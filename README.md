@@ -31,19 +31,24 @@ npm run dev
 
 ## פריסה ל-Render + GitHub
 
-הקובץ `render.yaml` מגדיר Web Service + PostgreSQL נפרדים.
+בתוכנית Free של Render אפשר **מסד נתונים אחד בלבד**.  
+`render.yaml` יוצר רק Web Service; את `DATABASE_URL` מדביקים ידנית.
 
-1. העלו את הקוד ל-GitHub
-2. ב-Render: **New → Blueprint** → בחרו את ה-repo
-3. הגדירו את `PLATFORM_PASSWORD` במשתני הסביבה
-4. אחרי Deploy: `https://sefer-baklik.onrender.com`
+אפשר להשתמש באותו PostgreSQL של MoneyAndTax — הטבלאות של ספר בקליק לא מתנגשות בשמות (`Barber`, `Appointment` וכו').
+
+1. ב-Render: פתחו את מסד הנתונים הקיים → העתיקו **External Database URL**
+2. Blueprint / Web Service של `sefer-baklik`
+3. הגדירו ידנית:
+   - `DATABASE_URL` = ה-URL שהעתקתם
+   - `PLATFORM_PASSWORD` = סיסמה חזקה
+4. Deploy → `https://sefer-baklik.onrender.com`
 
 ### משתני סביבה
 
 | משתנה | הסבר |
 |--------|------|
-| `DATABASE_URL` | מתמלא אוטומטית מ-Blueprint |
-| `AUTH_SECRET` | סוד לסשן (נוצר אוטומטית) |
+| `DATABASE_URL` | **חובה** — External URL ממסד Render קיים (או Neon וכו') |
+| `AUTH_SECRET` | סוד לסשן (נוצר אוטומטית ב-Blueprint) |
 | `PLATFORM_USERNAME` | ברירת מחדל: `admin` |
 | `PLATFORM_PASSWORD` | **חובה להגדיר ידנית** |
 | `DEMO_BARBER_PASSWORD` | סיסמת ספר הדמו `dani` |
