@@ -1,0 +1,32 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: sefer-baklik
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install && npx prisma db push && npx tsx prisma/seed.ts && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sefer-baklik-db
+          property: connectionString
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: PLATFORM_USERNAME
+        value: admin
+      - key: PLATFORM_PASSWORD
+        sync: false
+      - key: DEMO_BARBER_PASSWORD
+        value: barber123
+
+databases:
+  - name: sefer-baklik-db
+    plan: free
+    databaseName: seferbaklik
+    user: seferbaklik
+    region: frankfurt

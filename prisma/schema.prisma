@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Barber {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  displayName  String
+  username     String   @unique
+  passwordHash String
+  isActive     Boolean  @default(true)
+  slotMinutes  Int      @default(30)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workingHours WorkingHours[]
+  dayOffs      DayOff[]
+  appointments Appointment[]
+}
+
+model WorkingHours {
+  id        String @id @default(cuid())
+  barberId  String
+  /// 0 = Sunday … 6 = Saturday (Israel week)
+  dayOfWeek Int
+  startTime String
+  endTime   String
+
+  barber Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@unique([barberId, dayOfWeek])
+  @@index([barberId])
+}
+
+model DayOff {
+  id       String   @id @default(cuid())
+  barberId String
+  date     DateTime @db.Date
+  note     String?
+
+  barber Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@unique([barberId, date])
+  @@index([barberId])
+}
+
+model Appointment {
+  id            String   @id @default(cuid())
+  barberId      String
+  startsAt      DateTime
+  endsAt        DateTime
+  customerName  String
+  customerPhone String
+  /// BOOKED | CANCELLED
+  status        String   @default("BOOKED")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  barber Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@index([barberId, startsAt])
+  @@index([barberId, status])
+}
