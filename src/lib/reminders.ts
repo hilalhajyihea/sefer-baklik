@@ -27,6 +27,7 @@ export async function sendBookingConfirmation(appointmentId: string) {
       barberName: appointment.barber.displayName,
       startsAt: appointment.startsAt,
     }),
+    { trialTemplate: "sms_order_confirmation" },
   );
 
   if (result.ok && !result.skipped) {
@@ -78,6 +79,7 @@ export async function processDueReminders() {
           startsAt: appointment.startsAt,
           minutesBefore: minutes,
         }),
+        { trialTemplate: "sms_appointment_reminders" },
       );
 
       if (result.ok && !result.skipped) {

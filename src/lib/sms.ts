@@ -67,6 +67,7 @@ export function twilioConfigStatus() {
 export async function sendSms(
   toRaw: string,
   body: string,
+  options?: { trialTemplate?: string },
 ): Promise<{
   ok: boolean;
   skipped?: boolean;
@@ -94,8 +95,19 @@ export async function sendSms(
     return { ok: false, error: "מספר טלפון לא תקין לשליחת SMS" };
   }
 
+  // Trial accounts may only send predefined template IDs as Body.
+  // Set TWILIO_TRIAL_TEMPLATES=false after upgrading for custom Hebrew text.
+  const useTrialTemplates = process.env.TWILIO_TRIAL_TEMPLATES !== "false";
+  const messageBody = useTrialTemplates
+    ? options?.trialTemplate || "sms_appointment_reminders"
+    : body;
+
   const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
-  const params = new URLSearchParams({ To: to, From: from, Body: body });
+  const params = new URLSearchParams({
+    To: to,
+    From: from,
+    Body: messageBody,
+  });
 
   try {
     const res = await fetch(
@@ -117,7 +129,7 @@ export async function sendSms(
       status?: string;
     };
     if (!res.ok) {
-      console.error("[sms] Twilio error", { to, from, data });
+      console.error("[sms] Twilio error", { to, from, messageBody, data });
       return {
         ok: false,
         error: data.message || `שליחת SMS נכשלה (קוד ${data.code || res.status})`,
@@ -125,7 +137,13 @@ export async function sendSms(
       };
     }
 
-    console.info("[sms] sent", { to, from, sid: data.sid, status: data.status });
+    console.info("[sms] sent", {
+      to,
+      from,
+      sid: data.sid,
+      status: data.status,
+      trial: useTrialTemplates,
+    });
     return { ok: true, sid: data.sid, to };
   } catch (error) {
     console.error("[sms] send failed", error);
