@@ -1,9 +1,15 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { dayName, formatDateHe, formatTime, toDateKey } from "@/lib/time";
+import {
+  dayName,
+  dbDateToDateKey,
+  formatDateHe,
+  formatTime,
+  toDateKey,
+} from "@/lib/time";
 
 type Appointment = {
   id: string;
@@ -39,6 +45,18 @@ const defaultHours = (): HourRow[] =>
     enabled: dayOfWeek <= 4,
   }));
 
+function appointmentStatus(
+  startsAt: string,
+  endsAt: string,
+  now: number,
+): "past" | "current" | "upcoming" | "next" {
+  const start = new Date(startsAt).getTime();
+  const end = new Date(endsAt).getTime();
+  if (now >= start && now < end) return "current";
+  if (end <= now) return "past";
+  return "upcoming";
+}
+
 export function BarberAdminPanel({ slug, displayName }: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<"appointments" | "hours" | "daysOff">(
@@ -52,46 +70,85 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const [aRes, hRes, dRes] = await Promise.all([
-        fetch("/api/barber/appointments"),
-        fetch("/api/barber/hours"),
-        fetch("/api/barber/days-off"),
-      ]);
-      if (aRes.status === 401) {
-        router.push(`/${slug}/login`);
-        return;
+  const load = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) {
+        setLoading(true);
       }
-      const aData = await aRes.json();
-      const hData = await hRes.json();
-      const dData = await dRes.json();
-      setAppointments(aData.appointments || []);
+      setError("");
+      try {
+        const [aRes, hRes, dRes] = await Promise.all([
+          fetch("/api/barber/appointments"),
+          fetch("/api/barber/hours"),
+          fetch("/api/barber/days-off"),
+        ]);
+        if (aRes.status === 401) {
+          router.push(`/${slug}/login`);
+          return;
+        }
+        const aData = await aRes.json();
+        const hData = await hRes.json();
+        const dData = await dRes.json();
+        setAppointments(aData.appointments || []);
 
-      const next = defaultHours();
-      for (const h of hData.hours || []) {
-        next[h.dayOfWeek] = {
-          dayOfWeek: h.dayOfWeek,
-          startTime: h.startTime,
-          endTime: h.endTime,
-          enabled: true,
-        };
+        const next = defaultHours();
+        for (const h of hData.hours || []) {
+          next[h.dayOfWeek] = {
+            dayOfWeek: h.dayOfWeek,
+            startTime: h.startTime,
+            endTime: h.endTime,
+            enabled: true,
+          };
+        }
+        setHours(next);
+        setDayOffs(dData.dayOffs || []);
+        setNowMs(Date.now());
+      } catch {
+        setError("שגיאה בטעינת הנתונים");
+      } finally {
+        if (!opts?.silent) {
+          setLoading(false);
+        }
       }
-      setHours(next);
-      setDayOffs(dData.dayOffs || []);
-    } catch {
-      setError("שגיאה בטעינת הנתונים");
-    } finally {
-      setLoading(false);
-    }
-  }, [router, slug]);
+    },
+    [router, slug],
+  );
 
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      load({ silent: true });
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, [load]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNowMs(Date.now()), 15_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const groupedByDay = useMemo(() => {
+    const groups = new Map<string, Appointment[]>();
+    for (const a of appointments) {
+      const key = toDateKey(new Date(a.startsAt));
+      const list = groups.get(key) || [];
+      list.push(a);
+      groups.set(key, list);
+    }
+    return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [appointments]);
+
+  const nextUpcomingId = useMemo(() => {
+    const upcoming = appointments.find(
+      (a) => new Date(a.startsAt).getTime() > nowMs,
+    );
+    return upcoming?.id ?? null;
+  }, [appointments, nowMs]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -111,7 +168,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
       return;
     }
     setMessage("התור בוטל");
-    load();
+    load({ silent: true });
   }
 
   async function saveHours(e: FormEvent) {
@@ -148,7 +205,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
     setOffDate("");
     setOffNote("");
     setMessage("יום חופש נוסף");
-    load();
+    load({ silent: true });
   }
 
   async function removeDayOff(id: string) {
@@ -158,7 +215,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
       body: JSON.stringify({ id }),
     });
     setMessage("יום החופש הוסר");
-    load();
+    load({ silent: true });
   }
 
   return (
@@ -167,6 +224,9 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
         <div>
           <p className="text-sm text-[var(--muted)]">ספר בקליק · ניהול</p>
           <h1 className="font-display text-3xl sm:text-4xl">{displayName}</h1>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            מתרענן אוטומטית כל דקה
+          </p>
         </div>
         <div className="flex gap-2">
           <Link
@@ -224,33 +284,81 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
       ) : (
         <div className="surface rounded-2xl p-5 sm:p-6">
           {tab === "appointments" && (
-            <div className="space-y-3">
-              {appointments.length === 0 ? (
+            <div className="space-y-8">
+              {groupedByDay.length === 0 ? (
                 <p className="text-[var(--muted)]">אין תורים קרובים</p>
               ) : (
-                appointments.map((a) => {
-                  const starts = new Date(a.startsAt);
+                groupedByDay.map(([dateKey, dayAppointments]) => {
+                  const labelDate = new Date(dayAppointments[0].startsAt);
+                  const isToday = dateKey === toDateKey(new Date(nowMs));
                   return (
-                    <div
-                      key={a.id}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--line)] bg-white/80 px-4 py-3"
-                    >
-                      <div>
-                        <p className="font-semibold">
-                          {formatDateHe(starts)} · {formatTime(starts)}
-                        </p>
-                        <p className="text-sm text-[var(--muted)]">
-                          {a.customerName} · {a.customerPhone}
-                        </p>
+                    <section key={dateKey}>
+                      <div className="mb-3 flex items-baseline gap-2 border-b border-[var(--line)] pb-2">
+                        <h2 className="font-display text-2xl text-[var(--ink)]">
+                          {formatDateHe(labelDate)}
+                        </h2>
+                        {isToday ? (
+                          <span className="rounded-full bg-[var(--copper)] px-2.5 py-0.5 text-xs font-semibold text-white">
+                            היום
+                          </span>
+                        ) : null}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => cancelAppointment(a.id)}
-                        className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
-                      >
-                        ביטול תור
-                      </button>
-                    </div>
+                      <div className="space-y-2">
+                        {dayAppointments.map((a) => {
+                          const status = appointmentStatus(
+                            a.startsAt,
+                            a.endsAt,
+                            nowMs,
+                          );
+                          const isCurrent = status === "current";
+                          const isNext =
+                            status === "upcoming" && a.id === nextUpcomingId;
+                          return (
+                            <div
+                              key={a.id}
+                              className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 transition ${
+                                isCurrent
+                                  ? "border-[var(--copper)] bg-[rgba(182,92,44,0.14)] shadow-[0_0_0_1px_rgba(182,92,44,0.25)]"
+                                  : isNext
+                                    ? "border-[var(--olive)] bg-[var(--olive-soft)]"
+                                    : status === "past"
+                                      ? "border-[var(--line)] bg-white/50 opacity-60"
+                                      : "border-[var(--line)] bg-white/80"
+                              }`}
+                            >
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="font-semibold">
+                                    {formatTime(new Date(a.startsAt))}–
+                                    {formatTime(new Date(a.endsAt))}
+                                  </p>
+                                  {isCurrent ? (
+                                    <span className="rounded-full bg-[var(--copper)] px-2 py-0.5 text-xs font-semibold text-white">
+                                      עכשיו במספרה
+                                    </span>
+                                  ) : null}
+                                  {isNext ? (
+                                    <span className="rounded-full bg-[var(--olive)] px-2 py-0.5 text-xs font-semibold text-white">
+                                      הבא בתור
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <p className="text-sm text-[var(--muted)]">
+                                  {a.customerName} · {a.customerPhone}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => cancelAppointment(a.id)}
+                                className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
+                              >
+                                ביטול תור
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </section>
                   );
                 })
               )}
@@ -317,14 +425,17 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
 
           {tab === "daysOff" && (
             <div className="space-y-5">
-              <form onSubmit={addDayOff} className="flex flex-wrap items-end gap-3">
+              <form
+                onSubmit={addDayOff}
+                className="flex flex-wrap items-end gap-3"
+              >
                 <label className="text-sm font-medium">
                   תאריך
                   <input
                     type="date"
                     required
                     value={offDate}
-                    min={toDateKey(new Date())}
+                    min={toDateKey()}
                     onChange={(e) => setOffDate(e.target.value)}
                     className="mt-1 block rounded-xl border border-[var(--line)] bg-white px-3 py-2"
                   />
@@ -356,7 +467,11 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                     >
                       <div>
                         <p className="font-semibold">
-                          {formatDateHe(new Date(d.date))}
+                          {formatDateHe(
+                            new Date(
+                              `${dbDateToDateKey(new Date(d.date))}T12:00:00Z`,
+                            ),
+                          )}
                         </p>
                         {d.note ? (
                           <p className="text-sm text-[var(--muted)]">{d.note}</p>

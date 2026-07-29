@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireBarberSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { parseDateKey } from "@/lib/time";
+import { dateKeyToDbDate, toDateKey } from "@/lib/time";
 
 export async function GET() {
   const session = await requireBarberSession();
@@ -10,8 +10,7 @@ export async function GET() {
     return NextResponse.json({ error: "לא מחובר" }, { status: 401 });
   }
 
-  const from = new Date();
-  from.setHours(0, 0, 0, 0);
+  const from = dateKeyToDbDate(toDateKey());
 
   const dayOffs = await prisma.dayOff.findMany({
     where: { barberId: session.barberId, date: { gte: from } },
@@ -38,7 +37,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "תאריך לא תקין" }, { status: 400 });
   }
 
-  const date = parseDateKey(parsed.data.date);
+  const date = dateKeyToDbDate(parsed.data.date);
   const dayOff = await prisma.dayOff.upsert({
     where: {
       barberId_date: { barberId: session.barberId, date },

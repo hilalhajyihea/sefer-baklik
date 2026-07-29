@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireBarberSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { startOfJerusalemDay, toDateKey } from "@/lib/time";
 
 export async function GET() {
   const session = await requireBarberSession();
@@ -8,10 +9,8 @@ export async function GET() {
     return NextResponse.json({ error: "לא מחובר" }, { status: 401 });
   }
 
-  const from = new Date();
-  from.setHours(0, 0, 0, 0);
-  const to = new Date(from);
-  to.setDate(to.getDate() + 30);
+  const from = startOfJerusalemDay(toDateKey());
+  const to = new Date(from.getTime() + 30 * 24 * 60 * 60 * 1000);
 
   const appointments = await prisma.appointment.findMany({
     where: {

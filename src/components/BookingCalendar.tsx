@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { formatDateHe, parseDateKey } from "@/lib/time";
+import { formatDateHe, toDateKey, combineDateAndTime } from "@/lib/time";
 
 type Props = {
   slug: string;
@@ -12,12 +12,11 @@ type Props = {
 export function BookingCalendar({ slug, displayName }: Props) {
   const dates = useMemo(() => {
     const list: { key: string; label: string }[] = [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayKey = toDateKey();
     for (let i = 0; i < 14; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const noon = combineDateAndTime(todayKey, "12:00");
+      const d = new Date(noon.getTime() + i * 24 * 60 * 60 * 1000);
+      const key = toDateKey(d);
       list.push({ key, label: formatDateHe(d) });
     }
     return list;
@@ -82,7 +81,7 @@ export function BookingCalendar({ slug, displayName }: Props) {
         return;
       }
       setSuccess(
-        `התור נקבע ל-${formatDateHe(parseDateKey(date))} בשעה ${time}. נתראה!`,
+        `התור נקבע ל-${formatDateHe(combineDateAndTime(date, "12:00"))} בשעה ${time}. נתראה!`,
       );
       setName("");
       setPhone("");

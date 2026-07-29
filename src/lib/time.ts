@@ -1,4 +1,6 @@
-/** Israel-friendly date helpers. Store times as HH:mm strings and Date objects in Asia/Jerusalem conceptually. */
+/** All booking wall-clock times are Asia/Jerusalem (Israel). */
+
+export const TIMEZONE = "Asia/Jerusalem";
 
 const DAY_NAMES = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 
@@ -17,39 +19,144 @@ export function minutesToTime(total: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-/** YYYY-MM-DD in local calendar for a Date */
-export function toDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+type ZonedParts = {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+};
+
+function getZonedParts(date: Date, timeZone = TIMEZONE): ZonedParts {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+
+  const map: Record<string, string> = {};
+  for (const p of parts) {
+    if (p.type !== "literal") map[p.type] = p.value;
+  }
+
+  return {
+    year: Number(map.year),
+    month: Number(map.month),
+    day: Number(map.day),
+    hour: Number(map.hour),
+    minute: Number(map.minute),
+    second: Number(map.second),
+  };
 }
 
-export function parseDateKey(key: string): Date {
-  const [y, m, d] = key.split("-").map(Number);
-  return new Date(y, m - 1, d, 0, 0, 0, 0);
-}
-
+/** Convert a Jerusalem calendar date+time into the correct UTC Instant. */
 export function combineDateAndTime(dateKey: string, time: string): Date {
   const [y, m, d] = dateKey.split("-").map(Number);
   const [hh, mm] = time.split(":").map(Number);
-  return new Date(y, m - 1, d, hh, mm, 0, 0);
+  const desiredAsUtc = Date.UTC(y, m - 1, d, hh, mm, 0);
+
+  let utc = desiredAsUtc;
+  for (let i = 0; i < 3; i++) {
+    const parts = getZonedParts(new Date(utc));
+    const asUtc = Date.UTC(
+      parts.year,
+      parts.month - 1,
+      parts.day,
+      parts.hour,
+      parts.minute,
+      parts.second,
+    );
+    utc += desiredAsUtc - asUtc;
+  }
+
+  return new Date(utc);
+}
+
+/** YYYY-MM-DD in Asia/Jerusalem */
+export function toDateKey(date: Date = new Date()): string {
+  const p = getZonedParts(date);
+  return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
+}
+
+/** Date at midnight Jerusalem for @db.Date / day-of-week checks */
+export function parseDateKey(key: string): Date {
+  return combineDateAndTime(key, "00:00");
 }
 
 export function formatTime(date: Date): string {
-  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  const p = getZonedParts(date);
+  return `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
 }
 
 export function formatDateHe(date: Date): string {
   return date.toLocaleDateString("he-IL", {
+    timeZone: TIMEZONE,
     weekday: "long",
     day: "numeric",
     month: "long",
   });
 }
 
+/** Day-of-week 0=Sunday … 6=Saturday in Asia/Jerusalem */
+export function getJerusalemDayOfWeek(date: Date): number {
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: TIMEZONE,
+    weekday: "short",
+  }).format(date);
+  const map: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+  return map[weekday] ?? 0;
+}
+
+export function addDaysToDateKey(dateKey: string, days: number): string {
+  const start = combineDateAndTime(dateKey, "12:00");
+  return toDateKey(new Date(start.getTime() + days * 24 * 60 * 60 * 1000));
+}
+
 export function addDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+export function jerusalemNow(): Date {
+  return new Date();
+}
+
+export function startOfJerusalemDay(dateKey?: string): Date {
+  return combineDateAndTime(dateKey ?? toDateKey(), "00:00");
+}
+
+export function endOfJerusalemDay(dateKey?: string): Date {
+  // Inclusive end for queries — just before next midnight Jerusalem
+  const key = dateKey ?? toDateKey();
+  const nextNoon = combineDateAndTime(key, "12:00");
+  const nextKey = toDateKey(
+    new Date(nextNoon.getTime() + 24 * 60 * 60 * 1000),
+  );
+  return combineDateAndTime(nextKey, "00:00");
+}
+
+/** Calendar date for Prisma @db.Date — noon UTC avoids off-by-one. */
+export function dateKeyToDbDate(dateKey: string): Date {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+}
+
+export function dbDateToDateKey(date: Date): string {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }

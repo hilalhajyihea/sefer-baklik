@@ -1,9 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import {
   combineDateAndTime,
+  dateKeyToDbDate,
+  endOfJerusalemDay,
+  getJerusalemDayOfWeek,
   minutesToTime,
-  parseDateKey,
   parseTimeToMinutes,
+  startOfJerusalemDay,
   toDateKey,
 } from "@/lib/time";
 
@@ -14,27 +17,26 @@ export async function getAvailableSlots(barberId: string, dateKey: string) {
   });
   if (!barber || !barber.isActive) return [];
 
-  const day = parseDateKey(dateKey);
-  const dayOfWeek = day.getDay();
+  const dayOfWeek = getJerusalemDayOfWeek(combineDateAndTime(dateKey, "12:00"));
 
   const hours = barber.workingHours.find((h) => h.dayOfWeek === dayOfWeek);
   if (!hours) return [];
 
   const dayOff = await prisma.dayOff.findUnique({
     where: {
-      barberId_date: { barberId, date: day },
+      barberId_date: { barberId, date: dateKeyToDbDate(dateKey) },
     },
   });
   if (dayOff) return [];
 
-  const dayStart = combineDateAndTime(dateKey, "00:00");
-  const dayEnd = combineDateAndTime(dateKey, "23:59");
+  const dayStart = startOfJerusalemDay(dateKey);
+  const dayEnd = endOfJerusalemDay(dateKey);
 
   const appointments = await prisma.appointment.findMany({
     where: {
       barberId,
       status: "BOOKED",
-      startsAt: { gte: dayStart, lte: dayEnd },
+      startsAt: { gte: dayStart, lt: dayEnd },
     },
   });
 
@@ -110,12 +112,10 @@ export async function bookAppointment(input: {
 
 export function upcomingDateKeys(days = 14): string[] {
   const keys: string[] = [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const todayKey = toDateKey();
   for (let i = 0; i < days; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    keys.push(toDateKey(d));
+    const noon = combineDateAndTime(todayKey, "12:00");
+    keys.push(toDateKey(new Date(noon.getTime() + i * 24 * 60 * 60 * 1000)));
   }
   return keys;
 }
