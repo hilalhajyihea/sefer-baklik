@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { bookAppointment } from "@/lib/availability";
+import { sendBookingConfirmation } from "@/lib/reminders";
 
 const schema = z.object({
   slug: z.string().min(1),
@@ -39,6 +40,11 @@ export async function POST(request: Request) {
       time: parsed.data.time,
       customerName: parsed.data.customerName,
       customerPhone: parsed.data.customerPhone,
+    });
+
+    // Fire-and-forget confirmation SMS — booking succeeds even if SMS fails
+    void sendBookingConfirmation(appointment.id).catch((err) => {
+      console.error("confirmation sms error", err);
     });
 
     return NextResponse.json({

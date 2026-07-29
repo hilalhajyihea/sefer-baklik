@@ -8,15 +8,18 @@ datasource db {
 }
 
 model Barber {
-  id           String   @id @default(cuid())
-  slug         String   @unique
-  displayName  String
-  username     String   @unique
-  passwordHash String
-  isActive     Boolean  @default(true)
-  slotMinutes  Int      @default(30)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                      String   @id @default(cuid())
+  slug                    String   @unique
+  displayName             String
+  username                String   @unique
+  passwordHash            String
+  isActive                Boolean  @default(true)
+  slotMinutes             Int      @default(30)
+  smsConfirmationEnabled  Boolean  @default(true)
+  smsReminderEnabled      Boolean  @default(true)
+  reminderMinutesBefore   Int      @default(30)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   workingHours WorkingHours[]
   dayOffs      DayOff[]
@@ -50,19 +53,22 @@ model DayOff {
 }
 
 model Appointment {
-  id            String   @id @default(cuid())
-  barberId      String
-  startsAt      DateTime
-  endsAt        DateTime
-  customerName  String
-  customerPhone String
+  id                 String    @id @default(cuid())
+  barberId           String
+  startsAt           DateTime
+  endsAt             DateTime
+  customerName       String
+  customerPhone      String
   /// BOOKED | CANCELLED
-  status        String   @default("BOOKED")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  status             String    @default("BOOKED")
+  confirmationSentAt DateTime?
+  reminderSentAt     DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   barber Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
 
   @@index([barberId, startsAt])
   @@index([barberId, status])
+  @@index([status, reminderSentAt, startsAt])
 }

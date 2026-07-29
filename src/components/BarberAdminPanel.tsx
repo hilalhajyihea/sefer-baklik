@@ -59,12 +59,15 @@ function appointmentStatus(
 
 export function BarberAdminPanel({ slug, displayName }: Props) {
   const router = useRouter();
-  const [tab, setTab] = useState<"appointments" | "hours" | "daysOff">(
-    "appointments",
-  );
+  const [tab, setTab] = useState<
+    "appointments" | "hours" | "daysOff" | "sms"
+  >("appointments");
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [hours, setHours] = useState<HourRow[]>(defaultHours());
   const [dayOffs, setDayOffs] = useState<DayOff[]>([]);
+  const [smsConfirmationEnabled, setSmsConfirmationEnabled] = useState(true);
+  const [smsReminderEnabled, setSmsReminderEnabled] = useState(true);
+  const [reminderMinutesBefore, setReminderMinutesBefore] = useState(30);
   const [offDate, setOffDate] = useState("");
   const [offNote, setOffNote] = useState("");
   const [message, setMessage] = useState("");
@@ -79,10 +82,11 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
       }
       setError("");
       try {
-        const [aRes, hRes, dRes] = await Promise.all([
+        const [aRes, hRes, dRes, sRes] = await Promise.all([
           fetch("/api/barber/appointments"),
           fetch("/api/barber/hours"),
           fetch("/api/barber/days-off"),
+          fetch("/api/barber/sms-settings"),
         ]);
         if (aRes.status === 401) {
           router.push(`/${slug}/login`);
@@ -91,6 +95,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
         const aData = await aRes.json();
         const hData = await hRes.json();
         const dData = await dRes.json();
+        const sData = await sRes.json();
         setAppointments(aData.appointments || []);
 
         const next = defaultHours();
@@ -104,6 +109,11 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
         }
         setHours(next);
         setDayOffs(dData.dayOffs || []);
+        if (sData.settings) {
+          setSmsConfirmationEnabled(!!sData.settings.smsConfirmationEnabled);
+          setSmsReminderEnabled(!!sData.settings.smsReminderEnabled);
+          setReminderMinutesBefore(sData.settings.reminderMinutesBefore ?? 30);
+        }
         setNowMs(Date.now());
       } catch {
         setError("שגיאה בטעינת הנתונים");
@@ -208,6 +218,27 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
     load({ silent: true });
   }
 
+  async function saveSmsSettings(e: FormEvent) {
+    e.preventDefault();
+    setMessage("");
+    setError("");
+    const res = await fetch("/api/barber/sms-settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        smsConfirmationEnabled,
+        smsReminderEnabled,
+        reminderMinutesBefore,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || "שמירת הגדרות SMS נכשלה");
+      return;
+    }
+    setMessage("הגדרות ההודעות נשמרו");
+  }
+
   async function removeDayOff(id: string) {
     await fetch("/api/barber/days-off", {
       method: "DELETE",
@@ -251,6 +282,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
             ["appointments", "תורים"],
             ["hours", "שעות פעילות"],
             ["daysOff", "ימי חופש"],
+            ["sms", "הודעות SMS"],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -489,6 +521,55 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                 )}
               </div>
             </div>
+          )}
+
+          {tab === "sms" && (
+            <form onSubmit={saveSmsSettings} className="space-y-5">
+              <p className="text-sm text-[var(--muted)]">
+                הלקוח מקבל SMS באישור התור, ותזכורת לפני התור. ניתן לכבות או
+                לשנות את זמן התזכורת.
+              </p>
+              <label className="flex items-center gap-3 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={smsConfirmationEnabled}
+                  onChange={(e) => setSmsConfirmationEnabled(e.target.checked)}
+                />
+                שליחת SMS באישור קביעת תור
+              </label>
+              <label className="flex items-center gap-3 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={smsReminderEnabled}
+                  onChange={(e) => setSmsReminderEnabled(e.target.checked)}
+                />
+                שליחת SMS תזכורת לפני התור
+              </label>
+              <label className="block text-sm font-medium">
+                דקות לפני התור לתזכורת
+                <input
+                  type="number"
+                  min={5}
+                  max={1440}
+                  step={5}
+                  disabled={!smsReminderEnabled}
+                  value={reminderMinutesBefore}
+                  onChange={(e) =>
+                    setReminderMinutesBefore(Number(e.target.value) || 30)
+                  }
+                  className="mt-1.5 w-full max-w-[12rem] rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 disabled:opacity-40"
+                />
+                <span className="mt-1 block text-xs text-[var(--muted)]">
+                  ברירת מחדל: 30 דקות (מינימום 5)
+                </span>
+              </label>
+              <button
+                type="submit"
+                className="btn-primary rounded-xl px-6 py-2.5 font-semibold"
+              >
+                שמירת הגדרות
+              </button>
+            </form>
           )}
         </div>
       )}

@@ -1,5 +1,4 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
-# Free tier: only 1 Postgres. Reuse your existing Render DB URL in DATABASE_URL.
 services:
   - type: web
     name: sefer-baklik
@@ -22,3 +21,28 @@ services:
         sync: false
       - key: DEMO_BARBER_PASSWORD
         value: barber123
+      - key: CRON_SECRET
+        generateValue: true
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM_NUMBER
+        sync: false
+
+  # Reminder SMS every 5 minutes
+  - type: cron
+    name: sefer-baklik-reminders
+    runtime: node
+    plan: free
+    region: frankfurt
+    schedule: "*/5 * * * *"
+    buildCommand: "true"
+    startCommand: node -e "fetch(process.env.APP_URL+'/api/cron/reminders',{headers:{authorization:'Bearer '+process.env.CRON_SECRET}}).then(async r=>{console.log(await r.text()); if(!r.ok) process.exit(1)}).catch(e=>{console.error(e); process.exit(1)})"
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: APP_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false
