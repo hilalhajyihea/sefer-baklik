@@ -35,33 +35,64 @@ export function normalizePhoneE164(raw: string): string | null {
   return null;
 }
 
-function twilioConfigured() {
-  return Boolean(
-    process.env.TWILIO_ACCOUNT_SID &&
-      process.env.TWILIO_AUTH_TOKEN &&
-      process.env.TWILIO_FROM_NUMBER,
-  );
+function cleanEnv(value: string | undefined) {
+  if (!value) return "";
+  return value.trim().replace(/^["']|["']$/g, "");
 }
 
-export async function sendSms(toRaw: string, body: string): Promise<{
+function getTwilioConfig() {
+  return {
+    accountSid: cleanEnv(process.env.TWILIO_ACCOUNT_SID),
+    authToken: cleanEnv(process.env.TWILIO_AUTH_TOKEN),
+    from: cleanEnv(process.env.TWILIO_FROM_NUMBER),
+  };
+}
+
+export function twilioConfigured() {
+  const { accountSid, authToken, from } = getTwilioConfig();
+  return Boolean(accountSid && authToken && from);
+}
+
+export function twilioConfigStatus() {
+  const { accountSid, authToken, from } = getTwilioConfig();
+  return {
+    hasAccountSid: Boolean(accountSid),
+    hasAuthToken: Boolean(authToken),
+    hasFromNumber: Boolean(from),
+    fromNumberPreview: from ? `${from.slice(0, 4)}…${from.slice(-4)}` : null,
+    configured: Boolean(accountSid && authToken && from),
+  };
+}
+
+export async function sendSms(
+  toRaw: string,
+  body: string,
+): Promise<{
   ok: boolean;
   skipped?: boolean;
   error?: string;
   sid?: string;
+  to?: string;
 }> {
-  if (!twilioConfigured()) {
-    console.warn("[sms] Twilio not configured — skipping send");
-    return { ok: true, skipped: true };
+  const { accountSid, authToken, from } = getTwilioConfig();
+
+  if (!accountSid || !authToken || !from) {
+    console.warn("[sms] Twilio not configured — skipping send", {
+      hasAccountSid: Boolean(accountSid),
+      hasAuthToken: Boolean(authToken),
+      hasFromNumber: Boolean(from),
+    });
+    return {
+      ok: false,
+      skipped: true,
+      error: "Twilio לא מוגדר בשרת (חסר SID/Token/From)",
+    };
   }
 
   const to = normalizePhoneE164(toRaw);
   if (!to) {
     return { ok: false, error: "מספר טלפון לא תקין לשליחת SMS" };
   }
-
-  const accountSid = process.env.TWILIO_ACCOUNT_SID!;
-  const authToken = process.env.TWILIO_AUTH_TOKEN!;
-  const from = process.env.TWILIO_FROM_NUMBER!;
 
   const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
   const params = new URLSearchParams({ To: to, From: from, Body: body });
@@ -79,16 +110,26 @@ export async function sendSms(toRaw: string, body: string): Promise<{
       },
     );
 
-    const data = (await res.json()) as { sid?: string; message?: string };
+    const data = (await res.json()) as {
+      sid?: string;
+      message?: string;
+      code?: number;
+      status?: string;
+    };
     if (!res.ok) {
-      console.error("[sms] Twilio error", data);
-      return { ok: false, error: data.message || "שליחת SMS נכשלה" };
+      console.error("[sms] Twilio error", { to, from, data });
+      return {
+        ok: false,
+        error: data.message || `שליחת SMS נכשלה (קוד ${data.code || res.status})`,
+        to,
+      };
     }
 
-    return { ok: true, sid: data.sid };
+    console.info("[sms] sent", { to, from, sid: data.sid, status: data.status });
+    return { ok: true, sid: data.sid, to };
   } catch (error) {
     console.error("[sms] send failed", error);
-    return { ok: false, error: "שגיאת רשת בשליחת SMS" };
+    return { ok: false, error: "שגיאת רשת בשליחת SMS", to };
   }
 }
 

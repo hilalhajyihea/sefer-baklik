@@ -10,9 +10,15 @@ export async function sendBookingConfirmation(appointmentId: string) {
     where: { id: appointmentId },
     include: { barber: true },
   });
-  if (!appointment || appointment.status !== "BOOKED") return;
-  if (!appointment.barber.smsConfirmationEnabled) return;
-  if (appointment.confirmationSentAt) return;
+  if (!appointment || appointment.status !== "BOOKED") {
+    return { ok: false, error: "תור לא נמצא" };
+  }
+  if (!appointment.barber.smsConfirmationEnabled) {
+    return { ok: false, skipped: true, error: "אישור SMS כבוי אצל הספר" };
+  }
+  if (appointment.confirmationSentAt) {
+    return { ok: true, skipped: true, error: "אישור כבר נשלח" };
+  }
 
   const result = await sendSms(
     appointment.customerPhone,
@@ -23,7 +29,7 @@ export async function sendBookingConfirmation(appointmentId: string) {
     }),
   );
 
-  if (result.ok) {
+  if (result.ok && !result.skipped) {
     await prisma.appointment.update({
       where: { id: appointment.id },
       data: { confirmationSentAt: new Date() },
@@ -74,13 +80,14 @@ export async function processDueReminders() {
         }),
       );
 
-      if (result.ok) {
+      if (result.ok && !result.skipped) {
         await prisma.appointment.update({
           where: { id: appointment.id },
           data: { reminderSentAt: new Date() },
         });
-        if (result.skipped) skipped += 1;
-        else sent += 1;
+        sent += 1;
+      } else if (result.skipped) {
+        skipped += 1;
       } else {
         failed += 1;
       }

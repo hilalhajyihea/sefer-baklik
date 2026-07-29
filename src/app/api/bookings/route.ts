@@ -42,16 +42,18 @@ export async function POST(request: Request) {
       customerPhone: parsed.data.customerPhone,
     });
 
-    // Fire-and-forget confirmation SMS — booking succeeds even if SMS fails
-    void sendBookingConfirmation(appointment.id).catch((err) => {
-      console.error("confirmation sms error", err);
-    });
+    const sms = await sendBookingConfirmation(appointment.id);
 
     return NextResponse.json({
       appointment: {
         id: appointment.id,
         startsAt: appointment.startsAt.toISOString(),
         customerName: appointment.customerName,
+      },
+      sms: {
+        ok: !!sms?.ok,
+        skipped: !!sms?.skipped,
+        error: sms?.error || null,
       },
     });
   } catch (error) {

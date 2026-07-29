@@ -80,9 +80,13 @@ export function BookingCalendar({ slug, displayName }: Props) {
         setError(data.error || "לא ניתן לקבוע תור");
         return;
       }
-      setSuccess(
-        `התור נקבע ל-${formatDateHe(combineDateAndTime(date, "12:00"))} בשעה ${time}. נתראה!`,
-      );
+      let successMsg = `התור נקבע ל-${formatDateHe(combineDateAndTime(date, "12:00"))} בשעה ${time}. נתראה!`;
+      if (data.sms?.ok && !data.sms?.skipped) {
+        successMsg += " נשלח SMS לטלפון.";
+      } else if (data.sms?.error) {
+        setError(`התור נקבע, אבל SMS לא נשלח: ${data.sms.error}`);
+      }
+      setSuccess(successMsg);
       setName("");
       setPhone("");
       setTime("");
