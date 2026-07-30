@@ -379,7 +379,15 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                                   ) : null}
                                 </div>
                                 <p className="text-sm text-[var(--muted)]">
-                                  {a.customerName} · {a.customerPhone}
+                                  {a.customerName} ·{" "}
+                                  <a
+                                    href={`tel:${a.customerPhone.replace(/[^\d+]/g, "")}`}
+                                    dir="ltr"
+                                    className="font-medium text-[var(--copper-deep)] underline-offset-2 hover:underline"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    {a.customerPhone}
+                                  </a>
                                 </p>
                               </div>
                               <button
