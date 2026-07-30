@@ -16,6 +16,7 @@ async function main() {
       passwordHash,
       isActive: true,
       slotMinutes: 30,
+      smsPlanEnabled: true,
     },
     create: {
       slug: "dani",
@@ -23,6 +24,7 @@ async function main() {
       username: "dani",
       passwordHash,
       slotMinutes: 30,
+      smsPlanEnabled: true,
       workingHours: {
         create: [
           { dayOfWeek: 0, startTime: "09:00", endTime: "18:00" },

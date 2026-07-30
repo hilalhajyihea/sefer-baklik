@@ -10,6 +10,7 @@ type Barber = {
   displayName: string;
   username: string;
   isActive: boolean;
+  smsPlanEnabled: boolean;
   slotMinutes: number;
   _count: { appointments: number };
 };
@@ -84,6 +85,25 @@ export function PlatformAdminPanel() {
       return;
     }
     setMessage(barber.isActive ? "הספר הושבת" : "הספר הופעל");
+    load();
+  }
+
+  async function toggleSmsPlan(barber: Barber) {
+    const res = await fetch("/api/platform/barbers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: barber.id,
+        smsPlanEnabled: !barber.smsPlanEnabled,
+      }),
+    });
+    if (!res.ok) {
+      setError("עדכון SMS נכשל");
+      return;
+    }
+    setMessage(
+      barber.smsPlanEnabled ? "שירות SMS הושבת לספר" : "שירות SMS הופעל לספר",
+    );
     load();
   }
 
@@ -215,7 +235,8 @@ export function PlatformAdminPanel() {
                   </p>
                   <p className="text-sm text-[var(--muted)]">
                     משתמש: {b.username} · תורים: {b._count.appointments} ·{" "}
-                    {b.isActive ? "פעיל" : "מושבת"}
+                    {b.isActive ? "פעיל" : "מושבת"} · SMS:{" "}
+                    {b.smsPlanEnabled ? "מופעל" : "לא במנוי"}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -231,6 +252,13 @@ export function PlatformAdminPanel() {
                     className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
                   >
                     איפוס סיסמה
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleSmsPlan(b)}
+                    className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                  >
+                    {b.smsPlanEnabled ? "ביטול SMS" : "הפעל SMS"}
                   </button>
                   <button
                     type="button"

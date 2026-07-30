@@ -12,6 +12,7 @@ export async function GET() {
   const barber = await prisma.barber.findUnique({
     where: { id: session.barberId },
     select: {
+      smsPlanEnabled: true,
       smsConfirmationEnabled: true,
       smsReminderEnabled: true,
       reminderMinutesBefore: true,
@@ -37,6 +38,17 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "לא מחובר" }, { status: 401 });
   }
 
+  const barber = await prisma.barber.findUnique({
+    where: { id: session.barberId },
+    select: { smsPlanEnabled: true },
+  });
+  if (!barber?.smsPlanEnabled) {
+    return NextResponse.json(
+      { error: "שירות SMS אינו פעיל במנוי שלך" },
+      { status: 403 },
+    );
+  }
+
   const body = await request.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
@@ -50,6 +62,7 @@ export async function PUT(request: Request) {
     where: { id: session.barberId },
     data: parsed.data,
     select: {
+      smsPlanEnabled: true,
       smsConfirmationEnabled: true,
       smsReminderEnabled: true,
       reminderMinutesBefore: true,

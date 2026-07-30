@@ -15,6 +15,8 @@ model Barber {
   passwordHash            String
   isActive                Boolean  @default(true)
   slotMinutes             Int      @default(30)
+  /// Platform admin: allows this barber to use SMS features
+  smsPlanEnabled          Boolean  @default(false)
   smsConfirmationEnabled  Boolean  @default(true)
   smsReminderEnabled      Boolean  @default(true)
   reminderMinutesBefore   Int      @default(30)

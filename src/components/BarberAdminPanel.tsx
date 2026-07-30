@@ -10,6 +10,7 @@ import {
   formatTime,
   toDateKey,
 } from "@/lib/time";
+import { SITE_ADMIN_NAME, SITE_ADMIN_PHONE, SMS_UPGRADE_MESSAGE } from "@/lib/site";
 
 type Appointment = {
   id: string;
@@ -65,6 +66,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [hours, setHours] = useState<HourRow[]>(defaultHours());
   const [dayOffs, setDayOffs] = useState<DayOff[]>([]);
+  const [smsPlanEnabled, setSmsPlanEnabled] = useState(false);
   const [smsConfirmationEnabled, setSmsConfirmationEnabled] = useState(true);
   const [smsReminderEnabled, setSmsReminderEnabled] = useState(true);
   const [reminderMinutesBefore, setReminderMinutesBefore] = useState(30);
@@ -110,6 +112,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
         setHours(next);
         setDayOffs(dData.dayOffs || []);
         if (sData.settings) {
+          setSmsPlanEnabled(!!sData.settings.smsPlanEnabled);
           setSmsConfirmationEnabled(!!sData.settings.smsConfirmationEnabled);
           setSmsReminderEnabled(!!sData.settings.smsReminderEnabled);
           setReminderMinutesBefore(sData.settings.reminderMinutesBefore ?? 30);
@@ -524,6 +527,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
           )}
 
           {tab === "sms" && (
+            smsPlanEnabled ? (
             <form onSubmit={saveSmsSettings} className="space-y-5">
               <p className="text-sm text-[var(--muted)]">
                 הלקוח מקבל SMS באישור התור, ותזכורת לפני התור. ניתן לכבות או
@@ -570,6 +574,22 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                 שמירת הגדרות
               </button>
             </form>
+            ) : (
+            <div className="space-y-4 rounded-xl border border-[var(--line)] bg-white/80 p-5">
+              <h3 className="text-lg font-semibold text-[var(--ink)]">
+                שירות הודעות SMS
+              </h3>
+              <p className="text-sm leading-relaxed text-[var(--muted)]">
+                {SMS_UPGRADE_MESSAGE}
+              </p>
+              <a
+                href={`tel:${SITE_ADMIN_PHONE}`}
+                className="btn-primary inline-flex rounded-xl px-5 py-2.5 text-sm font-semibold"
+              >
+                צור קשר עם {SITE_ADMIN_NAME}
+              </a>
+            </div>
+            )
           )}
         </div>
       )}

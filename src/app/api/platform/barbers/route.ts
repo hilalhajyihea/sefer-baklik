@@ -19,6 +19,7 @@ export async function GET() {
       username: true,
       isActive: true,
       slotMinutes: true,
+      smsPlanEnabled: true,
       createdAt: true,
       _count: { select: { appointments: true } },
     },
@@ -82,6 +83,7 @@ export async function POST(request: Request) {
 const patchSchema = z.object({
   id: z.string().min(1),
   isActive: z.boolean().optional(),
+  smsPlanEnabled: z.boolean().optional(),
   password: z.string().min(6).max(100).optional(),
   displayName: z.string().min(2).max(80).optional(),
 });
@@ -108,6 +110,9 @@ export async function PATCH(request: Request) {
       ...(parsed.data.isActive !== undefined
         ? { isActive: parsed.data.isActive }
         : {}),
+      ...(parsed.data.smsPlanEnabled !== undefined
+        ? { smsPlanEnabled: parsed.data.smsPlanEnabled }
+        : {}),
       ...(parsed.data.displayName
         ? { displayName: parsed.data.displayName.trim() }
         : {}),
@@ -120,6 +125,7 @@ export async function PATCH(request: Request) {
       slug: barber.slug,
       displayName: barber.displayName,
       isActive: barber.isActive,
+      smsPlanEnabled: barber.smsPlanEnabled,
     },
   });
 }

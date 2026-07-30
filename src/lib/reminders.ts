@@ -13,6 +13,9 @@ export async function sendBookingConfirmation(appointmentId: string) {
   if (!appointment || appointment.status !== "BOOKED") {
     return { ok: false, error: "תור לא נמצא" };
   }
+  if (!appointment.barber.smsPlanEnabled) {
+    return { ok: false, skipped: true, error: "שירות SMS אינו פעיל במנוי" };
+  }
   if (!appointment.barber.smsConfirmationEnabled) {
     return { ok: false, skipped: true, error: "אישור SMS כבוי אצל הספר" };
   }
@@ -44,7 +47,7 @@ export async function sendBookingConfirmation(appointmentId: string) {
 export async function processDueReminders() {
   const now = new Date();
   const barbers = await prisma.barber.findMany({
-    where: { isActive: true, smsReminderEnabled: true },
+    where: { isActive: true, smsPlanEnabled: true, smsReminderEnabled: true },
     select: {
       id: true,
       displayName: true,

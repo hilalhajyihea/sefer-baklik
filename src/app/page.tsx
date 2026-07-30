@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SITE_ADMIN_NAME, SITE_ADMIN_PHONE } from "@/lib/site";
 
 export default function HomePage() {
   return (
@@ -50,6 +51,27 @@ export default function HomePage() {
           style={{ animationDelay: "200ms" }}
         />
       </section>
+
+      <footer className="relative border-t border-[var(--line)] bg-white/50 px-6 py-6 text-center text-sm text-[var(--muted)]">
+        <p>
+          מנהל האתר: {SITE_ADMIN_NAME}{" "}
+          <a
+            href={`tel:${SITE_ADMIN_PHONE}`}
+            className="font-medium text-[var(--copper-deep)] underline-offset-2 hover:underline"
+          >
+            {SITE_ADMIN_PHONE}
+          </a>
+        </p>
+        <p className="mt-1">
+          רוצה את זה אצלך?{" "}
+          <a
+            href={`tel:${SITE_ADMIN_PHONE}`}
+            className="font-semibold text-[var(--ink)] underline-offset-2 hover:underline"
+          >
+            צור קשר
+          </a>
+        </p>
+      </footer>
     </main>
   );
 }
