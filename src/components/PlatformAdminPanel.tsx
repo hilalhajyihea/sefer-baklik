@@ -107,6 +107,29 @@ export function PlatformAdminPanel() {
     load();
   }
 
+  async function renameDisplayName(barber: Barber) {
+    const next = prompt("שם תצוגה חדש", barber.displayName);
+    if (next == null) return;
+    const trimmed = next.trim();
+    if (trimmed.length < 2) {
+      setError("שם תצוגה חייב להיות לפחות 2 תווים");
+      return;
+    }
+    if (trimmed === barber.displayName) return;
+    setError("");
+    const res = await fetch("/api/platform/barbers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: barber.id, displayName: trimmed }),
+    });
+    if (!res.ok) {
+      setError("עדכון שם התצוגה נכשל");
+      return;
+    }
+    setMessage(`שם התצוגה עודכן ל־${trimmed}`);
+    load();
+  }
+
   async function resetPassword(barber: Barber) {
     const next = prompt(`סיסמה חדשה עבור ${barber.displayName}`);
     if (!next || next.length < 6) return;
@@ -246,6 +269,13 @@ export function PlatformAdminPanel() {
                   >
                     יומן
                   </Link>
+                  <button
+                    type="button"
+                    onClick={() => renameDisplayName(b)}
+                    className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                  >
+                    שם תצוגה
+                  </button>
                   <button
                     type="button"
                     onClick={() => resetPassword(b)}
