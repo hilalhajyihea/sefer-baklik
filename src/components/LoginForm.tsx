@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { BrandMark } from "@/components/BrandGraphics";
 
 type Props = {
   endpoint: string;
@@ -44,7 +45,12 @@ export function LoginForm({ endpoint, title, subtitle, redirectTo }: Props) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="surface w-full max-w-md rounded-2xl p-6 sm:p-8">
+    <form
+      onSubmit={onSubmit}
+      className="surface relative w-full max-w-md overflow-hidden rounded-2xl p-6 sm:p-8"
+    >
+      <div className="barber-stripes absolute inset-y-0 right-0 w-1.5 opacity-80" />
+      <BrandMark className="mb-6" />
       <h1 className="font-display text-3xl text-[var(--ink)]">{title}</h1>
       {subtitle ? (
         <p className="mt-2 text-sm text-[var(--muted)]">{subtitle}</p>

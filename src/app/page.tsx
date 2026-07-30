@@ -1,76 +1,94 @@
 import Link from "next/link";
 import { SITE_ADMIN_NAME, SITE_ADMIN_PHONE } from "@/lib/site";
+import { ScissorsMark } from "@/components/BrandGraphics";
 
 export default function HomePage() {
   return (
-    <main className="relative flex flex-1 flex-col overflow-hidden">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-40"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23b65c2c' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-        }}
-      />
-
-      <section className="relative mx-auto flex min-h-[100svh] w-full max-w-5xl flex-col justify-center px-6 py-16">
-        <p className="animate-fade-up mb-4 text-sm font-medium tracking-[0.2em] text-[var(--muted)]">
-          יומן תורים לספרים
-        </p>
-        <h1 className="font-display animate-fade-up text-5xl leading-tight text-[var(--ink)] sm:text-7xl">
-          ספר בקליק
-        </h1>
-        <p
-          className="animate-fade-up mt-5 max-w-xl text-lg leading-relaxed text-[var(--muted)]"
-          style={{ animationDelay: "80ms" }}
-        >
-          כל ספר מקבל כתובת ייחודית. הלקוחות נכנסים וקובעים תור ישירות מהטלפון
-          או מהמחשב — בלי שיחות ובלי המתנה.
-        </p>
-
+    <main className="relative flex flex-1 flex-col">
+      {/* Full-bleed hero composition */}
+      <section className="relative min-h-[100svh] overflow-hidden">
+        {/* Dominant graphic plane */}
         <div
-          className="animate-fade-up mt-10 flex flex-wrap gap-3"
-          style={{ animationDelay: "140ms" }}
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
         >
-          <Link
-            href="/dani"
-            className="btn-primary inline-flex items-center justify-center rounded-xl px-6 py-3 text-base font-semibold"
-          >
-            דוגמה: יומן של דני
-          </Link>
-          <Link
-            href="/platform/login"
-            className="inline-flex items-center justify-center rounded-xl border border-[var(--line)] bg-white/70 px-6 py-3 text-base font-semibold text-[var(--ink)] transition hover:bg-white"
-          >
-            כניסת מנהל מערכת
-          </Link>
+          <div className="absolute inset-y-0 left-0 w-[42%] max-lg:hidden">
+            <div className="barber-stripes animate-stripe absolute inset-0 opacity-[0.18]" />
+            <div className="absolute inset-0 bg-gradient-to-l from-[var(--cream)] via-transparent to-transparent" />
+          </div>
+          <div className="grain absolute inset-0" />
+          <div className="absolute -left-8 bottom-[12%] top-[18%] w-3 max-sm:hidden">
+            <div className="barber-stripes h-full w-full rounded-full opacity-80 shadow-lg" />
+          </div>
+          <ScissorsMark className="animate-drift absolute left-[6%] top-[22%] h-36 w-36 text-[var(--copper)] opacity-[0.14] max-lg:left-auto max-lg:right-[4%] max-lg:top-[8%] max-lg:h-28 max-lg:w-28" />
         </div>
 
-        <div
-          className="animate-soft-pulse mt-16 h-px w-24 bg-[var(--copper)]"
-          style={{ animationDelay: "200ms" }}
-        />
+        <div className="relative mx-auto flex min-h-[100svh] w-full max-w-6xl flex-col justify-center px-6 py-20 sm:px-10">
+          <p
+            className="animate-fade-up mb-5 text-xs font-semibold uppercase tracking-[0.28em] text-[var(--copper-deep)] sm:text-sm"
+          >
+            יומן תורים דיגיטלי
+          </p>
+
+          <h1 className="font-display animate-fade-up max-w-3xl text-6xl leading-[1.05] text-[var(--ink)] sm:text-8xl">
+            ספר בקליק
+          </h1>
+
+          <div
+            className="animate-draw-line mt-6 h-1 w-28 rounded-full bg-[var(--copper)]"
+            aria-hidden
+          />
+
+          <p
+            className="animate-fade-up mt-7 max-w-lg text-lg leading-relaxed text-[var(--muted)] sm:text-xl"
+            style={{ animationDelay: "100ms" }}
+          >
+            כתובת ייחודית לכל ספר. הלקוח נכנס וקובע תור מהטלפון — בלי שיחות
+            ובלי המתנה.
+          </p>
+
+          <div
+            className="animate-fade-up mt-11 flex flex-wrap gap-3"
+            style={{ animationDelay: "180ms" }}
+          >
+            <Link
+              href="/dani"
+              className="btn-primary inline-flex items-center justify-center rounded-xl px-7 py-3.5 text-base font-semibold"
+            >
+              דוגמה: יומן של דני
+            </Link>
+            <Link
+              href="/platform/login"
+              className="inline-flex items-center justify-center rounded-xl border border-[var(--ink)]/15 bg-[var(--charcoal)] px-7 py-3.5 text-base font-semibold text-[var(--cream)] transition hover:bg-[var(--ink)]"
+            >
+              כניסת מנהל מערכת
+            </Link>
+          </div>
+        </div>
       </section>
 
-      <footer className="relative border-t border-[var(--line)] bg-white/50 px-6 py-6 text-center text-sm text-[var(--muted)]">
-        <p>
-          מנהל האתר: {SITE_ADMIN_NAME}{" "}
-          <a
-            href={`tel:${SITE_ADMIN_PHONE}`}
-            className="font-medium text-[var(--copper-deep)] underline-offset-2 hover:underline"
-          >
-            {SITE_ADMIN_PHONE}
-          </a>
-        </p>
-        <p className="mt-1">
-          רוצה את זה אצלך?{" "}
-          <a
-            href={`tel:${SITE_ADMIN_PHONE}`}
-            className="font-semibold text-[var(--ink)] underline-offset-2 hover:underline"
-          >
-            צור קשר
-          </a>
-        </p>
+      <footer className="relative border-t border-[var(--line)] bg-[var(--charcoal)] px-6 py-8 text-center text-sm text-[var(--stripe)]">
+        <div className="barber-stripes-soft pointer-events-none absolute inset-0 opacity-40" />
+        <div className="relative">
+          <p>
+            מנהל האתר: {SITE_ADMIN_NAME}{" "}
+            <a
+              href={`tel:${SITE_ADMIN_PHONE}`}
+              className="font-medium text-[var(--copper)] underline-offset-2 hover:underline"
+            >
+              {SITE_ADMIN_PHONE}
+            </a>
+          </p>
+          <p className="mt-2">
+            רוצה את זה אצלך?{" "}
+            <a
+              href={`tel:${SITE_ADMIN_PHONE}`}
+              className="font-semibold text-[var(--cream)] underline-offset-2 hover:underline"
+            >
+              צור קשר
+            </a>
+          </p>
+        </div>
       </footer>
     </main>
   );
