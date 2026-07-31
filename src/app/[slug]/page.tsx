@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { prisma } from "@/lib/prisma";
+import { barberShareMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +14,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!barber || !barber.isActive) {
     return { title: "ספר בקליק" };
   }
-  return {
-    title: `ספר בקליק · ${barber.displayName}`,
-    description: `קביעת תור אצל ${barber.displayName}`,
-  };
+  return barberShareMetadata(barber.displayName, barber.slug);
 }
 
 export default async function BarberPublicPage({ params }: Props) {

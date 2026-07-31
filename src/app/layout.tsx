@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Frank_Ruhl_Libre, Rubik } from "next/font/google";
+import { homeMetadata } from "@/lib/seo";
 import "./globals.css";
 
 const rubik = Rubik({
@@ -14,10 +15,7 @@ const frank = Frank_Ruhl_Libre({
   weight: ["500", "700"],
 });
 
-export const metadata: Metadata = {
-  title: "ספר בקליק",
-  description: "קביעת תור לספר — בקליק אחד",
-};
+export const metadata: Metadata = homeMetadata();
 
 export default function RootLayout({
   children,

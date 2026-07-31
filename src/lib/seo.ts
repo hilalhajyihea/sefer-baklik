@@ -1,0 +1,88 @@
+import type { Metadata } from "next";
+
+const SITE_NAME = "ספר בקליק";
+const DEFAULT_DESCRIPTION = "קביעת תור לספר — בקליק אחד";
+const OG_IMAGE_PATH = "/og-sefer-baklik.png";
+
+export function getSiteUrl() {
+  const fromEnv =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.APP_URL ||
+    (process.env.RENDER_EXTERNAL_URL
+      ? `https://${process.env.RENDER_EXTERNAL_URL}`
+      : "");
+  if (fromEnv) return fromEnv.replace(/\/$/, "");
+  return "https://sefer-baklik.onrender.com";
+}
+
+export function homeMetadata(): Metadata {
+  const title = `${SITE_NAME} · קביעת תור לספר`;
+  const description = DEFAULT_DESCRIPTION;
+  const url = getSiteUrl();
+  const imageUrl = `${url}${OG_IMAGE_PATH}`;
+
+  return {
+    title: {
+      default: title,
+      template: `%s · ${SITE_NAME}`,
+    },
+    description,
+    metadataBase: new URL(url),
+    openGraph: {
+      type: "website",
+      locale: "he_IL",
+      siteName: SITE_NAME,
+      title,
+      description,
+      url,
+      images: [
+        {
+          url: OG_IMAGE_PATH,
+          width: 1200,
+          height: 630,
+          alt: `${SITE_NAME} — קביעת תור לספר`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
+    },
+  };
+}
+
+export function barberShareMetadata(displayName: string, slug: string): Metadata {
+  const title = `${SITE_NAME} · קביעת תור · ${displayName}`;
+  const description = `קביעת תור אצל ${displayName} — דרך ${SITE_NAME}`;
+  const url = `${getSiteUrl()}/${slug}`;
+  const imageUrl = `${getSiteUrl()}${OG_IMAGE_PATH}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      type: "website",
+      locale: "he_IL",
+      siteName: SITE_NAME,
+      title,
+      description,
+      url,
+      images: [
+        {
+          url: OG_IMAGE_PATH,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
+    },
+  };
+}
