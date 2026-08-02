@@ -18,7 +18,7 @@ export function buildCancelUrl(token: string) {
  * do NOT wrap with bidi marks (phones often include them in the opened URL).
  */
 export function formatCancelSmsLine(cancelUrl: string) {
-  return `לביטול התור:\n${cancelUrl}`;
+  return `ביטול:\n${cancelUrl}`;
 }
 
 /** Strip bidi / invisible chars phones may append when opening SMS links. */

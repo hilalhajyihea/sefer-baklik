@@ -94,6 +94,12 @@ export function formatTime(date: Date): string {
   return `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
 }
 
+/** Compact date for SMS cost (e.g. 03/08). */
+export function formatDateSms(date: Date): string {
+  const p = getZonedParts(date);
+  return `${String(p.day).padStart(2, "0")}/${String(p.month).padStart(2, "0")}`;
+}
+
 export function formatDateHe(date: Date): string {
   return date.toLocaleDateString("he-IL", {
     timeZone: TIMEZONE,
