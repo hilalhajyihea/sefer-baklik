@@ -43,7 +43,7 @@ export function resolveCancelState(appointment: {
 }
 
 export async function findAppointmentByCancelToken(token: string) {
-  return prisma.appointment.findUnique({
+  return prisma.appointment.findFirst({
     where: { cancelToken: token },
     include: {
       barber: { select: { displayName: true, slug: true, isActive: true } },

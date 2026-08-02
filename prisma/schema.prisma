@@ -64,7 +64,7 @@ model Appointment {
   /// BOOKED | CANCELLED
   status             String    @default("BOOKED")
   /// Opaque token for customer self-cancel link in SMS (nullable so existing rows can migrate)
-  cancelToken        String?   @unique
+  cancelToken        String?
   confirmationSentAt DateTime?
   reminderSentAt     DateTime?
   createdAt          DateTime  @default(now())
@@ -75,4 +75,5 @@ model Appointment {
   @@index([barberId, startsAt])
   @@index([barberId, status])
   @@index([status, reminderSentAt, startsAt])
+  @@index([cancelToken])
 }
