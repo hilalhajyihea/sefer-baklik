@@ -1,4 +1,5 @@
 import { formatDateHe, formatTime } from "@/lib/time";
+import { formatCancelSmsLine } from "@/lib/cancel";
 
 /** Normalize Israeli / international phones to E.164 (+972...). */
 export function normalizePhoneE164(raw: string): string | null {
@@ -160,8 +161,8 @@ export function buildConfirmationSms(input: {
   return [
     `שלום ${input.customerName},`,
     `התור אצל ${input.barberName} נקבע ל-${formatDateHe(input.startsAt)} בשעה ${formatTime(input.startsAt)}.`,
-    `לביטול: ${input.cancelUrl}`,
     "ספר בקליק",
+    formatCancelSmsLine(input.cancelUrl),
   ].join("\n");
 }
 
@@ -175,7 +176,7 @@ export function buildReminderSms(input: {
   return [
     `תזכורת: שלום ${input.customerName},`,
     `התור אצל ${input.barberName} בעוד כ-${input.minutesBefore} דקות (${formatTime(input.startsAt)}).`,
-    `לביטול: ${input.cancelUrl}`,
     "ספר בקליק",
+    formatCancelSmsLine(input.cancelUrl),
   ].join("\n");
 }

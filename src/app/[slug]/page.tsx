@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BarberPublicPage({ params }: Props) {
   const { slug } = await params;
-  if (slug === "platform" || slug === "api" || slug === "cancel") notFound();
+  if (slug === "platform" || slug === "api") notFound();
 
   const barber = await prisma.barber.findUnique({ where: { slug } });
   if (!barber || !barber.isActive) notFound();

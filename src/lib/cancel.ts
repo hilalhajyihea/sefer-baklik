@@ -10,6 +10,12 @@ export function buildCancelUrl(token: string) {
   return `${getSiteUrl()}/cancel/${token}`;
 }
 
+/** Wrap URL so RTL SMS clients don't mangle / truncate the link. */
+export function formatCancelSmsLine(cancelUrl: string) {
+  // LTR embedding: isolate the URL from surrounding Hebrew
+  return `לביטול:\n\u2066${cancelUrl}\u2069`;
+}
+
 /** Ensure appointment has a cancel token; backfill if missing (legacy rows). */
 export async function ensureCancelToken(appointment: {
   id: string;
