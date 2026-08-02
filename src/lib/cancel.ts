@@ -2,18 +2,36 @@ import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/seo";
 
+/** 16 bytes → 32 hex chars — short enough for SMS, still hard to guess. */
 export function generateCancelToken() {
-  return randomBytes(24).toString("hex");
+  return randomBytes(16).toString("hex");
 }
 
 export function buildCancelUrl(token: string) {
   return `${getSiteUrl()}/cancel/${token}`;
 }
 
-/** Wrap URL so RTL SMS clients don't mangle / truncate the link. */
+/**
+ * SMS line for cancel. Keep the URL on its own ASCII-only line —
+ * do NOT wrap with bidi marks (phones often include them in the opened URL).
+ */
 export function formatCancelSmsLine(cancelUrl: string) {
-  // LTR embedding: isolate the URL from surrounding Hebrew
-  return `לביטול:\n\u2066${cancelUrl}\u2069`;
+  return `לביטול התור (לחצו על הקישור):\n${cancelUrl}`;
+}
+
+/** Strip bidi / invisible chars phones may append when opening SMS links. */
+export function sanitizeCancelToken(raw: string): string {
+  let token = raw || "";
+  try {
+    token = decodeURIComponent(token);
+  } catch {
+    // keep raw
+  }
+  return token
+    .replace(/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, "")
+    .replace(/[^\t\n\r\x20-\x7E]/g, "")
+    .trim()
+    .replace(/[.,;:!?)\]}>]+$/g, "");
 }
 
 /** Ensure appointment has a cancel token; backfill if missing (legacy rows). */
@@ -48,21 +66,37 @@ export function resolveCancelState(appointment: {
   return "confirm";
 }
 
-export async function findAppointmentByCancelToken(token: string) {
-  return prisma.appointment.findFirst({
+const appointmentInclude = {
+  barber: { select: { displayName: true, slug: true, isActive: true } },
+} as const;
+
+export async function findAppointmentByCancelToken(rawToken: string) {
+  const token = sanitizeCancelToken(rawToken);
+  if (!token || token.length < 8) return null;
+
+  const exact = await prisma.appointment.findFirst({
     where: { cancelToken: token },
-    include: {
-      barber: { select: { displayName: true, slug: true, isActive: true } },
-    },
+    include: appointmentInclude,
   });
+  if (exact) return exact;
+
+  // Fallback: SMS sometimes truncates the end of a long token
+  if (token.length >= 16) {
+    return prisma.appointment.findFirst({
+      where: { cancelToken: { startsWith: token } },
+      include: appointmentInclude,
+    });
+  }
+
+  return null;
 }
 
 /** Cancel a BOOKED future appointment by public cancel token. Idempotent if already cancelled. */
-export async function cancelAppointmentByToken(token: string): Promise<{
+export async function cancelAppointmentByToken(rawToken: string): Promise<{
   state: CancelPageState;
   appointment: Awaited<ReturnType<typeof findAppointmentByCancelToken>>;
 }> {
-  const appointment = await findAppointmentByCancelToken(token);
+  const appointment = await findAppointmentByCancelToken(rawToken);
   if (!appointment) {
     return { state: "invalid", appointment: null };
   }
@@ -78,9 +112,7 @@ export async function cancelAppointmentByToken(token: string): Promise<{
   const updated = await prisma.appointment.update({
     where: { id: appointment.id },
     data: { status: "CANCELLED" },
-    include: {
-      barber: { select: { displayName: true, slug: true, isActive: true } },
-    },
+    include: appointmentInclude,
   });
 
   return { state: "success", appointment: updated };

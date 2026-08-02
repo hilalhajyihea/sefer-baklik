@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { cancelAppointmentByToken } from "@/lib/cancel";
+import { cancelAppointmentByToken, sanitizeCancelToken } from "@/lib/cancel";
 import { formatDateHe, formatTime } from "@/lib/time";
 
 type Params = { params: Promise<{ token: string }> };
 
 export async function POST(_request: Request, { params }: Params) {
-  const { token } = await params;
+  const { token: rawToken } = await params;
+  const token = sanitizeCancelToken(rawToken);
   if (!token || token.length < 8) {
     return NextResponse.json({ error: "קישור לא תקין", state: "invalid" }, { status: 400 });
   }

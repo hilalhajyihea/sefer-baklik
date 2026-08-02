@@ -16,11 +16,12 @@ export const metadata: Metadata = {
 };
 
 export default async function CancelAppointmentPage({ params }: Props) {
-  const { token } = await params;
-  const appointment = token
-    ? await findAppointmentByCancelToken(token)
+  const { token: rawToken } = await params;
+  const appointment = rawToken
+    ? await findAppointmentByCancelToken(rawToken)
     : null;
   const state = resolveCancelState(appointment);
+  const token = appointment?.cancelToken || rawToken;
 
   return (
     <main className="relative flex flex-1 flex-col px-6 py-16 sm:py-24">
