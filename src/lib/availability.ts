@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { generateCancelToken } from "@/lib/cancel";
 import {
   combineDateAndTime,
   dateKeyToDbDate,
@@ -105,6 +106,7 @@ export async function bookAppointment(input: {
         customerName: input.customerName.trim(),
         customerPhone: input.customerPhone.trim(),
         status: "BOOKED",
+        cancelToken: generateCancelToken(),
       },
     });
   });

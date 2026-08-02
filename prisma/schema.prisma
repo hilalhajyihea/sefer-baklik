@@ -63,6 +63,8 @@ model Appointment {
   customerPhone      String
   /// BOOKED | CANCELLED
   status             String    @default("BOOKED")
+  /// Opaque token for customer self-cancel link in SMS
+  cancelToken        String    @unique @default(cuid())
   confirmationSentAt DateTime?
   reminderSentAt     DateTime?
   createdAt          DateTime  @default(now())

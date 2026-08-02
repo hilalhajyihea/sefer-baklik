@@ -155,10 +155,12 @@ export function buildConfirmationSms(input: {
   customerName: string;
   barberName: string;
   startsAt: Date;
+  cancelUrl: string;
 }): string {
   return [
     `שלום ${input.customerName},`,
     `התור אצל ${input.barberName} נקבע ל-${formatDateHe(input.startsAt)} בשעה ${formatTime(input.startsAt)}.`,
+    `לביטול: ${input.cancelUrl}`,
     "ספר בקליק",
   ].join("\n");
 }
@@ -168,10 +170,12 @@ export function buildReminderSms(input: {
   barberName: string;
   startsAt: Date;
   minutesBefore: number;
+  cancelUrl: string;
 }): string {
   return [
     `תזכורת: שלום ${input.customerName},`,
     `התור אצל ${input.barberName} בעוד כ-${input.minutesBefore} דקות (${formatTime(input.startsAt)}).`,
+    `לביטול: ${input.cancelUrl}`,
     "ספר בקליק",
   ].join("\n");
 }
