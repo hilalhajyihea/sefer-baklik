@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { buildCancelUrl } from "@/lib/cancel";
+import { buildCancelUrl, ensureCancelToken } from "@/lib/cancel";
 import {
   buildConfirmationSms,
   buildReminderSms,
@@ -24,13 +24,15 @@ export async function sendBookingConfirmation(appointmentId: string) {
     return { ok: true, skipped: true, error: "אישור כבר נשלח" };
   }
 
+  const cancelToken = await ensureCancelToken(appointment);
+
   const result = await sendSms(
     appointment.customerPhone,
     buildConfirmationSms({
       customerName: appointment.customerName,
       barberName: appointment.barber.displayName,
       startsAt: appointment.startsAt,
-      cancelUrl: buildCancelUrl(appointment.cancelToken),
+      cancelUrl: buildCancelUrl(cancelToken),
     }),
     { trialTemplate: "sms_order_confirmation" },
   );
@@ -76,6 +78,7 @@ export async function processDueReminders() {
     });
 
     for (const appointment of due) {
+      const cancelToken = await ensureCancelToken(appointment);
       const result = await sendSms(
         appointment.customerPhone,
         buildReminderSms({
@@ -83,7 +86,7 @@ export async function processDueReminders() {
           barberName: barber.displayName,
           startsAt: appointment.startsAt,
           minutesBefore: minutes,
-          cancelUrl: buildCancelUrl(appointment.cancelToken),
+          cancelUrl: buildCancelUrl(cancelToken),
         }),
         { trialTemplate: "sms_appointment_reminders" },
       );

@@ -1,10 +1,29 @@
 import "dotenv/config";
+import { randomBytes } from "crypto";
 import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+async function backfillCancelTokens() {
+  const missing = await prisma.appointment.findMany({
+    where: { cancelToken: null },
+    select: { id: true },
+  });
+  for (const row of missing) {
+    await prisma.appointment.update({
+      where: { id: row.id },
+      data: { cancelToken: randomBytes(24).toString("hex") },
+    });
+  }
+  if (missing.length > 0) {
+    console.log(`Backfilled cancelToken for ${missing.length} appointments`);
+  }
+}
+
 async function main() {
+  await backfillCancelTokens();
+
   const demoPassword = process.env.DEMO_BARBER_PASSWORD || "barber123";
   const passwordHash = await hash(demoPassword, 12);
 

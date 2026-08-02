@@ -10,6 +10,20 @@ export function buildCancelUrl(token: string) {
   return `${getSiteUrl()}/cancel/${token}`;
 }
 
+/** Ensure appointment has a cancel token; backfill if missing (legacy rows). */
+export async function ensureCancelToken(appointment: {
+  id: string;
+  cancelToken: string | null;
+}): Promise<string> {
+  if (appointment.cancelToken) return appointment.cancelToken;
+  const token = generateCancelToken();
+  await prisma.appointment.update({
+    where: { id: appointment.id },
+    data: { cancelToken: token },
+  });
+  return token;
+}
+
 export type CancelPageState =
   | "confirm"
   | "success"
