@@ -100,6 +100,17 @@ export function formatDateSms(date: Date): string {
   return `${String(p.day).padStart(2, "0")}/${String(p.month).padStart(2, "0")}`;
 }
 
+/** Short weekday for SMS: א׳ … ש׳ */
+export function formatDaySms(date: Date): string {
+  const days = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"];
+  return days[getJerusalemDayOfWeek(date)] ?? "";
+}
+
+/** e.g. א׳ 03/08 14:30 */
+export function formatWhenSms(date: Date): string {
+  return `${formatDaySms(date)} ${formatDateSms(date)} ${formatTime(date)}`;
+}
+
 export function formatDateHe(date: Date): string {
   return date.toLocaleDateString("he-IL", {
     timeZone: TIMEZONE,

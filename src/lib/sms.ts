@@ -1,4 +1,4 @@
-import { formatDateSms, formatTime } from "@/lib/time";
+import { formatWhenSms } from "@/lib/time";
 import { formatCancelSmsLine } from "@/lib/cancel";
 
 /** Normalize Israeli / international phones to E.164 (+972...). */
@@ -152,8 +152,8 @@ export async function sendSms(
   }
 }
 
-/** Keep barber name short so no-cancel SMS stays in one UCS-2 segment (~70). */
-function shortBarberName(name: string, max = 28) {
+/** Keep names short so no-cancel SMS stays in one UCS-2 segment (~70). */
+function shortName(name: string, max: number) {
   const trimmed = name.trim();
   if (trimmed.length <= max) return trimmed;
   return `${trimmed.slice(0, max - 1)}…`;
@@ -165,9 +165,11 @@ export function buildConfirmationSms(input: {
   startsAt: Date;
   cancelUrl?: string | null;
 }): string {
-  const barber = shortBarberName(input.barberName);
-  const when = `${formatDateSms(input.startsAt)} ${formatTime(input.startsAt)}`;
-  const lines = [`תור אצל ${barber}: ${when}`];
+  const customer = shortName(input.customerName, 22);
+  const barber = shortName(input.barberName, 22);
+  const lines = [
+    `${customer}, תור אצל ${barber}: ${formatWhenSms(input.startsAt)}`,
+  ];
   if (input.cancelUrl) {
     lines.push(formatCancelSmsLine(input.cancelUrl));
   }
@@ -181,8 +183,11 @@ export function buildReminderSms(input: {
   minutesBefore: number;
   cancelUrl?: string | null;
 }): string {
-  const barber = shortBarberName(input.barberName);
-  const lines = [`תזכורת תור אצל ${barber} ב-${formatTime(input.startsAt)}`];
+  const customer = shortName(input.customerName, 20);
+  const barber = shortName(input.barberName, 20);
+  const lines = [
+    `תזכורת ${customer}, תור אצל ${barber}: ${formatWhenSms(input.startsAt)}`,
+  ];
   if (input.cancelUrl) {
     lines.push(formatCancelSmsLine(input.cancelUrl));
   }
