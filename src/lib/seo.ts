@@ -4,14 +4,25 @@ const SITE_NAME = "ספר בקליק";
 const DEFAULT_DESCRIPTION = "קביעת תור לספר — בקליק אחד";
 const OG_IMAGE_PATH = "/og-sefer-baklik.png";
 
+function normalizeSiteUrl(raw: string) {
+  let url = raw.trim().replace(/\/$/, "");
+  // Collapse accidental https://https:// from misconfigured env
+  while (/^https?:\/\/https?:\/\//i.test(url)) {
+    url = url.replace(/^https?:\/\//i, "");
+  }
+  if (!/^https?:\/\//i.test(url)) {
+    url = `https://${url}`;
+  }
+  return url;
+}
+
 export function getSiteUrl() {
   const fromEnv =
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.APP_URL ||
-    (process.env.RENDER_EXTERNAL_URL
-      ? `https://${process.env.RENDER_EXTERNAL_URL}`
-      : "");
-  if (fromEnv) return fromEnv.replace(/\/$/, "");
+    process.env.RENDER_EXTERNAL_URL ||
+    "";
+  if (fromEnv) return normalizeSiteUrl(fromEnv);
   return "https://sefer-baklik.onrender.com";
 }
 
