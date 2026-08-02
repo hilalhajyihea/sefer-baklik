@@ -10,8 +10,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/** Legacy SMS links used /cancel/... — keep working. */
-export default async function CancelAppointmentPage({ params }: Props) {
+export default async function ShortCancelAppointmentPage({ params }: Props) {
   const { token } = await params;
   return <CancelTokenPage rawToken={token} />;
 }

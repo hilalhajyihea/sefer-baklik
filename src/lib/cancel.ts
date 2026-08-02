@@ -2,13 +2,15 @@ import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/seo";
 
-/** 16 bytes → 32 hex chars — short enough for SMS, still hard to guess. */
+/**
+ * 6 bytes → 8 base64url chars. Compact for SMS cost, still ~48 bits of entropy.
+ */
 export function generateCancelToken() {
-  return randomBytes(16).toString("hex");
+  return randomBytes(6).toString("base64url");
 }
 
 export function buildCancelUrl(token: string) {
-  return `${getSiteUrl()}/cancel/${token}`;
+  return `${getSiteUrl()}/c/${token}`;
 }
 
 /**
@@ -16,7 +18,7 @@ export function buildCancelUrl(token: string) {
  * do NOT wrap with bidi marks (phones often include them in the opened URL).
  */
 export function formatCancelSmsLine(cancelUrl: string) {
-  return `לביטול התור (לחצו על הקישור):\n${cancelUrl}`;
+  return `לביטול התור:\n${cancelUrl}`;
 }
 
 /** Strip bidi / invisible chars phones may append when opening SMS links. */
@@ -29,9 +31,8 @@ export function sanitizeCancelToken(raw: string): string {
   }
   return token
     .replace(/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, "")
-    .replace(/[^\t\n\r\x20-\x7E]/g, "")
-    .trim()
-    .replace(/[.,;:!?)\]}>]+$/g, "");
+    .replace(/[^A-Za-z0-9_-]/g, "")
+    .trim();
 }
 
 /** Ensure appointment has a cancel token; backfill if missing (legacy rows). */
@@ -72,7 +73,7 @@ const appointmentInclude = {
 
 export async function findAppointmentByCancelToken(rawToken: string) {
   const token = sanitizeCancelToken(rawToken);
-  if (!token || token.length < 8) return null;
+  if (!token || token.length < 6) return null;
 
   const exact = await prisma.appointment.findFirst({
     where: { cancelToken: token },
@@ -80,8 +81,8 @@ export async function findAppointmentByCancelToken(rawToken: string) {
   });
   if (exact) return exact;
 
-  // Fallback: SMS sometimes truncates the end of a long token
-  if (token.length >= 16) {
+  // Fallback: SMS sometimes truncates the end of a long (legacy hex) token
+  if (token.length >= 12) {
     return prisma.appointment.findFirst({
       where: { cancelToken: { startsWith: token } },
       include: appointmentInclude,

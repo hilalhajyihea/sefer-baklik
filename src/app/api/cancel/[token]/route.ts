@@ -7,7 +7,7 @@ type Params = { params: Promise<{ token: string }> };
 export async function POST(_request: Request, { params }: Params) {
   const { token: rawToken } = await params;
   const token = sanitizeCancelToken(rawToken);
-  if (!token || token.length < 8) {
+  if (!token || token.length < 6) {
     return NextResponse.json({ error: "קישור לא תקין", state: "invalid" }, { status: 400 });
   }
 

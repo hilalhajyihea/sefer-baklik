@@ -13,7 +13,7 @@ async function backfillCancelTokens() {
   for (const row of missing) {
     await prisma.appointment.update({
       where: { id: row.id },
-      data: { cancelToken: randomBytes(16).toString("hex") },
+      data: { cancelToken: randomBytes(6).toString("base64url") },
     });
   }
   if (missing.length > 0) {
