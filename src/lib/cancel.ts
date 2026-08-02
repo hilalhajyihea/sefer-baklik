@@ -56,19 +56,15 @@ export type CancelPageState =
   | "cannot_cancel"
   | "invalid";
 
-export function resolveCancelState(appointment: {
-  status: string;
-  startsAt: Date;
-} | null): CancelPageState {
-  if (!appointment) return "invalid";
-  if (appointment.status === "CANCELLED") return "already_cancelled";
-  if (appointment.status !== "BOOKED") return "cannot_cancel";
-  if (appointment.startsAt.getTime() <= Date.now()) return "cannot_cancel";
-  return "confirm";
-}
-
 const appointmentInclude = {
-  barber: { select: { displayName: true, slug: true, isActive: true } },
+  barber: {
+    select: {
+      displayName: true,
+      slug: true,
+      isActive: true,
+      customerCancelEnabled: true,
+    },
+  },
 } as const;
 
 export async function findAppointmentByCancelToken(rawToken: string) {
@@ -92,6 +88,21 @@ export async function findAppointmentByCancelToken(rawToken: string) {
   return null;
 }
 
+export function resolveCancelState(appointment: {
+  status: string;
+  startsAt: Date;
+  barber?: { customerCancelEnabled?: boolean };
+} | null): CancelPageState {
+  if (!appointment) return "invalid";
+  if (appointment.barber && appointment.barber.customerCancelEnabled === false) {
+    return "cannot_cancel";
+  }
+  if (appointment.status === "CANCELLED") return "already_cancelled";
+  if (appointment.status !== "BOOKED") return "cannot_cancel";
+  if (appointment.startsAt.getTime() <= Date.now()) return "cannot_cancel";
+  return "confirm";
+}
+
 /** Cancel a BOOKED future appointment by public cancel token. Idempotent if already cancelled. */
 export async function cancelAppointmentByToken(rawToken: string): Promise<{
   state: CancelPageState;
@@ -100,6 +111,10 @@ export async function cancelAppointmentByToken(rawToken: string): Promise<{
   const appointment = await findAppointmentByCancelToken(rawToken);
   if (!appointment) {
     return { state: "invalid", appointment: null };
+  }
+
+  if (!appointment.barber.customerCancelEnabled) {
+    return { state: "cannot_cancel", appointment };
   }
 
   if (appointment.status === "CANCELLED") {

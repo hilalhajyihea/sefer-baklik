@@ -20,6 +20,7 @@ export async function GET() {
       isActive: true,
       slotMinutes: true,
       smsPlanEnabled: true,
+      customerCancelEnabled: true,
       createdAt: true,
       _count: { select: { appointments: true } },
     },
@@ -84,6 +85,7 @@ const patchSchema = z.object({
   id: z.string().min(1),
   isActive: z.boolean().optional(),
   smsPlanEnabled: z.boolean().optional(),
+  customerCancelEnabled: z.boolean().optional(),
   password: z.string().min(6).max(100).optional(),
   displayName: z.string().min(2).max(80).optional(),
 });
@@ -113,6 +115,9 @@ export async function PATCH(request: Request) {
       ...(parsed.data.smsPlanEnabled !== undefined
         ? { smsPlanEnabled: parsed.data.smsPlanEnabled }
         : {}),
+      ...(parsed.data.customerCancelEnabled !== undefined
+        ? { customerCancelEnabled: parsed.data.customerCancelEnabled }
+        : {}),
       ...(parsed.data.displayName
         ? { displayName: parsed.data.displayName.trim() }
         : {}),
@@ -126,6 +131,7 @@ export async function PATCH(request: Request) {
       displayName: barber.displayName,
       isActive: barber.isActive,
       smsPlanEnabled: barber.smsPlanEnabled,
+      customerCancelEnabled: barber.customerCancelEnabled,
     },
   });
 }

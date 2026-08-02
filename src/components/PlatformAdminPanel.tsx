@@ -11,6 +11,7 @@ type Barber = {
   username: string;
   isActive: boolean;
   smsPlanEnabled: boolean;
+  customerCancelEnabled: boolean;
   slotMinutes: number;
   _count: { appointments: number };
 };
@@ -103,6 +104,27 @@ export function PlatformAdminPanel() {
     }
     setMessage(
       barber.smsPlanEnabled ? "שירות SMS הושבת לספר" : "שירות SMS הופעל לספר",
+    );
+    load();
+  }
+
+  async function toggleCustomerCancel(barber: Barber) {
+    const res = await fetch("/api/platform/barbers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: barber.id,
+        customerCancelEnabled: !barber.customerCancelEnabled,
+      }),
+    });
+    if (!res.ok) {
+      setError("עדכון ביטול תור נכשל");
+      return;
+    }
+    setMessage(
+      barber.customerCancelEnabled
+        ? "ביטול תור בהודעות הושבת לספר"
+        : "ביטול תור בהודעות הופעל לספר",
     );
     load();
   }
@@ -259,7 +281,8 @@ export function PlatformAdminPanel() {
                   <p className="text-sm text-[var(--muted)]">
                     משתמש: {b.username} · תורים: {b._count.appointments} ·{" "}
                     {b.isActive ? "פעיל" : "מושבת"} · SMS:{" "}
-                    {b.smsPlanEnabled ? "מופעל" : "לא במנוי"}
+                    {b.smsPlanEnabled ? "מופעל" : "לא במנוי"} · ביטול לקוח:{" "}
+                    {b.customerCancelEnabled ? "מופעל" : "כבוי"}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -289,6 +312,21 @@ export function PlatformAdminPanel() {
                     className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
                   >
                     {b.smsPlanEnabled ? "ביטול SMS" : "הפעל SMS"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomerCancel(b)}
+                    className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                    disabled={!b.smsPlanEnabled && !b.customerCancelEnabled}
+                    title={
+                      !b.smsPlanEnabled && !b.customerCancelEnabled
+                        ? "יש להפעיל SMS קודם"
+                        : undefined
+                    }
+                  >
+                    {b.customerCancelEnabled
+                      ? "כבה ביטול תור"
+                      : "הפעל ביטול תור"}
                   </button>
                   <button
                     type="button"

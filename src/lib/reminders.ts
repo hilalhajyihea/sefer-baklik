@@ -24,7 +24,11 @@ export async function sendBookingConfirmation(appointmentId: string) {
     return { ok: true, skipped: true, error: "אישור כבר נשלח" };
   }
 
-  const cancelToken = await ensureCancelToken(appointment);
+  let cancelUrl: string | undefined;
+  if (appointment.barber.customerCancelEnabled) {
+    const cancelToken = await ensureCancelToken(appointment);
+    cancelUrl = buildCancelUrl(cancelToken);
+  }
 
   const result = await sendSms(
     appointment.customerPhone,
@@ -32,7 +36,7 @@ export async function sendBookingConfirmation(appointmentId: string) {
       customerName: appointment.customerName,
       barberName: appointment.barber.displayName,
       startsAt: appointment.startsAt,
-      cancelUrl: buildCancelUrl(cancelToken),
+      cancelUrl,
     }),
     { trialTemplate: "sms_order_confirmation" },
   );
@@ -56,6 +60,7 @@ export async function processDueReminders() {
       id: true,
       displayName: true,
       reminderMinutesBefore: true,
+      customerCancelEnabled: true,
     },
   });
 
@@ -78,7 +83,12 @@ export async function processDueReminders() {
     });
 
     for (const appointment of due) {
-      const cancelToken = await ensureCancelToken(appointment);
+      let cancelUrl: string | undefined;
+      if (barber.customerCancelEnabled) {
+        const cancelToken = await ensureCancelToken(appointment);
+        cancelUrl = buildCancelUrl(cancelToken);
+      }
+
       const result = await sendSms(
         appointment.customerPhone,
         buildReminderSms({
@@ -86,7 +96,7 @@ export async function processDueReminders() {
           barberName: barber.displayName,
           startsAt: appointment.startsAt,
           minutesBefore: minutes,
-          cancelUrl: buildCancelUrl(cancelToken),
+          cancelUrl,
         }),
         { trialTemplate: "sms_appointment_reminders" },
       );

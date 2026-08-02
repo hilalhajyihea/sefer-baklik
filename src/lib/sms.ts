@@ -156,14 +156,17 @@ export function buildConfirmationSms(input: {
   customerName: string;
   barberName: string;
   startsAt: Date;
-  cancelUrl: string;
+  cancelUrl?: string | null;
 }): string {
-  return [
+  const lines = [
     `שלום ${input.customerName},`,
     `התור אצל ${input.barberName} נקבע ל-${formatDateHe(input.startsAt)} בשעה ${formatTime(input.startsAt)}.`,
     "ספר בקליק",
-    formatCancelSmsLine(input.cancelUrl),
-  ].join("\n");
+  ];
+  if (input.cancelUrl) {
+    lines.push(formatCancelSmsLine(input.cancelUrl));
+  }
+  return lines.join("\n");
 }
 
 export function buildReminderSms(input: {
@@ -171,12 +174,15 @@ export function buildReminderSms(input: {
   barberName: string;
   startsAt: Date;
   minutesBefore: number;
-  cancelUrl: string;
+  cancelUrl?: string | null;
 }): string {
-  return [
+  const lines = [
     `תזכורת: שלום ${input.customerName},`,
     `התור אצל ${input.barberName} בעוד כ-${input.minutesBefore} דקות (${formatTime(input.startsAt)}).`,
     "ספר בקליק",
-    formatCancelSmsLine(input.cancelUrl),
-  ].join("\n");
+  ];
+  if (input.cancelUrl) {
+    lines.push(formatCancelSmsLine(input.cancelUrl));
+  }
+  return lines.join("\n");
 }
