@@ -23,11 +23,11 @@ services:
         value: barber123
       - key: CRON_SECRET
         generateValue: true
-      - key: TWILIO_ACCOUNT_SID
+      - key: SMS_019_USERNAME
         sync: false
-      - key: TWILIO_AUTH_TOKEN
+      - key: SMS_019_TOKEN
         sync: false
-      - key: TWILIO_FROM_NUMBER
+      - key: SMS_019_SOURCE
         sync: false
 
   # Reminder SMS every 5 minutes

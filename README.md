@@ -20,19 +20,22 @@ npm run dev
 - כניסת ספר: `/dani/login` (משתמש `dani` / סיסמת `DEMO_BARBER_PASSWORD`)
 - מנהל מערכת: `/platform/login`
 
-## SMS (Twilio)
+## SMS (019)
 
-חשבון Twilio אחד לכל הספרים — תשלום לפי הודעה, לא לפי מספר ספרים.
+חשבון [019 SMS](https://019sms.co.il) אחד לכל הספרים — תשלום לפי הודעה.
 
-1. צרו חשבון ב-[Twilio](https://www.twilio.com)
-2. קנו / השתמשו במספר לשליחת SMS
+1. צרו חשבון והפיקו API Token (הגדרות → ניהול טוקן API)
+2. אשרו מזהה שולח (`source`, עד 11 תווים באנגלית/ספרות)
 3. העתיקו ל-Environment ב-Render:
-   - `TWILIO_ACCOUNT_SID`
-   - `TWILIO_AUTH_TOKEN`
-   - `TWILIO_FROM_NUMBER` (למשל `+1...`)
-4. בפאנל הספר → **הודעות SMS**: אישור תור, תזכורת, דקות לפני התור
+   - `SMS_019_USERNAME`
+   - `SMS_019_TOKEN`
+   - `SMS_019_SOURCE` (למשל `SaparBclick`)
+4. בפאנל הספר → **הודעות SMS**: אישור תור, תזכורת, דקות לפני התור  
+   בפאנל המערכת: הפעלת SMS / ביטול לקוח לכל ספר
 
-בלי מפתחות Twilio האפליקציה עובדת כרגיל וה-SMS מדולג (בלוג יופיע skip).
+בלי מפתחות 019 האפליקציה עובדת כרגיל וה-SMS מדולג (בלוג יופיע skip).
+
+תיעוד: https://docs.019sms.co.il/
 
 ### תזכורות (Cron)
 
@@ -45,7 +48,7 @@ npm run dev
 ## פריסה ל-Render + GitHub
 
 1. Web Service `sefer-baklik` + מסד PostgreSQL נפרד (או Neon)
-2. הגדירו: `DATABASE_URL`, `PLATFORM_PASSWORD`, מפתחות Twilio, `CRON_SECRET`
+2. הגדירו: `DATABASE_URL`, `PLATFORM_PASSWORD`, מפתחות 019 (`SMS_019_*`), `CRON_SECRET`
 3. ל-Cron: `APP_URL=https://YOUR-SERVICE.onrender.com` ואותו `CRON_SECRET`
 
 ### משתני סביבה
@@ -55,7 +58,7 @@ npm run dev
 | `DATABASE_URL` | חובה |
 | `AUTH_SECRET` | סוד סשן |
 | `PLATFORM_USERNAME` / `PLATFORM_PASSWORD` | מנהל מערכת |
-| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM_NUMBER` | SMS |
+| `SMS_019_USERNAME` / `SMS_019_TOKEN` / `SMS_019_SOURCE` | SMS via 019 |
 | `CRON_SECRET` | הגנת endpoint תזכורות |
 | `APP_URL` | כתובת האתר ל-Cron |
 | `DEMO_BARBER_PASSWORD` | סיסמת ספר הדמו |

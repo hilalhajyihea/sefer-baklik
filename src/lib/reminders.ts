@@ -38,7 +38,6 @@ export async function sendBookingConfirmation(appointmentId: string) {
       startsAt: appointment.startsAt,
       cancelUrl,
     }),
-    { trialTemplate: "sms_order_confirmation" },
   );
 
   if (result.ok && !result.skipped) {
@@ -98,7 +97,6 @@ export async function processDueReminders() {
           minutesBefore: minutes,
           cancelUrl,
         }),
-        { trialTemplate: "sms_appointment_reminders" },
       );
 
       if (result.ok && !result.skipped) {

@@ -1,4 +1,4 @@
-import { formatWhenSms } from "@/lib/time";
+import { formatDateHe, formatTime } from "@/lib/time";
 import { formatCancelSmsLine } from "@/lib/cancel";
 
 /** Normalize Israeli / international phones to E.164 (+972...). */
@@ -36,39 +36,75 @@ export function normalizePhoneE164(raw: string): string | null {
   return null;
 }
 
+/** 019 expects 05xxxxxxxx or 5xxxxxxxx (not +972). */
+export function normalizePhoneIlLocal(raw: string): string | null {
+  const e164 = normalizePhoneE164(raw);
+  if (!e164 || !e164.startsWith("+972")) return null;
+  const national = e164.slice(4);
+  if (!national) return null;
+  return `0${national}`;
+}
+
 function cleanEnv(value: string | undefined) {
   if (!value) return "";
   return value.trim().replace(/^["']|["']$/g, "");
 }
 
-function getTwilioConfig() {
+function getSms019Config() {
   return {
-    accountSid: cleanEnv(process.env.TWILIO_ACCOUNT_SID),
-    authToken: cleanEnv(process.env.TWILIO_AUTH_TOKEN),
-    from: cleanEnv(process.env.TWILIO_FROM_NUMBER),
+    username: cleanEnv(process.env.SMS_019_USERNAME),
+    token: cleanEnv(process.env.SMS_019_TOKEN),
+    source: cleanEnv(process.env.SMS_019_SOURCE),
   };
 }
 
-export function twilioConfigured() {
-  const { accountSid, authToken, from } = getTwilioConfig();
-  return Boolean(accountSid && authToken && from);
+export function sms019Configured() {
+  const { username, token, source } = getSms019Config();
+  return Boolean(username && token && source);
 }
 
-export function twilioConfigStatus() {
-  const { accountSid, authToken, from } = getTwilioConfig();
+/** Safe status check — does not expose secrets. */
+export function sms019ConfigStatus() {
+  const { username, token, source } = getSms019Config();
   return {
-    hasAccountSid: Boolean(accountSid),
-    hasAuthToken: Boolean(authToken),
-    hasFromNumber: Boolean(from),
-    fromNumberPreview: from ? `${from.slice(0, 4)}…${from.slice(-4)}` : null,
-    configured: Boolean(accountSid && authToken && from),
+    provider: "019",
+    hasUsername: Boolean(username),
+    hasToken: Boolean(token),
+    hasSource: Boolean(source),
+    usernamePreview: username || null,
+    sourcePreview: source || null,
+    configured: Boolean(username && token && source),
   };
+}
+
+/** @deprecated use sms019Configured */
+export const twilioConfigured = sms019Configured;
+/** @deprecated use sms019ConfigStatus */
+export const twilioConfigStatus = sms019ConfigStatus;
+
+function parse019Status(data: unknown): { status: number | null; message: string } {
+  if (!data || typeof data !== "object") {
+    return { status: null, message: "" };
+  }
+  const root = data as Record<string, unknown>;
+  const nested =
+    root.sms && typeof root.sms === "object"
+      ? (root.sms as Record<string, unknown>)
+      : root;
+  const raw = nested.status ?? root.status;
+  const status =
+    typeof raw === "number"
+      ? raw
+      : typeof raw === "string" && raw.trim() !== "" && !Number.isNaN(Number(raw))
+        ? Number(raw)
+        : null;
+  const message = String(nested.message ?? root.message ?? "");
+  return { status, message };
 }
 
 export async function sendSms(
   toRaw: string,
   body: string,
-  options?: { trialTemplate?: string },
 ): Promise<{
   ok: boolean;
   skipped?: boolean;
@@ -76,87 +112,81 @@ export async function sendSms(
   sid?: string;
   to?: string;
 }> {
-  const { accountSid, authToken, from } = getTwilioConfig();
+  const { username, token, source } = getSms019Config();
 
-  if (!accountSid || !authToken || !from) {
-    console.warn("[sms] Twilio not configured — skipping send", {
-      hasAccountSid: Boolean(accountSid),
-      hasAuthToken: Boolean(authToken),
-      hasFromNumber: Boolean(from),
+  if (!username || !token || !source) {
+    console.warn("[sms] 019 not configured — skipping send", {
+      hasUsername: Boolean(username),
+      hasToken: Boolean(token),
+      hasSource: Boolean(source),
     });
     return {
       ok: false,
       skipped: true,
-      error: "Twilio לא מוגדר בשרת (חסר SID/Token/From)",
+      error: "019 SMS לא מוגדר בשרת (חסר USERNAME/TOKEN/SOURCE)",
     };
   }
 
-  const to = normalizePhoneE164(toRaw);
+  const to = normalizePhoneIlLocal(toRaw);
   if (!to) {
     return { ok: false, error: "מספר טלפון לא תקין לשליחת SMS" };
   }
 
-  // Trial accounts may only send predefined template IDs as Body.
-  // Set TWILIO_TRIAL_TEMPLATES=false after upgrading for custom Hebrew text.
-  const useTrialTemplates = process.env.TWILIO_TRIAL_TEMPLATES !== "false";
-  const messageBody = useTrialTemplates
-    ? options?.trialTemplate || "sms_appointment_reminders"
-    : body;
-
-  const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
-  const params = new URLSearchParams({
-    To: to,
-    From: from,
-    Body: messageBody,
-  });
+  const payload = {
+    sms: {
+      user: { username },
+      source,
+      destinations: { phone: to },
+      message: body,
+    },
+  };
 
   try {
-    const res = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${auth}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: params.toString(),
+    const res = await fetch("https://019sms.co.il/api", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-    );
+      body: JSON.stringify(payload),
+    });
 
-    const data = (await res.json()) as {
-      sid?: string;
-      message?: string;
-      code?: number;
-      status?: string;
-    };
-    if (!res.ok) {
-      console.error("[sms] Twilio error", { to, from, messageBody, data });
+    const text = await res.text();
+    let data: unknown = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = { raw: text };
+    }
+
+    const { status, message } = parse019Status(data);
+
+    if (!res.ok || (status !== null && status !== 0)) {
+      console.error("[sms] 019 error", { to, source, status, message, data });
       return {
         ok: false,
-        error: data.message || `שליחת SMS נכשלה (קוד ${data.code || res.status})`,
+        error:
+          message ||
+          `שליחת SMS נכשלה (019 status ${status ?? res.status})`,
         to,
       };
     }
 
-    console.info("[sms] sent", {
-      to,
-      from,
-      sid: data.sid,
-      status: data.status,
-      trial: useTrialTemplates,
-    });
-    return { ok: true, sid: data.sid, to };
+    const sid =
+      data && typeof data === "object"
+        ? String(
+            (data as Record<string, unknown>).shipment_id ??
+              (data as Record<string, unknown>).id ??
+              "",
+          ) || undefined
+        : undefined;
+
+    console.info("[sms] sent via 019", { to, source, status, sid });
+    return { ok: true, sid, to };
   } catch (error) {
     console.error("[sms] send failed", error);
     return { ok: false, error: "שגיאת רשת בשליחת SMS", to };
   }
-}
-
-/** Keep names short so no-cancel SMS stays in one UCS-2 segment (~70). */
-function shortName(name: string, max: number) {
-  const trimmed = name.trim();
-  if (trimmed.length <= max) return trimmed;
-  return `${trimmed.slice(0, max - 1)}…`;
 }
 
 export function buildConfirmationSms(input: {
@@ -165,10 +195,10 @@ export function buildConfirmationSms(input: {
   startsAt: Date;
   cancelUrl?: string | null;
 }): string {
-  const customer = shortName(input.customerName, 22);
-  const barber = shortName(input.barberName, 22);
   const lines = [
-    `${customer}, תור אצל ${barber}: ${formatWhenSms(input.startsAt)}`,
+    `שלום ${input.customerName},`,
+    `התור אצל ${input.barberName} נקבע ל-${formatDateHe(input.startsAt)} בשעה ${formatTime(input.startsAt)}.`,
+    "ספר בקליק",
   ];
   if (input.cancelUrl) {
     lines.push(formatCancelSmsLine(input.cancelUrl));
@@ -183,10 +213,10 @@ export function buildReminderSms(input: {
   minutesBefore: number;
   cancelUrl?: string | null;
 }): string {
-  const customer = shortName(input.customerName, 20);
-  const barber = shortName(input.barberName, 20);
   const lines = [
-    `תזכורת ${customer}, תור אצל ${barber}: ${formatWhenSms(input.startsAt)}`,
+    `תזכורת: שלום ${input.customerName},`,
+    `התור אצל ${input.barberName} בעוד כ-${input.minutesBefore} דקות (${formatTime(input.startsAt)}).`,
+    "ספר בקליק",
   ];
   if (input.cancelUrl) {
     lines.push(formatCancelSmsLine(input.cancelUrl));
