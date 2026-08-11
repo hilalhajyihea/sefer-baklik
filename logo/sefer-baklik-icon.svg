@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <circle cx="32" cy="32" r="30" fill="#1c1713"/>
+  <circle cx="32" cy="32" r="28.5" stroke="#c45a28" stroke-width="1.5" opacity="0.55"/>
+  <path d="M14 40c4 10 14 16 26 14" stroke="#c45a28" stroke-width="2.2" stroke-linecap="round" opacity="0.35"/>
+  <circle cx="22" cy="20" r="6.5" stroke="#f8f3ec" stroke-width="2.4"/>
+  <circle cx="22" cy="44" r="6.5" stroke="#f8f3ec" stroke-width="2.4"/>
+  <path d="M27.5 24.5 L46 16.5 L48.5 21.5 L30 29.5 Z" fill="#f8f3ec"/>
+  <path d="M27.5 39.5 L46 47.5 L48.5 42.5 L30 34.5 Z" fill="#f8f3ec"/>
+  <circle cx="29" cy="32" r="3.2" fill="#c45a28"/>
+  <circle cx="29" cy="32" r="1.4" fill="#f8f3ec"/>
+  <path d="M40 28 L40 46 L44.2 42.2 L46.8 48.2 L50.2 46.6 L47.6 40.6 L53 40.6 Z" fill="#c45a28" stroke="#1c1713" stroke-width="1" stroke-linejoin="round"/>
+  <circle cx="50.5" cy="36.5" r="5" stroke="#d5e4d2" stroke-width="1.6" opacity="0.85"/>
+  <circle cx="50.5" cy="36.5" r="2.2" fill="#2f4a34" opacity="0.9"/>
+</svg>
