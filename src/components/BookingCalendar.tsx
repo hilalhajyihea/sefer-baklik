@@ -2,15 +2,18 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { formatDateHe, toDateKey, combineDateAndTime } from "@/lib/time";
+import { formatDateLocalized, normalizeLocale, t, type Locale } from "@/lib/i18n";
+import { toDateKey, combineDateAndTime } from "@/lib/time";
 import { BrandMark, ScissorsMark } from "@/components/BrandGraphics";
 
 type Props = {
   slug: string;
   displayName: string;
+  locale?: Locale | string;
 };
 
-export function BookingCalendar({ slug, displayName }: Props) {
+export function BookingCalendar({ slug, displayName, locale: localeProp }: Props) {
+  const locale = normalizeLocale(localeProp);
   const dates = useMemo(() => {
     const list: { key: string; label: string }[] = [];
     const todayKey = toDateKey();
@@ -18,10 +21,10 @@ export function BookingCalendar({ slug, displayName }: Props) {
       const noon = combineDateAndTime(todayKey, "12:00");
       const d = new Date(noon.getTime() + i * 24 * 60 * 60 * 1000);
       const key = toDateKey(d);
-      list.push({ key, label: formatDateHe(d) });
+      list.push({ key, label: formatDateLocalized(locale, d) });
     }
     return list;
-  }, []);
+  }, [locale]);
 
   const [date, setDate] = useState(dates[0]?.key || "");
   const [slots, setSlots] = useState<string[]>([]);
@@ -78,14 +81,19 @@ export function BookingCalendar({ slug, displayName }: Props) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "לא ניתן לקבוע תור");
+        setError(data.error || t(locale, "bookFailed"));
         return;
       }
-      let successMsg = `התור נקבע ל-${formatDateHe(combineDateAndTime(date, "12:00"))} בשעה ${time}. נתראה!`;
+      let successMsg = t(locale, "bookSuccess", {
+        date: formatDateLocalized(locale, combineDateAndTime(date, "12:00")),
+        time,
+      });
       if (data.sms?.ok && !data.sms?.skipped) {
-        successMsg += " נשלח SMS לטלפון.";
+        successMsg += t(locale, "bookSuccessSms");
       } else if (data.sms?.error) {
-        setError(`התור נקבע, אבל SMS לא נשלח: ${data.sms.error}`);
+        setError(
+          t(locale, "bookSuccessSmsFail", { error: data.sms.error }),
+        );
       }
       setSuccess(successMsg);
       setName("");
@@ -97,30 +105,33 @@ export function BookingCalendar({ slug, displayName }: Props) {
       const refreshed = await refresh.json();
       setSlots(refreshed.slots || []);
     } catch {
-      setError("שגיאת רשת");
+      setError(t(locale, "networkError"));
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="relative min-h-[100svh] overflow-hidden">
+    <div className="relative min-h-[100svh] overflow-hidden" lang={locale}>
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="barber-stripes-soft absolute inset-0" />
         <div className="grain absolute inset-0" />
         <ScissorsMark className="absolute left-[-1rem] top-24 h-40 w-40 text-[var(--copper)] opacity-[0.08] sm:left-4" />
       </div>
 
-      {/* Graphic header band */}
       <div className="relative overflow-hidden border-b border-[var(--line)] bg-[var(--charcoal)] text-[var(--cream)]">
         <div className="barber-stripes animate-stripe absolute inset-y-0 left-0 w-2 opacity-90 sm:w-3" />
         <div className="relative mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-5 sm:px-6">
-          <BrandMark tone="light" />
+          <BrandMark
+            tone="light"
+            label={t(locale, "brand")}
+            initials={locale === "ar" ? "سب" : "סב"}
+          />
           <Link
             href={`/${slug}/login`}
             className="shrink-0 rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-sm font-semibold text-[var(--cream)] transition hover:bg-white/10"
           >
-            מנהל
+            {t(locale, "admin")}
           </Link>
         </div>
       </div>
@@ -128,13 +139,13 @@ export function BookingCalendar({ slug, displayName }: Props) {
       <div className="relative mx-auto w-full max-w-3xl px-4 py-8 sm:py-12">
         <header className="animate-fade-up mb-8">
           <p className="text-xs font-semibold tracking-[0.2em] text-[var(--copper-deep)]">
-            קביעת תור
+            {t(locale, "bookTitle")}
           </p>
           <h1 className="font-display mt-2 text-4xl text-[var(--ink)] sm:text-5xl">
             {displayName}
           </h1>
           <div className="mt-4 h-0.5 w-16 origin-right bg-[var(--copper)]" />
-          <p className="mt-3 text-[var(--muted)]">בחרו תאריך ושעה פנויה</p>
+          <p className="mt-3 text-[var(--muted)]">{t(locale, "pickDateTime")}</p>
         </header>
 
         <form
@@ -142,7 +153,9 @@ export function BookingCalendar({ slug, displayName }: Props) {
           className="surface animate-fade-up rounded-2xl p-5 sm:p-7"
           style={{ animationDelay: "80ms" }}
         >
-          <h2 className="text-lg font-semibold text-[var(--ink)]">תאריך</h2>
+          <h2 className="text-lg font-semibold text-[var(--ink)]">
+            {t(locale, "date")}
+          </h2>
           <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
             {dates.map((d) => (
               <button
@@ -160,12 +173,16 @@ export function BookingCalendar({ slug, displayName }: Props) {
             ))}
           </div>
 
-          <h2 className="mt-7 text-lg font-semibold text-[var(--ink)]">שעה</h2>
+          <h2 className="mt-7 text-lg font-semibold text-[var(--ink)]">
+            {t(locale, "time")}
+          </h2>
           {loadingSlots ? (
-            <p className="mt-3 text-sm text-[var(--muted)]">טוען משבצות...</p>
+            <p className="mt-3 text-sm text-[var(--muted)]">
+              {t(locale, "loadingSlots")}
+            </p>
           ) : slots.length === 0 ? (
             <p className="mt-3 text-sm text-[var(--muted)]">
-              אין משבצות פנויות בתאריך זה
+              {t(locale, "noSlots")}
             </p>
           ) : (
             <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
@@ -188,7 +205,7 @@ export function BookingCalendar({ slug, displayName }: Props) {
 
           <div className="mt-7 grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-medium">
-              שם מלא
+              {t(locale, "fullName")}
               <input
                 className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 outline-none focus:border-[var(--copper)]"
                 value={name}
@@ -198,7 +215,7 @@ export function BookingCalendar({ slug, displayName }: Props) {
               />
             </label>
             <label className="block text-sm font-medium">
-              טלפון
+              {t(locale, "phone")}
               <input
                 className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 outline-none focus:border-[var(--copper)]"
                 value={phone}
@@ -225,7 +242,7 @@ export function BookingCalendar({ slug, displayName }: Props) {
             disabled={!time || submitting}
             className="btn-primary mt-6 w-full rounded-xl py-3.5 text-base font-semibold sm:w-auto sm:px-10"
           >
-            {submitting ? "שומר תור..." : "קביעת תור"}
+            {submitting ? t(locale, "bookingSaving") : t(locale, "bookCta")}
           </button>
         </form>
       </div>

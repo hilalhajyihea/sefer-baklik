@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/seo";
+import { normalizeLocale, t, type Locale } from "@/lib/i18n";
 
 /**
  * 6 bytes → 8 base64url chars. Compact for SMS cost, still ~48 bits of entropy.
@@ -17,8 +18,8 @@ export function buildCancelUrl(token: string) {
  * SMS line for cancel. Keep the URL on its own ASCII-only line —
  * do NOT wrap with bidi marks (phones often include them in the opened URL).
  */
-export function formatCancelSmsLine(cancelUrl: string) {
-  return `ביטול:\n${cancelUrl}`;
+export function formatCancelSmsLine(cancelUrl: string, locale: Locale | string = "he") {
+  return `${t(normalizeLocale(locale), "smsCancelLabel")}\n${cancelUrl}`;
 }
 
 /** Strip bidi / invisible chars phones may append when opening SMS links. */
@@ -63,6 +64,7 @@ const appointmentInclude = {
       slug: true,
       isActive: true,
       customerCancelEnabled: true,
+      locale: true,
     },
   },
 } as const;

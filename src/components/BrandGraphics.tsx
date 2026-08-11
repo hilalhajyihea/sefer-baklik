@@ -34,9 +34,16 @@ export function ScissorsMark({ className = "" }: { className?: string }) {
 type BrandMarkProps = {
   className?: string;
   tone?: "dark" | "light";
+  label?: string;
+  initials?: string;
 };
 
-export function BrandMark({ className = "", tone = "dark" }: BrandMarkProps) {
+export function BrandMark({
+  className = "",
+  tone = "dark",
+  label = "ספר בקליק",
+  initials = "סב",
+}: BrandMarkProps) {
   const text =
     tone === "light" ? "text-[var(--cream)]" : "text-[var(--ink)]";
   return (
@@ -44,11 +51,11 @@ export function BrandMark({ className = "", tone = "dark" }: BrandMarkProps) {
       <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full shadow-md">
         <span className="barber-stripes absolute inset-0" />
         <span className="relative text-[11px] font-bold tracking-tight text-white drop-shadow-sm">
-          סב
+          {initials}
         </span>
       </span>
       <span className={`font-display text-xl leading-none ${text}`}>
-        ספר בקליק
+        {label}
       </span>
     </div>
   );

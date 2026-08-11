@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { prisma } from "@/lib/prisma";
+import { normalizeLocale } from "@/lib/i18n";
 import { barberShareMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -19,14 +20,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BarberPublicPage({ params }: Props) {
   const { slug } = await params;
-  if (slug === "platform" || slug === "api") notFound();
+  if (slug === "platform" || slug === "api" || slug === "cancel" || slug === "c") {
+    notFound();
+  }
 
   const barber = await prisma.barber.findUnique({ where: { slug } });
   if (!barber || !barber.isActive) notFound();
 
+  const locale = normalizeLocale(barber.locale);
+
   return (
-    <main className="flex-1">
-      <BookingCalendar slug={barber.slug} displayName={barber.displayName} />
+    <main className="flex-1" lang={locale}>
+      <BookingCalendar
+        slug={barber.slug}
+        displayName={barber.displayName}
+        locale={locale}
+      />
     </main>
   );
 }

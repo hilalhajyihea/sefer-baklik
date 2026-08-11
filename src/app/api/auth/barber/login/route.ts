@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { authenticateBarber } from "@/lib/barbers";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
+import { normalizeLocale, t } from "@/lib/i18n";
+import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
-  username: z.string().min(1, "נא להזין שם משתמש"),
-  password: z.string().min(1, "נא להזין סיסמה"),
+  username: z.string().min(1),
+  password: z.string().min(1),
 });
 
 export async function POST(request: Request) {
@@ -14,10 +16,16 @@ export async function POST(request: Request) {
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: parsed.error.issues[0]?.message || "נתונים לא תקינים" },
+        { error: t("he", "errInvalidData") },
         { status: 400 },
       );
     }
+
+    const existing = await prisma.barber.findUnique({
+      where: { username: parsed.data.username },
+      select: { locale: true },
+    });
+    const locale = normalizeLocale(existing?.locale);
 
     const barber = await authenticateBarber(
       parsed.data.username,
@@ -25,7 +33,7 @@ export async function POST(request: Request) {
     );
     if (!barber) {
       return NextResponse.json(
-        { error: "שם משתמש או סיסמה שגויים" },
+        { error: t(locale, "errBadCredentials") },
         { status: 401 },
       );
     }
@@ -48,6 +56,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("barber login error", error);
-    return NextResponse.json({ error: "שגיאת שרת" }, { status: 500 });
+    return NextResponse.json({ error: t("he", "errServer") }, { status: 500 });
   }
 }

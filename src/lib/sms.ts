@@ -1,4 +1,5 @@
-import { formatDateHe, formatTime } from "@/lib/time";
+import { formatDateLocalized, normalizeLocale, t, type Locale } from "@/lib/i18n";
+import { formatTime } from "@/lib/time";
 import { formatCancelSmsLine } from "@/lib/cancel";
 
 /** Normalize Israeli / international phones to E.164 (+972...). */
@@ -28,7 +29,6 @@ export function normalizePhoneE164(raw: string): string | null {
     return `+972${rest}`;
   }
 
-  // Already without leading 0, assume IL mobile (5xxxxxxxx)
   if (/^5\d{8}$/.test(digits)) {
     return `+972${digits}`;
   }
@@ -63,7 +63,6 @@ export function sms019Configured() {
   return Boolean(username && token && source);
 }
 
-/** Safe status check — does not expose secrets. */
 export function sms019ConfigStatus() {
   const { username, token, source } = getSms019Config();
   return {
@@ -77,9 +76,7 @@ export function sms019ConfigStatus() {
   };
 }
 
-/** @deprecated use sms019Configured */
 export const twilioConfigured = sms019Configured;
-/** @deprecated use sms019ConfigStatus */
 export const twilioConfigStatus = sms019ConfigStatus;
 
 function parse019Status(data: unknown): { status: number | null; message: string } {
@@ -194,14 +191,20 @@ export function buildConfirmationSms(input: {
   barberName: string;
   startsAt: Date;
   cancelUrl?: string | null;
+  locale?: Locale | string | null;
 }): string {
+  const locale = normalizeLocale(input.locale);
   const lines = [
-    `שלום ${input.customerName},`,
-    `התור אצל ${input.barberName} נקבע ל-${formatDateHe(input.startsAt)} בשעה ${formatTime(input.startsAt)}.`,
-    "ספר בקליק",
+    t(locale, "smsConfirmLine1", { name: input.customerName }),
+    t(locale, "smsConfirmLine2", {
+      barber: input.barberName,
+      date: formatDateLocalized(locale, input.startsAt),
+      time: formatTime(input.startsAt),
+    }),
+    t(locale, "brand"),
   ];
   if (input.cancelUrl) {
-    lines.push(formatCancelSmsLine(input.cancelUrl));
+    lines.push(formatCancelSmsLine(input.cancelUrl, locale));
   }
   return lines.join("\n");
 }
@@ -212,14 +215,20 @@ export function buildReminderSms(input: {
   startsAt: Date;
   minutesBefore: number;
   cancelUrl?: string | null;
+  locale?: Locale | string | null;
 }): string {
+  const locale = normalizeLocale(input.locale);
   const lines = [
-    `תזכורת: שלום ${input.customerName},`,
-    `התור אצל ${input.barberName} בעוד כ-${input.minutesBefore} דקות (${formatTime(input.startsAt)}).`,
-    "ספר בקליק",
+    t(locale, "smsReminderLine1", { name: input.customerName }),
+    t(locale, "smsReminderLine2", {
+      barber: input.barberName,
+      minutes: input.minutesBefore,
+      time: formatTime(input.startsAt),
+    }),
+    t(locale, "brand"),
   ];
   if (input.cancelUrl) {
-    lines.push(formatCancelSmsLine(input.cancelUrl));
+    lines.push(formatCancelSmsLine(input.cancelUrl, locale));
   }
   return lines.join("\n");
 }

@@ -37,6 +37,7 @@ export async function sendBookingConfirmation(appointmentId: string) {
       barberName: appointment.barber.displayName,
       startsAt: appointment.startsAt,
       cancelUrl,
+      locale: appointment.barber.locale,
     }),
   );
 
@@ -60,6 +61,7 @@ export async function processDueReminders() {
       displayName: true,
       reminderMinutesBefore: true,
       customerCancelEnabled: true,
+      locale: true,
     },
   });
 
@@ -96,6 +98,7 @@ export async function processDueReminders() {
           startsAt: appointment.startsAt,
           minutesBefore: minutes,
           cancelUrl,
+          locale: barber.locale,
         }),
       );
 

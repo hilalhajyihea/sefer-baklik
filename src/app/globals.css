@@ -38,6 +38,10 @@ body {
   font-family: var(--font-frank), Georgia, serif;
 }
 
+:lang(ar) .font-display {
+  font-family: var(--font-rubik), "Segoe UI", Tahoma, sans-serif;
+}
+
 .surface {
   background: var(--surface);
   border: 1px solid var(--line);

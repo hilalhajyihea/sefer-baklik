@@ -2,27 +2,41 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { bookAppointment } from "@/lib/availability";
+import { normalizeLocale, t, type Locale } from "@/lib/i18n";
 import { sendBookingConfirmation } from "@/lib/reminders";
 
-const schema = z.object({
-  slug: z.string().min(1),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  time: z.string().regex(/^\d{2}:\d{2}$/),
-  customerName: z.string().min(2, "נא להזין שם מלא").max(80),
-  customerPhone: z
-    .string()
-    .min(9, "נא להזין טלפון תקין")
-    .max(20)
-    .regex(/^[\d+\-\s()]+$/, "טלפון לא תקין"),
-});
-
 export async function POST(request: Request) {
+  let locale: Locale = "he";
   try {
     const body = await request.json();
+    const slug = typeof body?.slug === "string" ? body.slug : "";
+    const barberPreview = slug
+      ? await prisma.barber.findUnique({
+          where: { slug },
+          select: { locale: true },
+        })
+      : null;
+    locale = normalizeLocale(barberPreview?.locale);
+
+    const schema = z.object({
+      slug: z.string().min(1),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      time: z.string().regex(/^\d{2}:\d{2}$/),
+      customerName: z.string().min(2, t(locale, "errNameRequired")).max(80),
+      customerPhone: z
+        .string()
+        .min(9, t(locale, "errPhoneRequired"))
+        .max(20)
+        .regex(/^[\d+\-\s()]+$/, t(locale, "errPhoneInvalid")),
+    });
+
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: parsed.error.issues[0]?.message || "נתונים לא תקינים" },
+        {
+          error:
+            parsed.error.issues[0]?.message || t(locale, "errInvalidData"),
+        },
         { status: 400 },
       );
     }
@@ -31,8 +45,12 @@ export async function POST(request: Request) {
       where: { slug: parsed.data.slug },
     });
     if (!barber || !barber.isActive) {
-      return NextResponse.json({ error: "ספר לא נמצא" }, { status: 404 });
+      return NextResponse.json(
+        { error: t(locale, "errBarberNotFound") },
+        { status: 404 },
+      );
     }
+    locale = normalizeLocale(barber.locale);
 
     const appointment = await bookAppointment({
       barberId: barber.id,
@@ -57,8 +75,19 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "לא ניתן לקבוע תור";
-    return NextResponse.json({ error: message }, { status: 409 });
+    const message = error instanceof Error ? error.message : "";
+    const heMap: Record<
+      string,
+      "errBarberInactive" | "errSlotUnavailable" | "errSlotTaken"
+    > = {
+      "הספר לא פעיל": "errBarberInactive",
+      "השעה אינה פנויה": "errSlotUnavailable",
+      "השעה נתפסה בינתיים": "errSlotTaken",
+    };
+    const key = heMap[message];
+    return NextResponse.json(
+      { error: key ? t(locale, key) : message || t(locale, "bookFailed") },
+      { status: 409 },
+    );
   }
 }

@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireBarberSession } from "@/lib/auth";
+import { getBarberLocale, t } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
 import { dateKeyToDbDate, toDateKey } from "@/lib/time";
 
 export async function GET() {
   const session = await requireBarberSession();
   if (!session) {
-    return NextResponse.json({ error: "לא מחובר" }, { status: 401 });
+    return NextResponse.json({ error: t("he", "errUnauthorized") }, { status: 401 });
   }
 
   const from = dateKeyToDbDate(toDateKey());
@@ -28,13 +29,17 @@ const createSchema = z.object({
 export async function POST(request: Request) {
   const session = await requireBarberSession();
   if (!session) {
-    return NextResponse.json({ error: "לא מחובר" }, { status: 401 });
+    return NextResponse.json({ error: t("he", "errUnauthorized") }, { status: 401 });
   }
 
+  const locale = await getBarberLocale(session.barberId);
   const body = await request.json();
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "תאריך לא תקין" }, { status: 400 });
+    return NextResponse.json(
+      { error: t(locale, "errDateInvalid") },
+      { status: 400 },
+    );
   }
 
   const date = dateKeyToDbDate(parsed.data.date);
@@ -60,13 +65,17 @@ const deleteSchema = z.object({
 export async function DELETE(request: Request) {
   const session = await requireBarberSession();
   if (!session) {
-    return NextResponse.json({ error: "לא מחובר" }, { status: 401 });
+    return NextResponse.json({ error: t("he", "errUnauthorized") }, { status: 401 });
   }
 
+  const locale = await getBarberLocale(session.barberId);
   const body = await request.json();
   const parsed = deleteSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "מזהה חסר" }, { status: 400 });
+    return NextResponse.json(
+      { error: t(locale, "errIdMissing") },
+      { status: 400 },
+    );
   }
 
   await prisma.dayOff.deleteMany({

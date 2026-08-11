@@ -4,13 +4,18 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  dayName,
   dbDateToDateKey,
-  formatDateHe,
   formatTime,
   toDateKey,
 } from "@/lib/time";
-import { SITE_ADMIN_NAME, SITE_ADMIN_PHONE, SMS_UPGRADE_MESSAGE } from "@/lib/site";
+import { SITE_ADMIN_NAME, SITE_ADMIN_PHONE } from "@/lib/site";
+import {
+  dayNameLocalized,
+  formatDateLocalized,
+  normalizeLocale,
+  t,
+  type Locale,
+} from "@/lib/i18n";
 
 type Appointment = {
   id: string;
@@ -36,6 +41,7 @@ type DayOff = {
 type Props = {
   slug: string;
   displayName: string;
+  locale?: string;
 };
 
 const defaultHours = (): HourRow[] =>
@@ -58,7 +64,12 @@ function appointmentStatus(
   return "upcoming";
 }
 
-export function BarberAdminPanel({ slug, displayName }: Props) {
+export function BarberAdminPanel({
+  slug,
+  displayName,
+  locale: localeProp,
+}: Props) {
+  const locale = normalizeLocale(localeProp);
   const router = useRouter();
   const [tab, setTab] = useState<
     "appointments" | "hours" | "daysOff" | "sms"
@@ -119,14 +130,14 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
         }
         setNowMs(Date.now());
       } catch {
-        setError("שגיאה בטעינת הנתונים");
+        setError(t(locale, "loadError"));
       } finally {
         if (!opts?.silent) {
           setLoading(false);
         }
       }
     },
-    [router, slug],
+    [router, slug, locale],
   );
 
   useEffect(() => {
@@ -170,17 +181,17 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
   }
 
   async function cancelAppointment(id: string) {
-    if (!confirm("לבטל את התור?")) return;
+    if (!confirm(t(locale, "confirmCancel"))) return;
     const res = await fetch("/api/barber/appointments/cancel", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
     if (!res.ok) {
-      setError("ביטול נכשל");
+      setError(t(locale, "cancelFailed"));
       return;
     }
-    setMessage("התור בוטל");
+    setMessage(t(locale, "cancelled"));
     load({ silent: true });
   }
 
@@ -195,10 +206,10 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
     });
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error || "שמירה נכשלה");
+      setError(data.error || t(locale, "saveFailed"));
       return;
     }
-    setMessage("שעות הפעילות עודכנו");
+    setMessage(t(locale, "hoursSaved"));
   }
 
   async function addDayOff(e: FormEvent) {
@@ -212,12 +223,12 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
     });
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error || "הוספה נכשלה");
+      setError(data.error || t(locale, "addFailed"));
       return;
     }
     setOffDate("");
     setOffNote("");
-    setMessage("יום חופש נוסף");
+    setMessage(t(locale, "dayOffAdded"));
     load({ silent: true });
   }
 
@@ -236,10 +247,10 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
     });
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error || "שמירת הגדרות SMS נכשלה");
+      setError(data.error || t(locale, "smsSaveFailed"));
       return;
     }
-    setMessage("הגדרות ההודעות נשמרו");
+    setMessage(t(locale, "smsSaved"));
   }
 
   async function removeDayOff(id: string) {
@@ -248,18 +259,20 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
-    setMessage("יום החופש הוסר");
+    setMessage(t(locale, "dayOffRemoved"));
     load({ silent: true });
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8">
+    <div className="mx-auto w-full max-w-4xl px-4 py-8" lang={locale}>
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-[var(--muted)]">ספר בקליק · ניהול</p>
+          <p className="text-sm text-[var(--muted)]">
+            {t(locale, "adminEyebrow")}
+          </p>
           <h1 className="font-display text-3xl sm:text-4xl">{displayName}</h1>
           <p className="mt-1 text-xs text-[var(--muted)]">
-            מתרענן אוטומטית כל דקה
+            {t(locale, "autoRefresh")}
           </p>
         </div>
         <div className="flex gap-2">
@@ -267,14 +280,14 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
             href={`/${slug}`}
             className="rounded-xl border border-[var(--line)] bg-white/70 px-4 py-2 text-sm font-semibold"
           >
-            ליומן הציבורי
+            {t(locale, "publicCalendar")}
           </Link>
           <button
             type="button"
             onClick={logout}
             className="rounded-xl border border-[var(--line)] bg-white/70 px-4 py-2 text-sm font-semibold"
           >
-            יציאה
+            {t(locale, "logout")}
           </button>
         </div>
       </header>
@@ -282,12 +295,12 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
       <div className="mb-5 flex flex-wrap gap-2">
         {(
           [
-            ["appointments", "תורים"],
-            ["hours", "שעות פעילות"],
-            ["daysOff", "ימי חופש"],
-            ["sms", "הודעות SMS"],
+            ["appointments", "tabAppointments"],
+            ["hours", "tabHours"],
+            ["daysOff", "tabDaysOff"],
+            ["sms", "tabSms"],
           ] as const
-        ).map(([key, label]) => (
+        ).map(([key, labelKey]) => (
           <button
             key={key}
             type="button"
@@ -298,7 +311,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                 : "border border-[var(--line)] bg-white/70"
             }`}
           >
-            {label}
+            {t(locale, labelKey)}
           </button>
         ))}
       </div>
@@ -315,13 +328,15 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
       ) : null}
 
       {loading ? (
-        <p className="text-[var(--muted)]">טוען...</p>
+        <p className="text-[var(--muted)]">{t(locale, "loading")}</p>
       ) : (
         <div className="surface rounded-2xl p-5 sm:p-6">
           {tab === "appointments" && (
             <div className="space-y-8">
               {groupedByDay.length === 0 ? (
-                <p className="text-[var(--muted)]">אין תורים קרובים</p>
+                <p className="text-[var(--muted)]">
+                  {t(locale, "noAppointments")}
+                </p>
               ) : (
                 groupedByDay.map(([dateKey, dayAppointments]) => {
                   const labelDate = new Date(dayAppointments[0].startsAt);
@@ -330,11 +345,11 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                     <section key={dateKey}>
                       <div className="mb-3 flex items-baseline gap-2 border-b border-[var(--line)] pb-2">
                         <h2 className="font-display text-2xl text-[var(--ink)]">
-                          {formatDateHe(labelDate)}
+                          {formatDateLocalized(locale, labelDate)}
                         </h2>
                         {isToday ? (
                           <span className="rounded-full bg-[var(--copper)] px-2.5 py-0.5 text-xs font-semibold text-white">
-                            היום
+                            {t(locale, "today")}
                           </span>
                         ) : null}
                       </div>
@@ -369,12 +384,12 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                                   </p>
                                   {isCurrent ? (
                                     <span className="rounded-full bg-[var(--copper)] px-2 py-0.5 text-xs font-semibold text-white">
-                                      עכשיו במספרה
+                                      {t(locale, "nowInShop")}
                                     </span>
                                   ) : null}
                                   {isNext ? (
                                     <span className="rounded-full bg-[var(--olive)] px-2 py-0.5 text-xs font-semibold text-white">
-                                      הבא בתור
+                                      {t(locale, "nextUp")}
                                     </span>
                                   ) : null}
                                 </div>
@@ -395,7 +410,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                                 onClick={() => cancelAppointment(a.id)}
                                 className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
                               >
-                                ביטול תור
+                                {t(locale, "cancelAppointment")}
                               </button>
                             </div>
                           );
@@ -428,10 +443,10 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                         setHours(next);
                       }}
                     />
-                    {dayName(h.dayOfWeek)}
+                    {dayNameLocalized(locale, h.dayOfWeek)}
                   </label>
                   <span className="hidden text-xs text-[var(--muted)] sm:inline">
-                    פעיל
+                    {t(locale, "active")}
                   </span>
                   <input
                     type="time"
@@ -461,7 +476,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                 type="submit"
                 className="btn-primary mt-2 rounded-xl px-6 py-2.5 font-semibold"
               >
-                שמירת שעות
+                {t(locale, "saveHours")}
               </button>
             </form>
           )}
@@ -473,7 +488,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                 className="flex flex-wrap items-end gap-3"
               >
                 <label className="text-sm font-medium">
-                  תאריך
+                  {t(locale, "date")}
                   <input
                     type="date"
                     required
@@ -484,7 +499,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                   />
                 </label>
                 <label className="text-sm font-medium">
-                  הערה (אופציונלי)
+                  {t(locale, "noteOptional")}
                   <input
                     value={offNote}
                     onChange={(e) => setOffNote(e.target.value)}
@@ -495,13 +510,15 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                   type="submit"
                   className="btn-primary rounded-xl px-5 py-2.5 font-semibold"
                 >
-                  הוספה
+                  {t(locale, "add")}
                 </button>
               </form>
 
               <div className="space-y-2">
                 {dayOffs.length === 0 ? (
-                  <p className="text-[var(--muted)]">אין ימי חופש קרובים</p>
+                  <p className="text-[var(--muted)]">
+                    {t(locale, "noDaysOff")}
+                  </p>
                 ) : (
                   dayOffs.map((d) => (
                     <div
@@ -510,7 +527,8 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                     >
                       <div>
                         <p className="font-semibold">
-                          {formatDateHe(
+                          {formatDateLocalized(
+                            locale,
                             new Date(
                               `${dbDateToDateKey(new Date(d.date))}T12:00:00Z`,
                             ),
@@ -525,7 +543,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                         onClick={() => removeDayOff(d.id)}
                         className="text-sm font-medium text-red-700"
                       >
-                        הסרה
+                        {t(locale, "remove")}
                       </button>
                     </div>
                   ))
@@ -538,8 +556,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
             smsPlanEnabled ? (
             <form onSubmit={saveSmsSettings} className="space-y-5">
               <p className="text-sm text-[var(--muted)]">
-                הלקוח מקבל SMS באישור התור, ותזכורת לפני התור. ניתן לכבות או
-                לשנות את זמן התזכורת.
+                {t(locale, "smsHelp")}
               </p>
               <label className="flex items-center gap-3 text-sm font-medium">
                 <input
@@ -547,7 +564,7 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                   checked={smsConfirmationEnabled}
                   onChange={(e) => setSmsConfirmationEnabled(e.target.checked)}
                 />
-                שליחת SMS באישור קביעת תור
+                {t(locale, "smsConfirmToggle")}
               </label>
               <label className="flex items-center gap-3 text-sm font-medium">
                 <input
@@ -555,10 +572,10 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                   checked={smsReminderEnabled}
                   onChange={(e) => setSmsReminderEnabled(e.target.checked)}
                 />
-                שליחת SMS תזכורת לפני התור
+                {t(locale, "smsReminderToggle")}
               </label>
               <label className="block text-sm font-medium">
-                דקות לפני התור לתזכורת
+                {t(locale, "reminderMinutes")}
                 <input
                   type="number"
                   min={5}
@@ -572,29 +589,32 @@ export function BarberAdminPanel({ slug, displayName }: Props) {
                   className="mt-1.5 w-full max-w-[12rem] rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 disabled:opacity-40"
                 />
                 <span className="mt-1 block text-xs text-[var(--muted)]">
-                  ברירת מחדל: 30 דקות (מינימום 5)
+                  {t(locale, "reminderHint")}
                 </span>
               </label>
               <button
                 type="submit"
                 className="btn-primary rounded-xl px-6 py-2.5 font-semibold"
               >
-                שמירת הגדרות
+                {t(locale, "saveSettings")}
               </button>
             </form>
             ) : (
             <div className="space-y-4 rounded-xl border border-[var(--line)] bg-white/80 p-5">
               <h3 className="text-lg font-semibold text-[var(--ink)]">
-                שירות הודעות SMS
+                {t(locale, "smsServiceTitle")}
               </h3>
               <p className="text-sm leading-relaxed text-[var(--muted)]">
-                {SMS_UPGRADE_MESSAGE}
+                {t(locale, "smsUpgrade", {
+                  name: SITE_ADMIN_NAME,
+                  phone: SITE_ADMIN_PHONE,
+                })}
               </p>
               <a
                 href={`tel:${SITE_ADMIN_PHONE}`}
                 className="btn-primary inline-flex rounded-xl px-5 py-2.5 text-sm font-semibold"
               >
-                צור קשר עם {SITE_ADMIN_NAME}
+                {t(locale, "contactAdmin", { name: SITE_ADMIN_NAME })}
               </a>
             </div>
             )

@@ -5,7 +5,7 @@ import "./globals.css";
 
 const rubik = Rubik({
   variable: "--font-rubik",
-  subsets: ["hebrew", "latin"],
+  subsets: ["hebrew", "latin", "arabic"],
   weight: ["400", "500", "600", "700"],
 });
 

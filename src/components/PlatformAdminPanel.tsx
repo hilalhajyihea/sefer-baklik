@@ -10,6 +10,7 @@ type Barber = {
   displayName: string;
   username: string;
   isActive: boolean;
+  locale: string;
   smsPlanEnabled: boolean;
   customerCancelEnabled: boolean;
   slotMinutes: number;
@@ -125,6 +126,25 @@ export function PlatformAdminPanel() {
       barber.customerCancelEnabled
         ? "ביטול תור בהודעות הושבת לספר"
         : "ביטול תור בהודעות הופעל לספר",
+    );
+    load();
+  }
+
+  async function toggleLocale(barber: Barber) {
+    const nextLocale = barber.locale === "ar" ? "he" : "ar";
+    const res = await fetch("/api/platform/barbers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: barber.id, locale: nextLocale }),
+    });
+    if (!res.ok) {
+      setError("עדכון שפה נכשל");
+      return;
+    }
+    setMessage(
+      nextLocale === "ar"
+        ? "שפת האתר של הספר עודכנה לערבית"
+        : "שפת האתר של הספר עודכנה לעברית",
     );
     load();
   }
@@ -280,7 +300,8 @@ export function PlatformAdminPanel() {
                   </p>
                   <p className="text-sm text-[var(--muted)]">
                     משתמש: {b.username} · תורים: {b._count.appointments} ·{" "}
-                    {b.isActive ? "פעיל" : "מושבת"} · SMS:{" "}
+                    {b.isActive ? "פעיל" : "מושבת"} · שפה:{" "}
+                    {b.locale === "ar" ? "ערבית" : "עברית"} · SMS:{" "}
                     {b.smsPlanEnabled ? "מופעל" : "לא במנוי"} · ביטול לקוח:{" "}
                     {b.customerCancelEnabled ? "מופעל" : "כבוי"}
                   </p>
@@ -305,6 +326,14 @@ export function PlatformAdminPanel() {
                     className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
                   >
                     איפוס סיסמה
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleLocale(b)}
+                    className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                    title="מחליף את שפת דף ההזמנה, ניהול הספר והודעות ה-SMS"
+                  >
+                    {b.locale === "ar" ? "שפה: ערבית" : "שפה: עברית"}
                   </button>
                   <button
                     type="button"

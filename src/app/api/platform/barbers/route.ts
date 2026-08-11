@@ -18,6 +18,7 @@ export async function GET() {
       displayName: true,
       username: true,
       isActive: true,
+      locale: true,
       slotMinutes: true,
       smsPlanEnabled: true,
       customerCancelEnabled: true,
@@ -88,6 +89,7 @@ const patchSchema = z.object({
   customerCancelEnabled: z.boolean().optional(),
   password: z.string().min(6).max(100).optional(),
   displayName: z.string().min(2).max(80).optional(),
+  locale: z.enum(["he", "ar"]).optional(),
 });
 
 export async function PATCH(request: Request) {
@@ -121,6 +123,7 @@ export async function PATCH(request: Request) {
       ...(parsed.data.displayName
         ? { displayName: parsed.data.displayName.trim() }
         : {}),
+      ...(parsed.data.locale ? { locale: parsed.data.locale } : {}),
     },
   });
 
@@ -130,6 +133,7 @@ export async function PATCH(request: Request) {
       slug: barber.slug,
       displayName: barber.displayName,
       isActive: barber.isActive,
+      locale: barber.locale,
       smsPlanEnabled: barber.smsPlanEnabled,
       customerCancelEnabled: barber.customerCancelEnabled,
     },

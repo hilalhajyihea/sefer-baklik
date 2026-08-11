@@ -19,6 +19,8 @@ model Barber {
   smsPlanEnabled          Boolean  @default(false)
   /// Platform admin: include self-cancel link in customer SMS
   customerCancelEnabled   Boolean  @default(false)
+  /// Public + barber UI + SMS language: he | ar
+  locale                  String   @default("he")
   smsConfirmationEnabled  Boolean  @default(true)
   smsReminderEnabled      Boolean  @default(true)
   reminderMinutesBefore   Int      @default(30)

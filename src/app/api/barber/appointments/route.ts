@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { requireBarberSession } from "@/lib/auth";
+import { t } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
 import { startOfJerusalemDay, toDateKey } from "@/lib/time";
 
 export async function GET() {
   const session = await requireBarberSession();
   if (!session) {
-    return NextResponse.json({ error: "לא מחובר" }, { status: 401 });
+    return NextResponse.json({ error: t("he", "errUnauthorized") }, { status: 401 });
   }
 
   const from = startOfJerusalemDay(toDateKey());

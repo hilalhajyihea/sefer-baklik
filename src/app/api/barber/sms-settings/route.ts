@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireBarberSession } from "@/lib/auth";
+import { getBarberLocale, t } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   const session = await requireBarberSession();
   if (!session) {
-    return NextResponse.json({ error: "לא מחובר" }, { status: 401 });
+    return NextResponse.json({ error: t("he", "errUnauthorized") }, { status: 401 });
   }
 
+  const locale = await getBarberLocale(session.barberId);
   const barber = await prisma.barber.findUnique({
     where: { id: session.barberId },
     select: {
@@ -20,7 +22,10 @@ export async function GET() {
   });
 
   if (!barber) {
-    return NextResponse.json({ error: "ספר לא נמצא" }, { status: 404 });
+    return NextResponse.json(
+      { error: t(locale, "errBarberNotFound") },
+      { status: 404 },
+    );
   }
 
   return NextResponse.json({ settings: barber });
@@ -35,16 +40,17 @@ const schema = z.object({
 export async function PUT(request: Request) {
   const session = await requireBarberSession();
   if (!session) {
-    return NextResponse.json({ error: "לא מחובר" }, { status: 401 });
+    return NextResponse.json({ error: t("he", "errUnauthorized") }, { status: 401 });
   }
 
+  const locale = await getBarberLocale(session.barberId);
   const barber = await prisma.barber.findUnique({
     where: { id: session.barberId },
     select: { smsPlanEnabled: true },
   });
   if (!barber?.smsPlanEnabled) {
     return NextResponse.json(
-      { error: "שירות SMS אינו פעיל במנוי שלך" },
+      { error: t(locale, "errSmsPlanInactive") },
       { status: 403 },
     );
   }
@@ -53,7 +59,10 @@ export async function PUT(request: Request) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message || "נתונים לא תקינים" },
+      {
+        error:
+          parsed.error.issues[0]?.message || t(locale, "errInvalidData"),
+      },
       { status: 400 },
     );
   }
