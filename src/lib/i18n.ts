@@ -153,7 +153,7 @@ const he = {
 } as const;
 
 const ar: { [K in keyof typeof he]: string } = {
-  brand: "حلقة بكبسة زر",
+  brand: "حلاق بكبسة زر",
   admin: "إدارة",
   bookTitle: "حجز موعد",
   pickDateTime: "اختاروا التاريخ والساعة المتاحة",
@@ -181,7 +181,7 @@ const ar: { [K in keyof typeof he]: string } = {
   loggingIn: "جاري الدخول...",
   loginFailed: "فشل تسجيل الدخول",
 
-  adminEyebrow: "حلقة بكبسة زر · إدارة",
+  adminEyebrow: "حلاق بكبسة زر · إدارة",
   autoRefresh: "يتحدّث تلقائياً كل دقيقة",
   publicCalendar: "إلى الجدول العام",
   logout: "خروج",
@@ -245,7 +245,7 @@ const ar: { [K in keyof typeof he]: string } = {
   incompleteLinkTitle: "رابط الإلغاء غير مكتمل",
   incompleteLinkBody:
     "فُتح رابط دون معرّف الموعد. حاولوا فتح الرابط الكامل من الرسالة مجدداً (ضغط طويل على العنوان ونسخه)، أو تواصلوا مع الحلاق للإلغاء.",
-  backHome: "العودة إلى حلقة بكبسة زر",
+  backHome: "العودة إلى حلاق بكبسة زر",
   appointmentAt: "الموعد لدى",
   atTime: "الساعة",
 
