@@ -134,3 +134,74 @@ export async function PATCH(request: Request) {
     teamMode: activeCount >= 2,
   });
 }
+
+const deleteSchema = z.object({
+  id: z.string().min(1),
+});
+
+export async function DELETE(request: Request) {
+  const session = await requirePlatformSession();
+  if (!session) {
+    return NextResponse.json({ error: "לא מחובר" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const parsed = deleteSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "נתונים לא תקינים" }, { status: 400 });
+  }
+
+  const existing = await prisma.staff.findUnique({
+    where: { id: parsed.data.id },
+  });
+  if (!existing) {
+    return NextResponse.json({ error: "ספר צוות לא נמצא" }, { status: 404 });
+  }
+
+  // Never delete history: any appointment linked to this staff blocks deletion
+  const linkedAppointments = await prisma.appointment.count({
+    where: { staffId: existing.id },
+  });
+  if (linkedAppointments > 0) {
+    return NextResponse.json(
+      {
+        error:
+          "לא ניתן למחוק — יש תורים (פעילים או קודמים) המשויכים לספר הזה. אפשר להשבית במקום, או לבטל/לנקות תורים קודם",
+      },
+      { status: 409 },
+    );
+  }
+
+  // Same safety as deactivate: do not drop below 2 active while future team bookings exist
+  if (existing.isActive) {
+    const activeCount = await countActiveStaff(existing.barberId);
+    if (activeCount <= 2) {
+      const futureStaffAppts = await prisma.appointment.count({
+        where: {
+          barberId: existing.barberId,
+          staffId: { not: null },
+          status: "BOOKED",
+          startsAt: { gt: new Date() },
+        },
+      });
+      if (futureStaffAppts > 0) {
+        return NextResponse.json(
+          {
+            error:
+              "לא ניתן למחוק — מחיקה תוריד ממצב צוות ויש תורים עתידיים משובצים לצוות. בטלו אותם קודם או השביתו רק אחרי סיום התורים",
+          },
+          { status: 409 },
+        );
+      }
+    }
+  }
+
+  await prisma.staff.delete({ where: { id: existing.id } });
+
+  const activeCount = await countActiveStaff(existing.barberId);
+  return NextResponse.json({
+    ok: true,
+    activeCount,
+    teamMode: activeCount >= 2,
+  });
+}

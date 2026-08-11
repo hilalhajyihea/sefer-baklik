@@ -139,7 +139,7 @@ export function BookingCalendar({
           <BrandMark
             tone="light"
             label={t(locale, "brand")}
-            initials={locale === "ar" ? "سب" : "סב"}
+            initials={locale === "ar" ? "حب" : "סב"}
           />
           <Link
             href={`/${slug}/login`}

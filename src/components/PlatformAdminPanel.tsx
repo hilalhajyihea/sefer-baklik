@@ -265,6 +265,33 @@ export function PlatformAdminPanel() {
     load();
   }
 
+  async function deleteStaff(staff: StaffMember) {
+    if (
+      !confirm(
+        `למחוק את "${staff.displayName}" מהצוות?\nהמחיקה תתבצע רק אם אין תורים משויכים אליו.`,
+      )
+    ) {
+      return;
+    }
+    setError("");
+    const res = await fetch("/api/platform/staff", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: staff.id }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || "מחיקה נכשלה");
+      return;
+    }
+    setMessage(
+      `נמחק מהצוות: ${staff.displayName}${
+        data.teamMode === false ? " — המספרה במצב ספר יחיד" : ""
+      }`,
+    );
+    load();
+  }
+
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -512,6 +539,13 @@ export function PlatformAdminPanel() {
                                   className="rounded-lg border border-[var(--line)] px-2.5 py-1 text-xs font-medium"
                                 >
                                   {s.isActive ? "השבתה" : "הפעלה"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => deleteStaff(s)}
+                                  className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700"
+                                >
+                                  מחק
                                 </button>
                               </div>
                             </div>

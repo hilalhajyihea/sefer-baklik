@@ -63,7 +63,7 @@ export function LoginForm({
       <BrandMark
         className="mb-6"
         label={t(locale, "brand")}
-        initials={locale === "ar" ? "سب" : "סב"}
+        initials={locale === "ar" ? "حب" : "סב"}
       />
       <h1 className="font-display text-3xl text-[var(--ink)]">{title}</h1>
       {subtitle ? (
