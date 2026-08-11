@@ -6,14 +6,26 @@ import { formatDateLocalized, normalizeLocale, t, type Locale } from "@/lib/i18n
 import { toDateKey, combineDateAndTime } from "@/lib/time";
 import { BrandMark, ScissorsMark } from "@/components/BrandGraphics";
 
+type StaffOption = {
+  id: string;
+  displayName: string;
+};
+
 type Props = {
   slug: string;
   displayName: string;
   locale?: Locale | string;
+  staff?: StaffOption[];
 };
 
-export function BookingCalendar({ slug, displayName, locale: localeProp }: Props) {
+export function BookingCalendar({
+  slug,
+  displayName,
+  locale: localeProp,
+  staff = [],
+}: Props) {
   const locale = normalizeLocale(localeProp);
+  const teamMode = staff.length >= 2;
   const dates = useMemo(() => {
     const list: { key: string; label: string }[] = [];
     const todayKey = toDateKey();
@@ -26,6 +38,7 @@ export function BookingCalendar({ slug, displayName, locale: localeProp }: Props
     return list;
   }, [locale]);
 
+  const [staffKey, setStaffKey] = useState(teamMode ? "any" : "");
   const [date, setDate] = useState(dates[0]?.key || "");
   const [slots, setSlots] = useState<string[]>([]);
   const [time, setTime] = useState("");
@@ -43,9 +56,9 @@ export function BookingCalendar({ slug, displayName, locale: localeProp }: Props
       setTime("");
       setError("");
       try {
-        const res = await fetch(
-          `/api/availability?slug=${encodeURIComponent(slug)}&date=${encodeURIComponent(date)}`,
-        );
+        const params = new URLSearchParams({ slug, date });
+        if (teamMode && staffKey) params.set("staff", staffKey);
+        const res = await fetch(`/api/availability?${params.toString()}`);
         const data = await res.json();
         if (!cancelled) {
           setSlots(data.slots || []);
@@ -60,7 +73,7 @@ export function BookingCalendar({ slug, displayName, locale: localeProp }: Props
     return () => {
       cancelled = true;
     };
-  }, [slug, date]);
+  }, [slug, date, staffKey, teamMode]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -77,6 +90,7 @@ export function BookingCalendar({ slug, displayName, locale: localeProp }: Props
           time,
           customerName: name,
           customerPhone: phone,
+          ...(teamMode ? { staff: staffKey || "any" } : {}),
         }),
       });
       const data = await res.json();
@@ -99,9 +113,9 @@ export function BookingCalendar({ slug, displayName, locale: localeProp }: Props
       setName("");
       setPhone("");
       setTime("");
-      const refresh = await fetch(
-        `/api/availability?slug=${encodeURIComponent(slug)}&date=${encodeURIComponent(date)}`,
-      );
+      const params = new URLSearchParams({ slug, date });
+      if (teamMode && staffKey) params.set("staff", staffKey);
+      const refresh = await fetch(`/api/availability?${params.toString()}`);
       const refreshed = await refresh.json();
       setSlots(refreshed.slots || []);
     } catch {
@@ -153,7 +167,44 @@ export function BookingCalendar({ slug, displayName, locale: localeProp }: Props
           className="surface animate-fade-up rounded-2xl p-5 sm:p-7"
           style={{ animationDelay: "80ms" }}
         >
-          <h2 className="text-lg font-semibold text-[var(--ink)]">
+          {teamMode ? (
+            <>
+              <h2 className="text-lg font-semibold text-[var(--ink)]">
+                {t(locale, "pickStaff")}
+              </h2>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStaffKey("any")}
+                  className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
+                    staffKey === "any"
+                      ? "border-[var(--copper)] bg-[var(--copper)] text-white shadow-md"
+                      : "border-[var(--line)] bg-white/80 hover:border-[var(--copper)]"
+                  }`}
+                >
+                  {t(locale, "staffAnyone")}
+                </button>
+                {staff.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setStaffKey(s.id)}
+                    className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
+                      staffKey === s.id
+                        ? "border-[var(--copper)] bg-[var(--copper)] text-white shadow-md"
+                        : "border-[var(--line)] bg-white/80 hover:border-[var(--copper)]"
+                    }`}
+                  >
+                    {s.displayName}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
+
+          <h2
+            className={`text-lg font-semibold text-[var(--ink)] ${teamMode ? "mt-7" : ""}`}
+          >
             {t(locale, "date")}
           </h2>
           <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
@@ -239,7 +290,7 @@ export function BookingCalendar({ slug, displayName, locale: localeProp }: Props
 
           <button
             type="submit"
-            disabled={!time || submitting}
+            disabled={!time || submitting || (teamMode && !staffKey)}
             className="btn-primary mt-6 w-full rounded-xl py-3.5 text-base font-semibold sm:w-auto sm:px-10"
           >
             {submitting ? t(locale, "bookingSaving") : t(locale, "bookCta")}

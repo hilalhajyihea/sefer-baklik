@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { bookAppointment } from "@/lib/availability";
 import { normalizeLocale, t, type Locale } from "@/lib/i18n";
 import { sendBookingConfirmation } from "@/lib/reminders";
+import { isTeamMode } from "@/lib/staff";
 
 export async function POST(request: Request) {
   let locale: Locale = "he";
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
         .min(9, t(locale, "errPhoneRequired"))
         .max(20)
         .regex(/^[\d+\-\s()]+$/, t(locale, "errPhoneInvalid")),
+      staff: z.string().min(1).optional(),
     });
 
     const parsed = schema.safeParse(body);
@@ -52,12 +54,21 @@ export async function POST(request: Request) {
     }
     locale = normalizeLocale(barber.locale);
 
+    const team = await isTeamMode(barber.id);
+    if (team && !parsed.data.staff) {
+      return NextResponse.json(
+        { error: t(locale, "errStaffRequired") },
+        { status: 400 },
+      );
+    }
+
     const appointment = await bookAppointment({
       barberId: barber.id,
       dateKey: parsed.data.date,
       time: parsed.data.time,
       customerName: parsed.data.customerName,
       customerPhone: parsed.data.customerPhone,
+      staffKey: parsed.data.staff,
     });
 
     const sms = await sendBookingConfirmation(appointment.id);
@@ -67,6 +78,7 @@ export async function POST(request: Request) {
         id: appointment.id,
         startsAt: appointment.startsAt.toISOString(),
         customerName: appointment.customerName,
+        staffId: appointment.staffId,
       },
       sms: {
         ok: !!sms?.ok,

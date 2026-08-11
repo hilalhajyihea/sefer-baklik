@@ -4,6 +4,7 @@ import { BookingCalendar } from "@/components/BookingCalendar";
 import { prisma } from "@/lib/prisma";
 import { normalizeLocale } from "@/lib/i18n";
 import { barberShareMetadata } from "@/lib/seo";
+import { getActiveStaff, isTeamMode } from "@/lib/staff";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,8 @@ export default async function BarberPublicPage({ params }: Props) {
   if (!barber || !barber.isActive) notFound();
 
   const locale = normalizeLocale(barber.locale);
+  const teamMode = await isTeamMode(barber.id);
+  const staff = teamMode ? await getActiveStaff(barber.id) : [];
 
   return (
     <main className="flex-1" lang={locale}>
@@ -35,6 +38,7 @@ export default async function BarberPublicPage({ params }: Props) {
         slug={barber.slug}
         displayName={barber.displayName}
         locale={locale}
+        staff={staff}
       />
     </main>
   );

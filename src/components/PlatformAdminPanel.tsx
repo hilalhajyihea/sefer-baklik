@@ -4,6 +4,13 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+type StaffMember = {
+  id: string;
+  displayName: string;
+  isActive: boolean;
+  sortOrder: number;
+};
+
 type Barber = {
   id: string;
   slug: string;
@@ -15,6 +22,7 @@ type Barber = {
   customerCancelEnabled: boolean;
   slotMinutes: number;
   _count: { appointments: number };
+  staff: StaffMember[];
 };
 
 export function PlatformAdminPanel() {
@@ -27,6 +35,7 @@ export function PlatformAdminPanel() {
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [expandedStaffFor, setExpandedStaffFor] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -187,6 +196,75 @@ export function PlatformAdminPanel() {
     setMessage("הסיסמה עודכנה");
   }
 
+  async function addStaff(barber: Barber) {
+    const name = prompt("שם הספר בצוות (למשל: יוסי)");
+    if (!name || name.trim().length < 2) return;
+    setError("");
+    const res = await fetch("/api/platform/staff", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        barberId: barber.id,
+        displayName: name.trim(),
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || "הוספת ספר לצוות נכשלה");
+      return;
+    }
+    const teamHint =
+      data.teamMode
+        ? " — מצב צוות פעיל (מסך הזמנה + יומן משולב)"
+        : data.activeCount === 1
+          ? " — הוסיפו לפחות עוד ספר אחד כדי להפעיל מצב צוות"
+          : "";
+    setMessage(`נוסף לצוות: ${data.staff.displayName}${teamHint}`);
+    setExpandedStaffFor(barber.id);
+    load();
+  }
+
+  async function renameStaff(staff: StaffMember) {
+    const next = prompt("שם חדש לספר בצוות", staff.displayName);
+    if (next == null) return;
+    const trimmed = next.trim();
+    if (trimmed.length < 2) {
+      setError("שם חייב להיות לפחות 2 תווים");
+      return;
+    }
+    const res = await fetch("/api/platform/staff", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: staff.id, displayName: trimmed }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || "עדכון שם נכשל");
+      return;
+    }
+    setMessage(`שם עודכן ל־${trimmed}`);
+    load();
+  }
+
+  async function toggleStaffActive(staff: StaffMember) {
+    const res = await fetch("/api/platform/staff", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: staff.id, isActive: !staff.isActive }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || "עדכון סטטוס נכשל");
+      return;
+    }
+    setMessage(
+      staff.isActive
+        ? `הושבת: ${staff.displayName}${data.teamMode === false ? " — המספרה חזרה למצב ספר יחיד" : ""}`
+        : `הופעל: ${staff.displayName}${data.teamMode ? " — מצב צוות פעיל" : ""}`,
+    );
+    load();
+  }
+
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -286,87 +364,165 @@ export function PlatformAdminPanel() {
           <p className="text-[var(--muted)]">עדיין אין ספרים</p>
         ) : (
           <div className="space-y-3">
-            {barbers.map((b) => (
-              <div
-                key={b.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--line)] bg-white/80 px-4 py-3"
-              >
-                <div>
-                  <p className="font-semibold">
-                    {b.displayName}{" "}
-                    <span className="text-sm font-normal text-[var(--muted)]">
-                      /{b.slug}
-                    </span>
-                  </p>
-                  <p className="text-sm text-[var(--muted)]">
-                    משתמש: {b.username} · תורים: {b._count.appointments} ·{" "}
-                    {b.isActive ? "פעיל" : "מושבת"} · שפה:{" "}
-                    {b.locale === "ar" ? "ערבית" : "עברית"} · SMS:{" "}
-                    {b.smsPlanEnabled ? "מופעל" : "לא במנוי"} · ביטול לקוח:{" "}
-                    {b.customerCancelEnabled ? "מופעל" : "כבוי"}
-                  </p>
+            {barbers.map((b) => {
+              const activeStaff = (b.staff || []).filter((s) => s.isActive);
+              const teamMode = activeStaff.length >= 2;
+              const expanded = expandedStaffFor === b.id;
+              return (
+                <div
+                  key={b.id}
+                  className="rounded-xl border border-[var(--line)] bg-white/80 px-4 py-3"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold">
+                        {b.displayName}{" "}
+                        <span className="text-sm font-normal text-[var(--muted)]">
+                          /{b.slug}
+                        </span>
+                      </p>
+                      <p className="text-sm text-[var(--muted)]">
+                        משתמש: {b.username} · תורים: {b._count.appointments} ·{" "}
+                        {b.isActive ? "פעיל" : "מושבת"} · שפה:{" "}
+                        {b.locale === "ar" ? "ערבית" : "עברית"} · SMS:{" "}
+                        {b.smsPlanEnabled ? "מופעל" : "לא במנוי"} · ביטול לקוח:{" "}
+                        {b.customerCancelEnabled ? "מופעל" : "כבוי"} · צוות:{" "}
+                        {teamMode
+                          ? `${activeStaff.length} ספרים פעילים`
+                          : "ספר יחיד"}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        href={`/${b.slug}`}
+                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                      >
+                        יומן
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedStaffFor(expanded ? null : b.id)
+                        }
+                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                      >
+                        צוות
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => renameDisplayName(b)}
+                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                      >
+                        שם תצוגה
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => resetPassword(b)}
+                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                      >
+                        איפוס סיסמה
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleLocale(b)}
+                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                        title="מחליף את שפת דף ההזמנה, ניהול הספר והודעות ה-SMS"
+                      >
+                        {b.locale === "ar" ? "שפה: ערבית" : "שפה: עברית"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleSmsPlan(b)}
+                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                      >
+                        {b.smsPlanEnabled ? "ביטול SMS" : "הפעל SMS"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleCustomerCancel(b)}
+                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                        disabled={!b.smsPlanEnabled && !b.customerCancelEnabled}
+                        title={
+                          !b.smsPlanEnabled && !b.customerCancelEnabled
+                            ? "יש להפעיל SMS קודם"
+                            : undefined
+                        }
+                      >
+                        {b.customerCancelEnabled
+                          ? "כבה ביטול תור"
+                          : "הפעל ביטול תור"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleActive(b)}
+                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                      >
+                        {b.isActive ? "השבתה" : "הפעלה"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {expanded ? (
+                    <div className="mt-3 rounded-lg border border-[var(--line)] bg-[var(--cream)]/60 p-3">
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-semibold">
+                          צוות המספרה
+                          {!teamMode ? (
+                            <span className="mr-2 font-normal text-[var(--muted)]">
+                              (צריך לפחות 2 ספרים פעילים למצב צוות)
+                            </span>
+                          ) : null}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => addStaff(b)}
+                          className="rounded-lg border border-[var(--line)] bg-white px-3 py-1.5 text-sm font-medium"
+                        >
+                          הוסף ספר לצוות
+                        </button>
+                      </div>
+                      {(b.staff || []).length === 0 ? (
+                        <p className="text-sm text-[var(--muted)]">
+                          אין ספרי צוות — המספרה פועלת כספר יחיד
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {b.staff.map((s) => (
+                            <div
+                              key={s.id}
+                              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--line)] bg-white px-3 py-2"
+                            >
+                              <p className="text-sm font-medium">
+                                {s.displayName}{" "}
+                                <span className="text-[var(--muted)]">
+                                  · {s.isActive ? "פעיל" : "מושבת"}
+                                </span>
+                              </p>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => renameStaff(s)}
+                                  className="rounded-lg border border-[var(--line)] px-2.5 py-1 text-xs font-medium"
+                                >
+                                  שם
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleStaffActive(s)}
+                                  className="rounded-lg border border-[var(--line)] px-2.5 py-1 text-xs font-medium"
+                                >
+                                  {s.isActive ? "השבתה" : "הפעלה"}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Link
-                    href={`/${b.slug}`}
-                    className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
-                  >
-                    יומן
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => renameDisplayName(b)}
-                    className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
-                  >
-                    שם תצוגה
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => resetPassword(b)}
-                    className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
-                  >
-                    איפוס סיסמה
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleLocale(b)}
-                    className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
-                    title="מחליף את שפת דף ההזמנה, ניהול הספר והודעות ה-SMS"
-                  >
-                    {b.locale === "ar" ? "שפה: ערבית" : "שפה: עברית"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleSmsPlan(b)}
-                    className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
-                  >
-                    {b.smsPlanEnabled ? "ביטול SMS" : "הפעל SMS"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleCustomerCancel(b)}
-                    className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
-                    disabled={!b.smsPlanEnabled && !b.customerCancelEnabled}
-                    title={
-                      !b.smsPlanEnabled && !b.customerCancelEnabled
-                        ? "יש להפעיל SMS קודם"
-                        : undefined
-                    }
-                  >
-                    {b.customerCancelEnabled
-                      ? "כבה ביטול תור"
-                      : "הפעל ביטול תור"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleActive(b)}
-                    className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
-                  >
-                    {b.isActive ? "השבתה" : "הפעלה"}
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

@@ -20,6 +20,9 @@ export async function GET() {
       startsAt: { gte: from, lt: to },
     },
     orderBy: { startsAt: "asc" },
+    include: {
+      staff: { select: { id: true, displayName: true } },
+    },
   });
 
   return NextResponse.json({ appointments });

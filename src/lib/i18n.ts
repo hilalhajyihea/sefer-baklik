@@ -13,6 +13,8 @@ const he = {
   admin: "מנהל",
   bookTitle: "קביעת תור",
   pickDateTime: "בחרו תאריך ושעה פנויה",
+  pickStaff: "בחרו ספר",
+  staffAnyone: "כל מי שפנוי",
   date: "תאריך",
   time: "שעה",
   loadingSlots: "טוען משבצות...",
@@ -107,9 +109,13 @@ const he = {
   smsConfirmLine1: "שלום {name},",
   smsConfirmLine2:
     "התור אצל {barber} נקבע ל-{date} בשעה {time}.",
+  smsConfirmLine2Staff:
+    "התור אצל {barber} עם {staff} נקבע ל-{date} בשעה {time}.",
   smsReminderLine1: "תזכורת: שלום {name},",
   smsReminderLine2:
     "התור אצל {barber} בעוד כ-{minutes} דקות ({time}).",
+  smsReminderLine2Staff:
+    "התור אצל {barber} עם {staff} בעוד כ-{minutes} דקות ({time}).",
 
   errBarberNotFound: "ספר לא נמצא",
   errInvalidData: "נתונים לא תקינים",
@@ -131,6 +137,12 @@ const he = {
   errDateInvalid: "תאריך לא תקין",
   errIdMissing: "מזהה חסר",
   errHoursOrder: "שעת התחלה חייבת להיות לפני שעת סיום",
+  errStaffRequired: "נא לבחור ספר או כל מי שפנוי",
+  errStaffNotFound: "ספר לא נמצא בצוות",
+  errCannotDisableStaff:
+    "לא ניתן להשבית — נשארו פחות משני ספרים פעילים ויש תורים עתידיים משובצים",
+  filterAllStaff: "כל הספרים",
+  withStaff: "עם",
   day0: "ראשון",
   day1: "שני",
   day2: "שלישי",
@@ -145,6 +157,8 @@ const ar: { [K in keyof typeof he]: string } = {
   admin: "إدارة",
   bookTitle: "حجز موعد",
   pickDateTime: "اختاروا التاريخ والساعة المتاحة",
+  pickStaff: "اختاروا الحلاق",
+  staffAnyone: "أي شخص متاح",
   date: "التاريخ",
   time: "الساعة",
   loadingSlots: "جاري تحميل المواعيد...",
@@ -239,9 +253,13 @@ const ar: { [K in keyof typeof he]: string } = {
   smsConfirmLine1: "مرحباً {name}،",
   smsConfirmLine2:
     "تم حجز موعدك لدى {barber} لـ {date} الساعة {time}.",
+  smsConfirmLine2Staff:
+    "تم حجز موعدك لدى {barber} مع {staff} لـ {date} الساعة {time}.",
   smsReminderLine1: "تذكير: مرحباً {name}،",
   smsReminderLine2:
     "موعدك لدى {barber} خلال حوالي {minutes} دقيقة ({time}).",
+  smsReminderLine2Staff:
+    "موعدك لدى {barber} مع {staff} خلال حوالي {minutes} دقيقة ({time}).",
 
   errBarberNotFound: "الحلاق غير موجود",
   errInvalidData: "بيانات غير صالحة",
@@ -263,6 +281,12 @@ const ar: { [K in keyof typeof he]: string } = {
   errDateInvalid: "تاريخ غير صالح",
   errIdMissing: "المعرّف مفقود",
   errHoursOrder: "ساعة البداية يجب أن تكون قبل ساعة النهاية",
+  errStaffRequired: "يرجى اختيار حلاق أو أي شخص متاح",
+  errStaffNotFound: "الحلاق غير موجود في الفريق",
+  errCannotDisableStaff:
+    "لا يمكن التعطيل — يتبقى أقل من حلاقين نشطين وهناك مواعيد مستقبلية معينة",
+  filterAllStaff: "كل الحلاقين",
+  withStaff: "مع",
   day0: "الأحد",
   day1: "الاثنين",
   day2: "الثلاثاء",

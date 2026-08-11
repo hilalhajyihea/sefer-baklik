@@ -9,7 +9,10 @@ import {
 export async function sendBookingConfirmation(appointmentId: string) {
   const appointment = await prisma.appointment.findUnique({
     where: { id: appointmentId },
-    include: { barber: true },
+    include: {
+      barber: true,
+      staff: { select: { displayName: true } },
+    },
   });
   if (!appointment || appointment.status !== "BOOKED") {
     return { ok: false, error: "תור לא נמצא" };
@@ -35,6 +38,7 @@ export async function sendBookingConfirmation(appointmentId: string) {
     buildConfirmationSms({
       customerName: appointment.customerName,
       barberName: appointment.barber.displayName,
+      staffName: appointment.staff?.displayName,
       startsAt: appointment.startsAt,
       cancelUrl,
       locale: appointment.barber.locale,
@@ -80,6 +84,9 @@ export async function processDueReminders() {
         reminderSentAt: null,
         startsAt: { gt: now, lte: windowEnd },
       },
+      include: {
+        staff: { select: { displayName: true } },
+      },
       take: 50,
     });
 
@@ -95,6 +102,7 @@ export async function processDueReminders() {
         buildReminderSms({
           customerName: appointment.customerName,
           barberName: barber.displayName,
+          staffName: appointment.staff?.displayName,
           startsAt: appointment.startsAt,
           minutesBefore: minutes,
           cancelUrl,

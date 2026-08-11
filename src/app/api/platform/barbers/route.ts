@@ -24,6 +24,15 @@ export async function GET() {
       customerCancelEnabled: true,
       createdAt: true,
       _count: { select: { appointments: true } },
+      staff: {
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        select: {
+          id: true,
+          displayName: true,
+          isActive: true,
+          sortOrder: true,
+        },
+      },
     },
   });
 

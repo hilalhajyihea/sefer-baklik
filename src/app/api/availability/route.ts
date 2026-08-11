@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { getAvailableSlots } from "@/lib/availability";
+import { getTeamOrSoloSlots } from "@/lib/availability";
 import { normalizeLocale, t } from "@/lib/i18n";
 
 const schema = z.object({
   slug: z.string().min(1),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  staff: z.string().min(1).optional(),
 });
 
 export async function GET(request: Request) {
@@ -16,6 +17,7 @@ export async function GET(request: Request) {
     const parsed = schema.safeParse({
       slug: searchParams.get("slug"),
       date: searchParams.get("date"),
+      staff: searchParams.get("staff") || undefined,
     });
     if (!parsed.success) {
       return NextResponse.json({ error: t(locale, "errParams") }, { status: 400 });
@@ -32,7 +34,11 @@ export async function GET(request: Request) {
       );
     }
 
-    const slots = await getAvailableSlots(barber.id, parsed.data.date);
+    const slots = await getTeamOrSoloSlots(
+      barber.id,
+      parsed.data.date,
+      parsed.data.staff,
+    );
     return NextResponse.json({ slots, slotMinutes: barber.slotMinutes });
   } catch (error) {
     console.error("availability error", error);

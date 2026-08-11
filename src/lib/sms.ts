@@ -189,18 +189,27 @@ export async function sendSms(
 export function buildConfirmationSms(input: {
   customerName: string;
   barberName: string;
+  staffName?: string | null;
   startsAt: Date;
   cancelUrl?: string | null;
   locale?: Locale | string | null;
 }): string {
   const locale = normalizeLocale(input.locale);
+  const line2 = input.staffName
+    ? t(locale, "smsConfirmLine2Staff", {
+        barber: input.barberName,
+        staff: input.staffName,
+        date: formatDateLocalized(locale, input.startsAt),
+        time: formatTime(input.startsAt),
+      })
+    : t(locale, "smsConfirmLine2", {
+        barber: input.barberName,
+        date: formatDateLocalized(locale, input.startsAt),
+        time: formatTime(input.startsAt),
+      });
   const lines = [
     t(locale, "smsConfirmLine1", { name: input.customerName }),
-    t(locale, "smsConfirmLine2", {
-      barber: input.barberName,
-      date: formatDateLocalized(locale, input.startsAt),
-      time: formatTime(input.startsAt),
-    }),
+    line2,
     t(locale, "brand"),
   ];
   if (input.cancelUrl) {
@@ -212,19 +221,28 @@ export function buildConfirmationSms(input: {
 export function buildReminderSms(input: {
   customerName: string;
   barberName: string;
+  staffName?: string | null;
   startsAt: Date;
   minutesBefore: number;
   cancelUrl?: string | null;
   locale?: Locale | string | null;
 }): string {
   const locale = normalizeLocale(input.locale);
+  const line2 = input.staffName
+    ? t(locale, "smsReminderLine2Staff", {
+        barber: input.barberName,
+        staff: input.staffName,
+        minutes: input.minutesBefore,
+        time: formatTime(input.startsAt),
+      })
+    : t(locale, "smsReminderLine2", {
+        barber: input.barberName,
+        minutes: input.minutesBefore,
+        time: formatTime(input.startsAt),
+      });
   const lines = [
     t(locale, "smsReminderLine1", { name: input.customerName }),
-    t(locale, "smsReminderLine2", {
-      barber: input.barberName,
-      minutes: input.minutesBefore,
-      time: formatTime(input.startsAt),
-    }),
+    line2,
     t(locale, "brand"),
   ];
   if (input.cancelUrl) {

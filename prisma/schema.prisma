@@ -30,6 +30,7 @@ model Barber {
   workingHours WorkingHours[]
   dayOffs      DayOff[]
   appointments Appointment[]
+  staff        Staff[]
 }
 
 model WorkingHours {
@@ -58,9 +59,55 @@ model DayOff {
   @@index([barberId])
 }
 
+model Staff {
+  id          String   @id @default(cuid())
+  barberId    String
+  displayName String
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  barber       Barber              @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  workingHours StaffWorkingHours[]
+  dayOffs      StaffDayOff[]
+  appointments Appointment[]
+
+  @@index([barberId])
+  @@index([barberId, isActive])
+}
+
+model StaffWorkingHours {
+  id        String @id @default(cuid())
+  staffId   String
+  /// 0 = Sunday … 6 = Saturday (Israel week)
+  dayOfWeek Int
+  startTime String
+  endTime   String
+
+  staff Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, dayOfWeek])
+  @@index([staffId])
+}
+
+model StaffDayOff {
+  id      String   @id @default(cuid())
+  staffId String
+  date    DateTime @db.Date
+  note    String?
+
+  staff Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, date])
+  @@index([staffId])
+}
+
 model Appointment {
   id                 String    @id @default(cuid())
   barberId           String
+  /// Set in team mode (2+ active staff); null for solo shops
+  staffId            String?
   startsAt           DateTime
   endsAt             DateTime
   customerName       String
@@ -75,9 +122,11 @@ model Appointment {
   updatedAt          DateTime  @updatedAt
 
   barber Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  staff  Staff? @relation(fields: [staffId], references: [id], onDelete: SetNull)
 
   @@index([barberId, startsAt])
   @@index([barberId, status])
+  @@index([staffId, startsAt])
   @@index([status, reminderSentAt, startsAt])
   @@index([cancelToken])
 }

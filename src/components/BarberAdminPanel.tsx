@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -14,8 +14,14 @@ import {
   formatDateLocalized,
   normalizeLocale,
   t,
-  type Locale,
 } from "@/lib/i18n";
+
+type StaffMember = {
+  id: string;
+  displayName: string;
+  sortOrder: number;
+  isActive: boolean;
+};
 
 type Appointment = {
   id: string;
@@ -23,6 +29,8 @@ type Appointment = {
   endsAt: string;
   customerName: string;
   customerPhone: string;
+  staffId?: string | null;
+  staff?: { id: string; displayName: string } | null;
 };
 
 type HourRow = {
@@ -43,6 +51,13 @@ type Props = {
   displayName: string;
   locale?: string;
 };
+
+const STAFF_COLORS = [
+  "bg-[var(--copper)] text-white",
+  "bg-[var(--olive)] text-white",
+  "bg-[var(--ink)] text-white",
+  "bg-[#5c6b8a] text-white",
+];
 
 const defaultHours = (): HourRow[] =>
   Array.from({ length: 7 }, (_, dayOfWeek) => ({
@@ -74,6 +89,12 @@ export function BarberAdminPanel({
   const [tab, setTab] = useState<
     "appointments" | "hours" | "daysOff" | "sms"
   >("appointments");
+  const [teamMode, setTeamMode] = useState(false);
+  const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [staffFilter, setStaffFilter] = useState<string>("all");
+  const [manageStaffId, setManageStaffId] = useState<string>("");
+  const manageStaffIdRef = useRef(manageStaffId);
+  manageStaffIdRef.current = manageStaffId;
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [hours, setHours] = useState<HourRow[]>(defaultHours());
   const [dayOffs, setDayOffs] = useState<DayOff[]>([]);
@@ -88,29 +109,22 @@ export function BarberAdminPanel({
   const [loading, setLoading] = useState(true);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
-  const load = useCallback(
-    async (opts?: { silent?: boolean }) => {
-      if (!opts?.silent) {
-        setLoading(true);
-      }
-      setError("");
-      try {
-        const [aRes, hRes, dRes, sRes] = await Promise.all([
-          fetch("/api/barber/appointments"),
-          fetch("/api/barber/hours"),
-          fetch("/api/barber/days-off"),
-          fetch("/api/barber/sms-settings"),
+  const activeStaff = useMemo(
+    () => staff.filter((s) => s.isActive),
+    [staff],
+  );
+
+  const loadHoursAndDaysOff = useCallback(
+    async (team: boolean, staffId: string) => {
+      if (team && staffId) {
+        const [hRes, dRes] = await Promise.all([
+          fetch(`/api/barber/staff/hours?staffId=${encodeURIComponent(staffId)}`),
+          fetch(
+            `/api/barber/staff/days-off?staffId=${encodeURIComponent(staffId)}`,
+          ),
         ]);
-        if (aRes.status === 401) {
-          router.push(`/${slug}/login`);
-          return;
-        }
-        const aData = await aRes.json();
         const hData = await hRes.json();
         const dData = await dRes.json();
-        const sData = await sRes.json();
-        setAppointments(aData.appointments || []);
-
         const next = defaultHours();
         for (const h of hData.hours || []) {
           next[h.dayOfWeek] = {
@@ -122,6 +136,71 @@ export function BarberAdminPanel({
         }
         setHours(next);
         setDayOffs(dData.dayOffs || []);
+        return;
+      }
+
+      const [hRes, dRes] = await Promise.all([
+        fetch("/api/barber/hours"),
+        fetch("/api/barber/days-off"),
+      ]);
+      const hData = await hRes.json();
+      const dData = await dRes.json();
+      const next = defaultHours();
+      for (const h of hData.hours || []) {
+        next[h.dayOfWeek] = {
+          dayOfWeek: h.dayOfWeek,
+          startTime: h.startTime,
+          endTime: h.endTime,
+          enabled: true,
+        };
+      }
+      setHours(next);
+      setDayOffs(dData.dayOffs || []);
+    },
+    [],
+  );
+
+  const load = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) {
+        setLoading(true);
+      }
+      setError("");
+      try {
+        const [aRes, sRes, staffRes] = await Promise.all([
+          fetch("/api/barber/appointments"),
+          fetch("/api/barber/sms-settings"),
+          fetch("/api/barber/staff"),
+        ]);
+        if (aRes.status === 401) {
+          router.push(`/${slug}/login`);
+          return;
+        }
+        const aData = await aRes.json();
+        const sData = await sRes.json();
+        const staffData = await staffRes.json();
+        setAppointments(aData.appointments || []);
+
+        const nextTeam = !!staffData.teamMode;
+        const nextStaff: StaffMember[] = staffData.staff || [];
+        setTeamMode(nextTeam);
+        setStaff(nextStaff);
+
+        const active = nextStaff.filter((s) => s.isActive);
+        let staffIdForHours = "";
+        if (nextTeam && active.length > 0) {
+          staffIdForHours = active.some(
+            (s) => s.id === manageStaffIdRef.current,
+          )
+            ? manageStaffIdRef.current
+            : active[0]!.id;
+          setManageStaffId(staffIdForHours);
+        } else {
+          setManageStaffId("");
+        }
+
+        await loadHoursAndDaysOff(nextTeam, staffIdForHours);
+
         if (sData.settings) {
           setSmsPlanEnabled(!!sData.settings.smsPlanEnabled);
           setSmsConfirmationEnabled(!!sData.settings.smsConfirmationEnabled);
@@ -137,7 +216,7 @@ export function BarberAdminPanel({
         }
       }
     },
-    [router, slug, locale],
+    [router, slug, locale, loadHoursAndDaysOff],
   );
 
   useEffect(() => {
@@ -156,23 +235,49 @@ export function BarberAdminPanel({
     return () => window.clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    if (!teamMode || !manageStaffId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await loadHoursAndDaysOff(true, manageStaffId);
+      } catch {
+        if (!cancelled) setError(t(locale, "loadError"));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [teamMode, manageStaffId, loadHoursAndDaysOff, locale]);
+
+  const filteredAppointments = useMemo(() => {
+    if (!teamMode || staffFilter === "all") return appointments;
+    return appointments.filter((a) => a.staffId === staffFilter);
+  }, [appointments, teamMode, staffFilter]);
+
   const groupedByDay = useMemo(() => {
     const groups = new Map<string, Appointment[]>();
-    for (const a of appointments) {
+    for (const a of filteredAppointments) {
       const key = toDateKey(new Date(a.startsAt));
       const list = groups.get(key) || [];
       list.push(a);
       groups.set(key, list);
     }
     return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [appointments]);
+  }, [filteredAppointments]);
 
   const nextUpcomingId = useMemo(() => {
-    const upcoming = appointments.find(
+    const upcoming = filteredAppointments.find(
       (a) => new Date(a.startsAt).getTime() > nowMs,
     );
     return upcoming?.id ?? null;
-  }, [appointments, nowMs]);
+  }, [filteredAppointments, nowMs]);
+
+  function staffColor(staffId: string | null | undefined) {
+    if (!staffId) return "bg-[var(--muted)] text-white";
+    const idx = activeStaff.findIndex((s) => s.id === staffId);
+    return STAFF_COLORS[idx >= 0 ? idx % STAFF_COLORS.length : 0];
+  }
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -199,11 +304,16 @@ export function BarberAdminPanel({
     e.preventDefault();
     setMessage("");
     setError("");
-    const res = await fetch("/api/barber/hours", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hours }),
-    });
+    const res = await fetch(
+      teamMode ? "/api/barber/staff/hours" : "/api/barber/hours",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          teamMode ? { staffId: manageStaffId, hours } : { hours },
+        ),
+      },
+    );
     const data = await res.json();
     if (!res.ok) {
       setError(data.error || t(locale, "saveFailed"));
@@ -216,11 +326,22 @@ export function BarberAdminPanel({
     e.preventDefault();
     setMessage("");
     setError("");
-    const res = await fetch("/api/barber/days-off", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: offDate, note: offNote || undefined }),
-    });
+    const res = await fetch(
+      teamMode ? "/api/barber/staff/days-off" : "/api/barber/days-off",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          teamMode
+            ? {
+                staffId: manageStaffId,
+                date: offDate,
+                note: offNote || undefined,
+              }
+            : { date: offDate, note: offNote || undefined },
+        ),
+      },
+    );
     const data = await res.json();
     if (!res.ok) {
       setError(data.error || t(locale, "addFailed"));
@@ -229,7 +350,7 @@ export function BarberAdminPanel({
     setOffDate("");
     setOffNote("");
     setMessage(t(locale, "dayOffAdded"));
-    load({ silent: true });
+    await loadHoursAndDaysOff(teamMode, manageStaffId);
   }
 
   async function saveSmsSettings(e: FormEvent) {
@@ -254,13 +375,16 @@ export function BarberAdminPanel({
   }
 
   async function removeDayOff(id: string) {
-    await fetch("/api/barber/days-off", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
+    await fetch(
+      teamMode ? "/api/barber/staff/days-off" : "/api/barber/days-off",
+      {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      },
+    );
     setMessage(t(locale, "dayOffRemoved"));
-    load({ silent: true });
+    await loadHoursAndDaysOff(teamMode, manageStaffId);
   }
 
   return (
@@ -333,6 +457,36 @@ export function BarberAdminPanel({
         <div className="surface rounded-2xl p-5 sm:p-6">
           {tab === "appointments" && (
             <div className="space-y-8">
+              {teamMode ? (
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setStaffFilter("all")}
+                    className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
+                      staffFilter === "all"
+                        ? "border-[var(--ink)] bg-[var(--ink)] text-white"
+                        : "border-[var(--line)] bg-white/80"
+                    }`}
+                  >
+                    {t(locale, "filterAllStaff")}
+                  </button>
+                  {activeStaff.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setStaffFilter(s.id)}
+                      className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
+                        staffFilter === s.id
+                          ? "border-[var(--ink)] bg-[var(--ink)] text-white"
+                          : "border-[var(--line)] bg-white/80"
+                      }`}
+                    >
+                      {s.displayName}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
               {groupedByDay.length === 0 ? (
                 <p className="text-[var(--muted)]">
                   {t(locale, "noAppointments")}
@@ -382,6 +536,13 @@ export function BarberAdminPanel({
                                     {formatTime(new Date(a.startsAt))}–
                                     {formatTime(new Date(a.endsAt))}
                                   </p>
+                                  {teamMode && a.staff ? (
+                                    <span
+                                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${staffColor(a.staffId)}`}
+                                    >
+                                      {a.staff.displayName}
+                                    </span>
+                                  ) : null}
                                   {isCurrent ? (
                                     <span className="rounded-full bg-[var(--copper)] px-2 py-0.5 text-xs font-semibold text-white">
                                       {t(locale, "nowInShop")}
@@ -422,6 +583,25 @@ export function BarberAdminPanel({
               )}
             </div>
           )}
+
+          {(tab === "hours" || tab === "daysOff") && teamMode ? (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {activeStaff.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setManageStaffId(s.id)}
+                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
+                    manageStaffId === s.id
+                      ? "border-[var(--ink)] bg-[var(--ink)] text-white"
+                      : "border-[var(--line)] bg-white/80"
+                  }`}
+                >
+                  {s.displayName}
+                </button>
+              ))}
+            </div>
+          ) : null}
 
           {tab === "hours" && (
             <form onSubmit={saveHours} className="space-y-3">
