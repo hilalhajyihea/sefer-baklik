@@ -136,11 +136,7 @@ export function BookingCalendar({
       <div className="relative overflow-hidden border-b border-[var(--line)] bg-[var(--charcoal)] text-[var(--cream)]">
         <div className="barber-stripes animate-stripe absolute inset-y-0 left-0 w-2 opacity-90 sm:w-3" />
         <div className="relative mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-5 sm:px-6">
-          <BrandMark
-            tone="light"
-            label={t(locale, "brand")}
-            initials={locale === "ar" ? "حب" : "סב"}
-          />
+          <BrandMark tone="light" label={t(locale, "brand")} />
           <Link
             href={`/${slug}/login`}
             className="shrink-0 rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-sm font-semibold text-[var(--cream)] transition hover:bg-white/10"

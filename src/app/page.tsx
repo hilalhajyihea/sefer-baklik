@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { SITE_ADMIN_NAME, SITE_ADMIN_PHONE } from "@/lib/site";
-import { ScissorsMark } from "@/components/BrandGraphics";
+import { LogoMark, ScissorsMark } from "@/components/BrandGraphics";
 
 export default function HomePage() {
   return (
@@ -30,7 +30,8 @@ export default function HomePage() {
             יומן תורים דיגיטלי
           </p>
 
-          <h1 className="font-display animate-fade-up max-w-3xl text-6xl leading-[1.05] text-[var(--ink)] sm:text-8xl">
+          <h1 className="font-display animate-fade-up flex max-w-3xl flex-wrap items-center gap-4 text-6xl leading-[1.05] text-[var(--ink)] sm:gap-5 sm:text-8xl">
+            <LogoMark className="h-14 w-14 shrink-0 sm:h-[4.5rem] sm:w-[4.5rem]" />
             ספר בקליק
           </h1>
 
