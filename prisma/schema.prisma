@@ -24,13 +24,18 @@ model Barber {
   smsConfirmationEnabled  Boolean  @default(true)
   smsReminderEnabled      Boolean  @default(true)
   reminderMinutesBefore   Int      @default(30)
+  /// Barber mobile for SMS alerts (e.g. customer cancelled)
+  phone                   String?
+  /// Notify barber by SMS when a customer self-cancels
+  notifyOnCustomerCancel  Boolean  @default(true)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
-  workingHours WorkingHours[]
-  dayOffs      DayOff[]
-  appointments Appointment[]
-  staff        Staff[]
+  workingHours      WorkingHours[]
+  dayOffs           DayOff[]
+  appointments      Appointment[]
+  staff             Staff[]
+  recurringSeries   RecurringSeries[]
 }
 
 model WorkingHours {
@@ -108,12 +113,15 @@ model Appointment {
   barberId           String
   /// Set in team mode (2+ active staff); null for solo shops
   staffId            String?
+  seriesId           String?
   startsAt           DateTime
   endsAt             DateTime
   customerName       String
   customerPhone      String
   /// BOOKED | CANCELLED
   status             String    @default("BOOKED")
+  /// PUBLIC | ADMIN | RECURRING
+  source             String    @default("PUBLIC")
   /// Opaque token for customer self-cancel link in SMS (nullable so existing rows can migrate)
   cancelToken        String?
   confirmationSentAt DateTime?
@@ -121,12 +129,39 @@ model Appointment {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  barber Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
-  staff  Staff? @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  barber Barber           @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  staff  Staff?           @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  series RecurringSeries? @relation(fields: [seriesId], references: [id], onDelete: SetNull)
 
   @@index([barberId, startsAt])
   @@index([barberId, status])
   @@index([staffId, startsAt])
+  @@index([seriesId])
   @@index([status, reminderSentAt, startsAt])
   @@index([cancelToken])
+}
+
+/// Admin-created repeating bookings for a specific customer
+model RecurringSeries {
+  id            String    @id @default(cuid())
+  barberId      String
+  staffId       String?
+  customerName  String
+  customerPhone String
+  /// WEEKLY | BIWEEKLY | TRIWEEKLY | MONTHLY
+  interval      String
+  /// HH:mm
+  time          String
+  /// First occurrence YYYY-MM-DD (Jerusalem)
+  startDateKey  String
+  /// Last occurrence YYYY-MM-DD (inclusive)
+  endDateKey    String
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  barber       Barber        @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@index([barberId])
 }

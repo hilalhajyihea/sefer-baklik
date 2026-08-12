@@ -250,3 +250,26 @@ export function buildReminderSms(input: {
   }
   return lines.join("\n");
 }
+
+export function buildBarberCancelNoticeSms(input: {
+  customerName: string;
+  staffName?: string | null;
+  dateLabel: string;
+  timeLabel: string;
+  locale?: Locale | string | null;
+}): string {
+  const locale = normalizeLocale(input.locale);
+  if (input.staffName) {
+    return t(locale, "smsBarberCancelStaff", {
+      name: input.customerName,
+      staff: input.staffName,
+      date: input.dateLabel,
+      time: input.timeLabel,
+    });
+  }
+  return t(locale, "smsBarberCancel", {
+    name: input.customerName,
+    date: input.dateLabel,
+    time: input.timeLabel,
+  });
+}

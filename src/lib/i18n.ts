@@ -116,6 +116,10 @@ const he = {
     "התור אצל {barber} בעוד כ-{minutes} דקות ({time}).",
   smsReminderLine2Staff:
     "התור אצל {barber} עם {staff} בעוד כ-{minutes} דקות ({time}).",
+  smsBarberCancel:
+    "ביטול תור: {name} ביטל/ה את התור ב-{date} בשעה {time}.",
+  smsBarberCancelStaff:
+    "ביטול תור: {name} ביטל/ה אצל {staff} ב-{date} בשעה {time}.",
 
   errBarberNotFound: "ספר לא נמצא",
   errInvalidData: "נתונים לא תקינים",
@@ -141,8 +145,25 @@ const he = {
   errStaffNotFound: "ספר לא נמצא בצוות",
   errCannotDisableStaff:
     "לא ניתן להשבית — נשארו פחות משני ספרים פעילים ויש תורים עתידיים משובצים",
+  errRecurringFields: "נא לבחור מחזור חוזר ותאריך סיום",
   filterAllStaff: "כל הספרים",
   withStaff: "עם",
+  tabBook: "קביעת תור",
+  bookOnce: "תור חד־פעמי",
+  bookRecurring: "תור קבוע",
+  intervalWeekly: "כל שבוע",
+  intervalBiweekly: "כל שבועיים",
+  intervalTriweekly: "כל 3 שבועות",
+  intervalMonthly: "כל חודש",
+  endDate: "עד תאריך",
+  bookAdminCta: "קביעת התור",
+  bookAdminSaving: "שומר...",
+  bookAdminSuccess: "התור נקבע והשעה ירדה מהיומן הציבורי",
+  bookRecurringSuccess: "נקבעו {count} תורים בסדרה",
+  bookRecurringPartial: "נקבעו {count} תורים; חלק מהמועדים דולגו כי לא היו פנויים",
+  barberPhone: "טלפון לקבלת התראות",
+  barberPhoneHint: "יקבל SMS כשלקוח מבטל תור (דורש מנוי SMS)",
+  notifyCancelToggle: "שלחו לי SMS כשלקוח מבטל תור",
   day0: "ראשון",
   day1: "שני",
   day2: "שלישי",
@@ -260,6 +281,10 @@ const ar: { [K in keyof typeof he]: string } = {
     "موعدك لدى {barber} خلال حوالي {minutes} دقيقة ({time}).",
   smsReminderLine2Staff:
     "موعدك لدى {barber} مع {staff} خلال حوالي {minutes} دقيقة ({time}).",
+  smsBarberCancel:
+    "إلغاء موعد: ألغى/ت {name} الموعد في {date} الساعة {time}.",
+  smsBarberCancelStaff:
+    "إلغاء موعد: ألغى/ت {name} الموعد لدى {staff} في {date} الساعة {time}.",
 
   errBarberNotFound: "الحلاق غير موجود",
   errInvalidData: "بيانات غير صالحة",
@@ -285,8 +310,25 @@ const ar: { [K in keyof typeof he]: string } = {
   errStaffNotFound: "الحلاق غير موجود في الفريق",
   errCannotDisableStaff:
     "لا يمكن التعطيل — يتبقى أقل من حلاقين نشطين وهناك مواعيد مستقبلية معينة",
+  errRecurringFields: "يرجى اختيار التكرار وتاريخ الانتهاء",
   filterAllStaff: "كل الحلاقين",
   withStaff: "مع",
+  tabBook: "حجز موعد",
+  bookOnce: "موعد لمرة واحدة",
+  bookRecurring: "موعد ثابت",
+  intervalWeekly: "كل أسبوع",
+  intervalBiweekly: "كل أسبوعين",
+  intervalTriweekly: "كل 3 أسابيع",
+  intervalMonthly: "كل شهر",
+  endDate: "حتى تاريخ",
+  bookAdminCta: "تأكيد الحجز",
+  bookAdminSaving: "جاري الحفظ...",
+  bookAdminSuccess: "تم حجز الموعد وإزالته من الجدول العام",
+  bookRecurringSuccess: "تم حجز {count} مواعيد في السلسلة",
+  bookRecurringPartial: "تم حجز {count} مواعيد؛ تم تخطي بعضها لأنها غير متاحة",
+  barberPhone: "هاتف لاستلام التنبيهات",
+  barberPhoneHint: "سيصلك SMS عند إلغاء الزبون (يتطلب اشتراك SMS)",
+  notifyCancelToggle: "أرسلوا لي SMS عند إلغاء الزبون",
   day0: "الأحد",
   day1: "الاثنين",
   day2: "الثلاثاء",

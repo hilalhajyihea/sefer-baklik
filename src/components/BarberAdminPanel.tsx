@@ -87,7 +87,7 @@ export function BarberAdminPanel({
   const locale = normalizeLocale(localeProp);
   const router = useRouter();
   const [tab, setTab] = useState<
-    "appointments" | "hours" | "daysOff" | "sms"
+    "appointments" | "book" | "hours" | "daysOff" | "sms"
   >("appointments");
   const [teamMode, setTeamMode] = useState(false);
   const [staff, setStaff] = useState<StaffMember[]>([]);
@@ -102,8 +102,23 @@ export function BarberAdminPanel({
   const [smsConfirmationEnabled, setSmsConfirmationEnabled] = useState(true);
   const [smsReminderEnabled, setSmsReminderEnabled] = useState(true);
   const [reminderMinutesBefore, setReminderMinutesBefore] = useState(30);
+  const [barberPhone, setBarberPhone] = useState("");
+  const [notifyOnCustomerCancel, setNotifyOnCustomerCancel] = useState(true);
   const [offDate, setOffDate] = useState("");
   const [offNote, setOffNote] = useState("");
+  const [bookMode, setBookMode] = useState<"once" | "recurring">("once");
+  const [bookDate, setBookDate] = useState("");
+  const [bookEndDate, setBookEndDate] = useState("");
+  const [bookTime, setBookTime] = useState("10:00");
+  const [bookName, setBookName] = useState("");
+  const [bookPhone, setBookPhone] = useState("");
+  const [bookStaffId, setBookStaffId] = useState("");
+  const [bookInterval, setBookInterval] = useState<
+    "WEEKLY" | "BIWEEKLY" | "TRIWEEKLY" | "MONTHLY"
+  >("WEEKLY");
+  const [bookSlots, setBookSlots] = useState<string[]>([]);
+  const [bookLoadingSlots, setBookLoadingSlots] = useState(false);
+  const [bookSubmitting, setBookSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -206,6 +221,15 @@ export function BarberAdminPanel({
           setSmsConfirmationEnabled(!!sData.settings.smsConfirmationEnabled);
           setSmsReminderEnabled(!!sData.settings.smsReminderEnabled);
           setReminderMinutesBefore(sData.settings.reminderMinutesBefore ?? 30);
+          setBarberPhone(sData.settings.phone || "");
+          setNotifyOnCustomerCancel(
+            sData.settings.notifyOnCustomerCancel !== false,
+          );
+        }
+        if (nextTeam && active.length > 0) {
+          setBookStaffId((prev) =>
+            active.some((s) => s.id === prev) ? prev : active[0]!.id,
+          );
         }
         setNowMs(Date.now());
       } catch {
@@ -249,6 +273,38 @@ export function BarberAdminPanel({
       cancelled = true;
     };
   }, [teamMode, manageStaffId, loadHoursAndDaysOff, locale]);
+
+  useEffect(() => {
+    if (!bookDate) {
+      setBookSlots([]);
+      return;
+    }
+    let cancelled = false;
+    async function loadSlots() {
+      setBookLoadingSlots(true);
+      try {
+        const params = new URLSearchParams({ slug, date: bookDate });
+        if (teamMode && bookStaffId) params.set("staff", bookStaffId);
+        const res = await fetch(`/api/availability?${params.toString()}`);
+        const data = await res.json();
+        if (!cancelled) {
+          const slots: string[] = data.slots || [];
+          setBookSlots(slots);
+          if (slots.length && !slots.includes(bookTime)) {
+            setBookTime(slots[0]!);
+          }
+        }
+      } catch {
+        if (!cancelled) setBookSlots([]);
+      } finally {
+        if (!cancelled) setBookLoadingSlots(false);
+      }
+    }
+    loadSlots();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, bookDate, bookStaffId, teamMode]);
 
   const filteredAppointments = useMemo(() => {
     if (!teamMode || staffFilter === "all") return appointments;
@@ -361,9 +417,15 @@ export function BarberAdminPanel({
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        smsConfirmationEnabled,
-        smsReminderEnabled,
-        reminderMinutesBefore,
+        phone: barberPhone,
+        notifyOnCustomerCancel,
+        ...(smsPlanEnabled
+          ? {
+              smsConfirmationEnabled,
+              smsReminderEnabled,
+              reminderMinutesBefore,
+            }
+          : {}),
       }),
     });
     const data = await res.json();
@@ -372,6 +434,52 @@ export function BarberAdminPanel({
       return;
     }
     setMessage(t(locale, "smsSaved"));
+  }
+
+  async function submitAdminBook(e: FormEvent) {
+    e.preventDefault();
+    setMessage("");
+    setError("");
+    setBookSubmitting(true);
+    try {
+      const res = await fetch("/api/barber/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: bookMode,
+          date: bookDate,
+          time: bookTime,
+          customerName: bookName,
+          customerPhone: bookPhone,
+          ...(teamMode && bookStaffId ? { staffId: bookStaffId } : {}),
+          ...(bookMode === "recurring"
+            ? { interval: bookInterval, endDate: bookEndDate }
+            : {}),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || t(locale, "bookFailed"));
+        return;
+      }
+      if (data.mode === "recurring") {
+        const skipped = Array.isArray(data.skipped) ? data.skipped.length : 0;
+        setMessage(
+          skipped > 0
+            ? t(locale, "bookRecurringPartial", { count: data.createdCount })
+            : t(locale, "bookRecurringSuccess", { count: data.createdCount }),
+        );
+      } else {
+        setMessage(t(locale, "bookAdminSuccess"));
+      }
+      setBookName("");
+      setBookPhone("");
+      load({ silent: true });
+    } catch {
+      setError(t(locale, "networkError"));
+    } finally {
+      setBookSubmitting(false);
+    }
   }
 
   async function removeDayOff(id: string) {
@@ -420,6 +528,7 @@ export function BarberAdminPanel({
         {(
           [
             ["appointments", "tabAppointments"],
+            ["book", "tabBook"],
             ["hours", "tabHours"],
             ["daysOff", "tabDaysOff"],
             ["sms", "tabSms"],
@@ -584,6 +693,176 @@ export function BarberAdminPanel({
             </div>
           )}
 
+          {tab === "book" && (
+            <form onSubmit={submitAdminBook} className="space-y-5">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBookMode("once")}
+                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
+                    bookMode === "once"
+                      ? "border-[var(--ink)] bg-[var(--ink)] text-white"
+                      : "border-[var(--line)] bg-white/80"
+                  }`}
+                >
+                  {t(locale, "bookOnce")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBookMode("recurring")}
+                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
+                    bookMode === "recurring"
+                      ? "border-[var(--ink)] bg-[var(--ink)] text-white"
+                      : "border-[var(--line)] bg-white/80"
+                  }`}
+                >
+                  {t(locale, "bookRecurring")}
+                </button>
+              </div>
+
+              {teamMode ? (
+                <label className="block text-sm font-medium">
+                  {t(locale, "pickStaff")}
+                  <select
+                    required
+                    value={bookStaffId}
+                    onChange={(e) => setBookStaffId(e.target.value)}
+                    className="mt-1.5 w-full max-w-md rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                  >
+                    {activeStaff.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.displayName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="text-sm font-medium">
+                  {t(locale, "fullName")}
+                  <input
+                    required
+                    minLength={2}
+                    value={bookName}
+                    onChange={(e) => setBookName(e.target.value)}
+                    className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                  />
+                </label>
+                <label className="text-sm font-medium">
+                  {t(locale, "phone")}
+                  <input
+                    required
+                    inputMode="tel"
+                    value={bookPhone}
+                    onChange={(e) => setBookPhone(e.target.value)}
+                    className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                  />
+                </label>
+                <label className="text-sm font-medium">
+                  {t(locale, "date")}
+                  <input
+                    type="date"
+                    required
+                    min={toDateKey()}
+                    value={bookDate}
+                    onChange={(e) => setBookDate(e.target.value)}
+                    className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                  />
+                </label>
+                <label className="text-sm font-medium">
+                  {t(locale, "time")}
+                  {bookLoadingSlots ? (
+                    <p className="mt-1.5 text-sm text-[var(--muted)]">
+                      {t(locale, "loadingSlots")}
+                    </p>
+                  ) : (
+                    <select
+                      required
+                      value={bookTime}
+                      onChange={(e) => setBookTime(e.target.value)}
+                      className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                      disabled={!bookDate || bookSlots.length === 0}
+                    >
+                      {bookSlots.length === 0 ? (
+                        <option value="">
+                          {bookDate ? t(locale, "noSlots") : "—"}
+                        </option>
+                      ) : (
+                        bookSlots.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  )}
+                </label>
+              </div>
+
+              {bookMode === "recurring" ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-sm font-medium">
+                    {t(locale, "bookRecurring")}
+                    <select
+                      value={bookInterval}
+                      onChange={(e) =>
+                        setBookInterval(
+                          e.target.value as
+                            | "WEEKLY"
+                            | "BIWEEKLY"
+                            | "TRIWEEKLY"
+                            | "MONTHLY",
+                        )
+                      }
+                      className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                    >
+                      <option value="WEEKLY">
+                        {t(locale, "intervalWeekly")}
+                      </option>
+                      <option value="BIWEEKLY">
+                        {t(locale, "intervalBiweekly")}
+                      </option>
+                      <option value="TRIWEEKLY">
+                        {t(locale, "intervalTriweekly")}
+                      </option>
+                      <option value="MONTHLY">
+                        {t(locale, "intervalMonthly")}
+                      </option>
+                    </select>
+                  </label>
+                  <label className="text-sm font-medium">
+                    {t(locale, "endDate")}
+                    <input
+                      type="date"
+                      required
+                      min={bookDate || toDateKey()}
+                      value={bookEndDate}
+                      onChange={(e) => setBookEndDate(e.target.value)}
+                      className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                    />
+                  </label>
+                </div>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={
+                  bookSubmitting ||
+                  !bookDate ||
+                  !bookTime ||
+                  bookSlots.length === 0 ||
+                  (teamMode && !bookStaffId)
+                }
+                className="btn-primary rounded-xl px-6 py-2.5 font-semibold"
+              >
+                {bookSubmitting
+                  ? t(locale, "bookAdminSaving")
+                  : t(locale, "bookAdminCta")}
+              </button>
+            </form>
+          )}
+
           {(tab === "hours" || tab === "daysOff") && teamMode ? (
             <div className="mb-4 flex flex-wrap gap-2">
               {activeStaff.map((s) => (
@@ -733,71 +1012,106 @@ export function BarberAdminPanel({
           )}
 
           {tab === "sms" && (
-            smsPlanEnabled ? (
-            <form onSubmit={saveSmsSettings} className="space-y-5">
-              <p className="text-sm text-[var(--muted)]">
-                {t(locale, "smsHelp")}
-              </p>
-              <label className="flex items-center gap-3 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  checked={smsConfirmationEnabled}
-                  onChange={(e) => setSmsConfirmationEnabled(e.target.checked)}
-                />
-                {t(locale, "smsConfirmToggle")}
-              </label>
-              <label className="flex items-center gap-3 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  checked={smsReminderEnabled}
-                  onChange={(e) => setSmsReminderEnabled(e.target.checked)}
-                />
-                {t(locale, "smsReminderToggle")}
-              </label>
-              <label className="block text-sm font-medium">
-                {t(locale, "reminderMinutes")}
-                <input
-                  type="number"
-                  min={5}
-                  max={1440}
-                  step={5}
-                  disabled={!smsReminderEnabled}
-                  value={reminderMinutesBefore}
-                  onChange={(e) =>
-                    setReminderMinutesBefore(Number(e.target.value) || 30)
-                  }
-                  className="mt-1.5 w-full max-w-[12rem] rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 disabled:opacity-40"
-                />
-                <span className="mt-1 block text-xs text-[var(--muted)]">
-                  {t(locale, "reminderHint")}
-                </span>
-              </label>
-              <button
-                type="submit"
-                className="btn-primary rounded-xl px-6 py-2.5 font-semibold"
-              >
-                {t(locale, "saveSettings")}
-              </button>
-            </form>
-            ) : (
-            <div className="space-y-4 rounded-xl border border-[var(--line)] bg-white/80 p-5">
-              <h3 className="text-lg font-semibold text-[var(--ink)]">
-                {t(locale, "smsServiceTitle")}
-              </h3>
-              <p className="text-sm leading-relaxed text-[var(--muted)]">
-                {t(locale, "smsUpgrade", {
-                  name: SITE_ADMIN_NAME,
-                  phone: SITE_ADMIN_PHONE,
-                })}
-              </p>
-              <a
-                href={`tel:${SITE_ADMIN_PHONE}`}
-                className="btn-primary inline-flex rounded-xl px-5 py-2.5 text-sm font-semibold"
-              >
-                {t(locale, "contactAdmin", { name: SITE_ADMIN_NAME })}
-              </a>
+            <div className="space-y-6">
+              <form onSubmit={saveSmsSettings} className="space-y-5">
+                <label className="block text-sm font-medium">
+                  {t(locale, "barberPhone")}
+                  <input
+                    value={barberPhone}
+                    onChange={(e) => setBarberPhone(e.target.value)}
+                    inputMode="tel"
+                    placeholder="05..."
+                    className="mt-1.5 w-full max-w-sm rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                  />
+                  <span className="mt-1 block text-xs text-[var(--muted)]">
+                    {t(locale, "barberPhoneHint")}
+                  </span>
+                </label>
+                <label className="flex items-center gap-3 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={notifyOnCustomerCancel}
+                    onChange={(e) =>
+                      setNotifyOnCustomerCancel(e.target.checked)
+                    }
+                  />
+                  {t(locale, "notifyCancelToggle")}
+                </label>
+
+                {smsPlanEnabled ? (
+                  <>
+                    <p className="text-sm text-[var(--muted)]">
+                      {t(locale, "smsHelp")}
+                    </p>
+                    <label className="flex items-center gap-3 text-sm font-medium">
+                      <input
+                        type="checkbox"
+                        checked={smsConfirmationEnabled}
+                        onChange={(e) =>
+                          setSmsConfirmationEnabled(e.target.checked)
+                        }
+                      />
+                      {t(locale, "smsConfirmToggle")}
+                    </label>
+                    <label className="flex items-center gap-3 text-sm font-medium">
+                      <input
+                        type="checkbox"
+                        checked={smsReminderEnabled}
+                        onChange={(e) =>
+                          setSmsReminderEnabled(e.target.checked)
+                        }
+                      />
+                      {t(locale, "smsReminderToggle")}
+                    </label>
+                    <label className="block text-sm font-medium">
+                      {t(locale, "reminderMinutes")}
+                      <input
+                        type="number"
+                        min={5}
+                        max={1440}
+                        step={5}
+                        disabled={!smsReminderEnabled}
+                        value={reminderMinutesBefore}
+                        onChange={(e) =>
+                          setReminderMinutesBefore(
+                            Number(e.target.value) || 30,
+                          )
+                        }
+                        className="mt-1.5 w-full max-w-[12rem] rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 disabled:opacity-40"
+                      />
+                      <span className="mt-1 block text-xs text-[var(--muted)]">
+                        {t(locale, "reminderHint")}
+                      </span>
+                    </label>
+                  </>
+                ) : (
+                  <div className="space-y-3 rounded-xl border border-[var(--line)] bg-white/80 p-4">
+                    <h3 className="text-base font-semibold text-[var(--ink)]">
+                      {t(locale, "smsServiceTitle")}
+                    </h3>
+                    <p className="text-sm leading-relaxed text-[var(--muted)]">
+                      {t(locale, "smsUpgrade", {
+                        name: SITE_ADMIN_NAME,
+                        phone: SITE_ADMIN_PHONE,
+                      })}
+                    </p>
+                    <a
+                      href={`tel:${SITE_ADMIN_PHONE}`}
+                      className="btn-primary inline-flex rounded-xl px-5 py-2.5 text-sm font-semibold"
+                    >
+                      {t(locale, "contactAdmin", { name: SITE_ADMIN_NAME })}
+                    </a>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="btn-primary rounded-xl px-6 py-2.5 font-semibold"
+                >
+                  {t(locale, "saveSettings")}
+                </button>
+              </form>
             </div>
-            )
           )}
         </div>
       )}

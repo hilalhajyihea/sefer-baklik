@@ -65,7 +65,13 @@ const appointmentInclude = {
       isActive: true,
       customerCancelEnabled: true,
       locale: true,
+      phone: true,
+      smsPlanEnabled: true,
+      notifyOnCustomerCancel: true,
     },
+  },
+  staff: {
+    select: { displayName: true },
   },
 } as const;
 
@@ -133,5 +139,45 @@ export async function cancelAppointmentByToken(rawToken: string): Promise<{
     include: appointmentInclude,
   });
 
+  // Fire-and-forget SMS to barber (errors logged inside sendSms)
+  void notifyBarberOfCustomerCancel(updated);
+
   return { state: "success", appointment: updated };
+}
+
+async function notifyBarberOfCustomerCancel(appointment: {
+  customerName: string;
+  startsAt: Date;
+  barber: {
+    displayName: string;
+    phone: string | null;
+    smsPlanEnabled: boolean;
+    notifyOnCustomerCancel: boolean;
+    locale: string;
+  };
+  staff: { displayName: string } | null;
+}) {
+  const { barber } = appointment;
+  if (
+    !barber.notifyOnCustomerCancel ||
+    !barber.smsPlanEnabled ||
+    !barber.phone?.trim()
+  ) {
+    return;
+  }
+
+  const { buildBarberCancelNoticeSms, sendSms } = await import("@/lib/sms");
+  const { formatTime } = await import("@/lib/time");
+  const { formatDateLocalized, normalizeLocale } = await import("@/lib/i18n");
+
+  const locale = normalizeLocale(barber.locale);
+  const body = buildBarberCancelNoticeSms({
+    customerName: appointment.customerName,
+    staffName: appointment.staff?.displayName,
+    dateLabel: formatDateLocalized(locale, appointment.startsAt),
+    timeLabel: formatTime(appointment.startsAt),
+    locale,
+  });
+
+  await sendSms(barber.phone, body);
 }

@@ -195,6 +195,8 @@ export async function bookAppointment(input: {
   customerPhone: string;
   /** Team mode: specific staff id, or "any" */
   staffKey?: string | null;
+  source?: "PUBLIC" | "ADMIN" | "RECURRING";
+  seriesId?: string | null;
 }) {
   const barber = await prisma.barber.findUnique({
     where: { id: input.barberId },
@@ -203,6 +205,7 @@ export async function bookAppointment(input: {
     throw new Error("הספר לא פעיל");
   }
 
+  const source = input.source ?? "PUBLIC";
   const team = await isTeamMode(input.barberId);
 
   if (!team) {
@@ -230,11 +233,13 @@ export async function bookAppointment(input: {
       return tx.appointment.create({
         data: {
           barberId: input.barberId,
+          seriesId: input.seriesId || null,
           startsAt,
           endsAt,
           customerName: input.customerName.trim(),
           customerPhone: input.customerPhone.trim(),
           status: "BOOKED",
+          source,
           cancelToken: generateCancelToken(),
         },
       });
@@ -293,11 +298,13 @@ export async function bookAppointment(input: {
       data: {
         barberId: input.barberId,
         staffId: staff.id,
+        seriesId: input.seriesId || null,
         startsAt,
         endsAt,
         customerName: input.customerName.trim(),
         customerPhone: input.customerPhone.trim(),
         status: "BOOKED",
+        source,
         cancelToken: generateCancelToken(),
       },
     });

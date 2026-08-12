@@ -18,6 +18,8 @@ export async function GET() {
       smsConfirmationEnabled: true,
       smsReminderEnabled: true,
       reminderMinutesBefore: true,
+      phone: true,
+      notifyOnCustomerCancel: true,
     },
   });
 
@@ -32,9 +34,11 @@ export async function GET() {
 }
 
 const schema = z.object({
-  smsConfirmationEnabled: z.boolean(),
-  smsReminderEnabled: z.boolean(),
-  reminderMinutesBefore: z.number().int().min(5).max(1440),
+  phone: z.string().max(20).optional(),
+  notifyOnCustomerCancel: z.boolean().optional(),
+  smsConfirmationEnabled: z.boolean().optional(),
+  smsReminderEnabled: z.boolean().optional(),
+  reminderMinutesBefore: z.number().int().min(5).max(1440).optional(),
 });
 
 export async function PUT(request: Request) {
@@ -48,10 +52,10 @@ export async function PUT(request: Request) {
     where: { id: session.barberId },
     select: { smsPlanEnabled: true },
   });
-  if (!barber?.smsPlanEnabled) {
+  if (!barber) {
     return NextResponse.json(
-      { error: t(locale, "errSmsPlanInactive") },
-      { status: 403 },
+      { error: t(locale, "errBarberNotFound") },
+      { status: 404 },
     );
   }
 
@@ -67,14 +71,47 @@ export async function PUT(request: Request) {
     );
   }
 
+  const wantsSmsToggles =
+    parsed.data.smsConfirmationEnabled !== undefined ||
+    parsed.data.smsReminderEnabled !== undefined ||
+    parsed.data.reminderMinutesBefore !== undefined;
+
+  if (wantsSmsToggles && !barber.smsPlanEnabled) {
+    return NextResponse.json(
+      { error: t(locale, "errSmsPlanInactive") },
+      { status: 403 },
+    );
+  }
+
+  const phone =
+    parsed.data.phone !== undefined
+      ? parsed.data.phone.trim() || null
+      : undefined;
+
   const settings = await prisma.barber.update({
     where: { id: session.barberId },
-    data: parsed.data,
+    data: {
+      ...(phone !== undefined ? { phone } : {}),
+      ...(parsed.data.notifyOnCustomerCancel !== undefined
+        ? { notifyOnCustomerCancel: parsed.data.notifyOnCustomerCancel }
+        : {}),
+      ...(parsed.data.smsConfirmationEnabled !== undefined
+        ? { smsConfirmationEnabled: parsed.data.smsConfirmationEnabled }
+        : {}),
+      ...(parsed.data.smsReminderEnabled !== undefined
+        ? { smsReminderEnabled: parsed.data.smsReminderEnabled }
+        : {}),
+      ...(parsed.data.reminderMinutesBefore !== undefined
+        ? { reminderMinutesBefore: parsed.data.reminderMinutesBefore }
+        : {}),
+    },
     select: {
       smsPlanEnabled: true,
       smsConfirmationEnabled: true,
       smsReminderEnabled: true,
       reminderMinutesBefore: true,
+      phone: true,
+      notifyOnCustomerCancel: true,
     },
   });
 
