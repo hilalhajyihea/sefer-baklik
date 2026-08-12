@@ -10,14 +10,14 @@ export async function GET() {
     return NextResponse.json({ error: t("he", "errUnauthorized") }, { status: 401 });
   }
 
+  // All upcoming booked appointments through the last one (not a fixed 30-day window)
   const from = startOfJerusalemDay(toDateKey());
-  const to = new Date(from.getTime() + 30 * 24 * 60 * 60 * 1000);
 
   const appointments = await prisma.appointment.findMany({
     where: {
       barberId: session.barberId,
       status: "BOOKED",
-      startsAt: { gte: from, lt: to },
+      startsAt: { gte: from },
     },
     orderBy: { startsAt: "asc" },
     include: {
