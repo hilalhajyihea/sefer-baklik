@@ -91,6 +91,12 @@ export async function processDueReminders() {
     });
 
     for (const appointment of due) {
+      const phone = (appointment.customerPhone || "").trim();
+      if (!phone) {
+        skipped += 1;
+        continue;
+      }
+
       let cancelUrl: string | undefined;
       if (barber.customerCancelEnabled) {
         const cancelToken = await ensureCancelToken(appointment);
@@ -98,7 +104,7 @@ export async function processDueReminders() {
       }
 
       const result = await sendSms(
-        appointment.customerPhone,
+        phone,
         buildReminderSms({
           customerName: appointment.customerName,
           barberName: barber.displayName,

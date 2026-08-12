@@ -664,15 +664,20 @@ export function BarberAdminPanel({
                                   ) : null}
                                 </div>
                                 <p className="text-sm text-[var(--muted)]">
-                                  {a.customerName} ·{" "}
-                                  <a
-                                    href={`tel:${a.customerPhone.replace(/[^\d+]/g, "")}`}
-                                    dir="ltr"
-                                    className="font-medium text-[var(--copper-deep)] underline-offset-2 hover:underline"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    {a.customerPhone}
-                                  </a>
+                                  {a.customerName}
+                                  {a.customerPhone?.trim() ? (
+                                    <>
+                                      {" · "}
+                                      <a
+                                        href={`tel:${a.customerPhone.replace(/[^\d+]/g, "")}`}
+                                        dir="ltr"
+                                        className="font-medium text-[var(--copper-deep)] underline-offset-2 hover:underline"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        {a.customerPhone}
+                                      </a>
+                                    </>
+                                  ) : null}
                                 </p>
                               </div>
                               <button
@@ -750,9 +755,8 @@ export function BarberAdminPanel({
                   />
                 </label>
                 <label className="text-sm font-medium">
-                  {t(locale, "phone")}
+                  {t(locale, "phoneOptional")}
                   <input
-                    required
                     inputMode="tel"
                     value={bookPhone}
                     onChange={(e) => setBookPhone(e.target.value)}

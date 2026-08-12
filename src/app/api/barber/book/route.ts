@@ -13,11 +13,16 @@ const schema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^\d{2}:\d{2}$/),
   customerName: z.string().min(2).max(80),
+  /** Optional in admin; empty = no SMS to customer */
   customerPhone: z
     .string()
-    .min(9)
     .max(20)
-    .regex(/^[\d+\-\s()]+$/),
+    .optional()
+    .transform((v) => (v ?? "").trim())
+    .refine(
+      (v) => v === "" || (v.length >= 9 && /^[\d+\-\s()]+$/.test(v)),
+      "טלפון לא תקין",
+    ),
   staffId: z.string().min(1).optional(),
   interval: z
     .enum(["WEEKLY", "BIWEEKLY", "TRIWEEKLY", "MONTHLY"])
