@@ -1067,6 +1067,9 @@ export function BarberAdminPanel({
                           quota: smsQuota,
                         })}
                       </p>
+                      <p className="mt-1 text-xs text-[var(--muted)]">
+                        {t(locale, "smsQuotaResetHint")}
+                      </p>
                       {smsRemaining <= 0 ? (
                         <p className="mt-2 text-sm text-red-700">
                           {t(locale, "smsQuotaEmpty")}

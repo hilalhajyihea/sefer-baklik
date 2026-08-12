@@ -5,6 +5,50 @@ import { SITE_ADMIN_NAME, SITE_ADMIN_PHONE } from "@/lib/site";
 
 const LOW_QUOTA_THRESHOLD = 10;
 
+/** Current billing month key in Asia/Jerusalem, e.g. "2026-08". */
+export function getSmsQuotaPeriod(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Jerusalem",
+    year: "numeric",
+    month: "2-digit",
+  }).formatToParts(now);
+  const year = parts.find((p) => p.type === "year")?.value ?? "0000";
+  const month = parts.find((p) => p.type === "month")?.value ?? "01";
+  return `${year}-${month}`;
+}
+
+/**
+ * On the 1st of each month (Israel time), reset remaining = monthly quota.
+ * Idempotent — safe to call from cron and before each send.
+ */
+export async function resetMonthlySmsQuotasIfNeeded(): Promise<{ reset: number }> {
+  const period = getSmsQuotaPeriod();
+  const stale = await prisma.barber.findMany({
+    where: {
+      OR: [{ smsQuotaMonth: null }, { smsQuotaMonth: { not: period } }],
+    },
+    select: { id: true, smsQuota: true },
+  });
+  if (stale.length === 0) {
+    return { reset: 0 };
+  }
+
+  await prisma.$transaction(
+    stale.map((b) =>
+      prisma.barber.update({
+        where: { id: b.id },
+        data: {
+          smsRemaining: b.smsQuota,
+          smsLowNotified: false,
+          smsQuotaMonth: period,
+        },
+      }),
+    ),
+  );
+
+  return { reset: stale.length };
+}
+
 /**
  * Reserve one customer-SMS credit before sending.
  * Returns false when remaining is 0 (booking should continue without SMS).
@@ -14,6 +58,8 @@ export async function consumeCustomerSmsCredit(barberId: string): Promise<{
   remaining: number;
   crossedLow: boolean;
 }> {
+  await resetMonthlySmsQuotasIfNeeded();
+
   const updated = await prisma.$transaction(async (tx) => {
     const barber = await tx.barber.findUnique({
       where: { id: barberId },
@@ -138,12 +184,14 @@ export async function setBarberSmsQuota(input: {
     input.remaining !== undefined
       ? Math.max(0, Math.floor(input.remaining))
       : quota;
+  const period = getSmsQuotaPeriod();
 
   return prisma.barber.update({
     where: { id: input.barberId },
     data: {
       smsQuota: quota,
       smsRemaining: remaining,
+      smsQuotaMonth: period,
       smsLowNotified: remaining > LOW_QUOTA_THRESHOLD ? false : true,
     },
     select: {
@@ -151,23 +199,32 @@ export async function setBarberSmsQuota(input: {
       smsQuota: true,
       smsRemaining: true,
       smsLowNotified: true,
+      smsQuotaMonth: true,
     },
   });
 }
 
+/** Mid-month top-up: adds to remaining only (monthly allotment stays smsQuota). */
 export async function addBarberSmsCredits(barberId: string, amount: number) {
   const add = Math.max(0, Math.floor(amount));
   if (add === 0) {
     return prisma.barber.findUnique({
       where: { id: barberId },
-      select: { id: true, smsQuota: true, smsRemaining: true, smsLowNotified: true },
+      select: {
+        id: true,
+        smsQuota: true,
+        smsRemaining: true,
+        smsLowNotified: true,
+        smsQuotaMonth: true,
+      },
     });
   }
+
+  await resetMonthlySmsQuotasIfNeeded();
 
   return prisma.barber.update({
     where: { id: barberId },
     data: {
-      smsQuota: { increment: add },
       smsRemaining: { increment: add },
       smsLowNotified: false,
     },
@@ -176,6 +233,7 @@ export async function addBarberSmsCredits(barberId: string, amount: number) {
       smsQuota: true,
       smsRemaining: true,
       smsLowNotified: true,
+      smsQuotaMonth: true,
     },
   });
 }

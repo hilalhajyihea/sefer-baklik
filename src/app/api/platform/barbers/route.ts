@@ -3,13 +3,19 @@ import { z } from "zod";
 import { requirePlatformSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createBarber, isValidSlug, resetBarberPassword } from "@/lib/barbers";
-import { addBarberSmsCredits, setBarberSmsQuota } from "@/lib/smsQuota";
+import {
+  addBarberSmsCredits,
+  resetMonthlySmsQuotasIfNeeded,
+  setBarberSmsQuota,
+} from "@/lib/smsQuota";
 
 export async function GET() {
   const session = await requirePlatformSession();
   if (!session) {
     return NextResponse.json({ error: "לא מחובר" }, { status: 401 });
   }
+
+  await resetMonthlySmsQuotasIfNeeded();
 
   const barbers = await prisma.barber.findMany({
     orderBy: { createdAt: "desc" },

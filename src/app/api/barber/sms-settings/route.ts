@@ -3,12 +3,15 @@ import { z } from "zod";
 import { requireBarberSession } from "@/lib/auth";
 import { getBarberLocale, t } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
+import { resetMonthlySmsQuotasIfNeeded } from "@/lib/smsQuota";
 
 export async function GET() {
   const session = await requireBarberSession();
   if (!session) {
     return NextResponse.json({ error: t("he", "errUnauthorized") }, { status: 401 });
   }
+
+  await resetMonthlySmsQuotasIfNeeded();
 
   const locale = await getBarberLocale(session.barberId);
   const barber = await prisma.barber.findUnique({

@@ -4,7 +4,10 @@ import {
   buildConfirmationSms,
   buildReminderSms,
 } from "@/lib/sms";
-import { sendCustomerSms } from "@/lib/smsQuota";
+import {
+  resetMonthlySmsQuotasIfNeeded,
+  sendCustomerSms,
+} from "@/lib/smsQuota";
 
 export async function sendBookingConfirmation(appointmentId: string) {
   const appointment = await prisma.appointment.findUnique({
@@ -63,6 +66,8 @@ export async function sendBookingConfirmation(appointmentId: string) {
 
 /** Find due reminders and send them. Safe to call every minute. */
 export async function processDueReminders() {
+  await resetMonthlySmsQuotasIfNeeded();
+
   const now = new Date();
   const barbers = await prisma.barber.findMany({
     where: { isActive: true, smsPlanEnabled: true, smsReminderEnabled: true },

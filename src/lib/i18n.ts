@@ -165,8 +165,9 @@ const he = {
   barberPhone: "טלפון לקבלת התראות",
   barberPhoneHint: "יקבל SMS כשלקוח מבטל תור (דורש מנוי SMS)",
   notifyCancelToggle: "שלחו לי SMS כשלקוח מבטל תור",
-  smsQuotaTitle: "מכסת הודעות",
+  smsQuotaTitle: "מכסת הודעות חודשית",
   smsQuotaBalance: "יתרה: {remaining} מתוך {quota}",
+  smsQuotaResetHint: "בראשון לכל חודש היתרה מתאפסת למכסה המלאה",
   smsQuotaEmpty: "נגמרה מכסת ההודעות — תורים ייקבעו בלי SMS עד חידוש המכסה",
   smsQuotaLow:
     "שים לב: נותרו רק {remaining} הודעות SMS במנוי שלך. נא לפנות למנהל האפליקציה {admin} בטלפון {phone} לחידוש המכסה.",
@@ -336,8 +337,9 @@ const ar: { [K in keyof typeof he]: string } = {
   barberPhone: "هاتف لاستلام التنبيهات",
   barberPhoneHint: "سيصلك SMS عند إلغاء الزبون (يتطلب اشتراك SMS)",
   notifyCancelToggle: "أرسلوا لي SMS عند إلغاء الزبون",
-  smsQuotaTitle: "حصة الرسائل",
+  smsQuotaTitle: "حصة الرسائل الشهرية",
   smsQuotaBalance: "المتبقي: {remaining} من أصل {quota}",
+  smsQuotaResetHint: "في أول كل شهر تُعاد الحصة المتبقية إلى الحصة الكاملة",
   smsQuotaEmpty: "انتهت حصة الرسائل — ستُحجز المواعيد دون SMS حتى تجديد الحصة",
   smsQuotaLow:
     "تنبيه: تبقّى فقط {remaining} رسائل SMS في اشتراكك. يرجى التواصل مع مدير التطبيق {admin} على الهاتف {phone} لتجديد الحصة.",

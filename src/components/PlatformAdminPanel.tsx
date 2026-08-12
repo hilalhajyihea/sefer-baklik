@@ -122,7 +122,7 @@ export function PlatformAdminPanel() {
 
   async function setSmsQuota(barber: Barber) {
     const quotaRaw = prompt(
-      `מכסת SMS כוללת עבור ${barber.displayName} (כרגע ${barber.smsRemaining}/${barber.smsQuota})`,
+      `מכסת SMS חודשית עבור ${barber.displayName} (כרגע ${barber.smsRemaining}/${barber.smsQuota})\nבראשון לחודש היתרה מתאפסת למכסה`,
       String(barber.smsQuota || 100),
     );
     if (quotaRaw == null) return;
@@ -161,13 +161,13 @@ export function PlatformAdminPanel() {
       setError("עדכון מכסת SMS נכשל");
       return;
     }
-    setMessage(`מכסת SMS עודכנה ל־${Math.floor(quota)}`);
+    setMessage(`מכסה חודשית עודכנה ל־${Math.floor(quota)}`);
     load();
   }
 
   async function addSmsCredits(barber: Barber) {
     const raw = prompt(
-      `כמה הודעות להוסיף ל־${barber.displayName}? (יתרה כרגע ${barber.smsRemaining})`,
+      `כמה הודעות להוסיף לחודש הנוכחי ל־${barber.displayName}? (יתרה כרגע ${barber.smsRemaining}; המכסה החודשית נשארת ${barber.smsQuota})`,
       "100",
     );
     if (raw == null) return;
@@ -547,15 +547,15 @@ export function PlatformAdminPanel() {
                         type="button"
                         onClick={() => setSmsQuota(b)}
                         className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
-                        title="הגדרת מכסה ויתרה"
+                        title="מכסה חודשית — מתאפסת בראשון לחודש"
                       >
-                        מכסת SMS
+                        מכסה חודשית
                       </button>
                       <button
                         type="button"
                         onClick={() => addSmsCredits(b)}
                         className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
-                        title="הוספת הודעות למכסה וליתרה"
+                        title="תוספת ליתרה בחודש הנוכחי בלבד"
                       >
                         הוסף SMS
                       </button>
