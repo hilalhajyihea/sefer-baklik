@@ -67,6 +67,15 @@ const defaultHours = (): HourRow[] =>
     enabled: dayOfWeek <= 4,
   }));
 
+/** Template for loading from API: days missing in DB = disabled (not default-on). */
+const blankHours = (): HourRow[] =>
+  Array.from({ length: 7 }, (_, dayOfWeek) => ({
+    dayOfWeek,
+    startTime: "09:00",
+    endTime: "18:00",
+    enabled: false,
+  }));
+
 function appointmentStatus(
   startsAt: string,
   endsAt: string,
@@ -140,7 +149,7 @@ export function BarberAdminPanel({
         ]);
         const hData = await hRes.json();
         const dData = await dRes.json();
-        const next = defaultHours();
+        const next = blankHours();
         for (const h of hData.hours || []) {
           next[h.dayOfWeek] = {
             dayOfWeek: h.dayOfWeek,
@@ -160,7 +169,7 @@ export function BarberAdminPanel({
       ]);
       const hData = await hRes.json();
       const dData = await dRes.json();
-      const next = defaultHours();
+      const next = blankHours();
       for (const h of hData.hours || []) {
         next[h.dayOfWeek] = {
           dayOfWeek: h.dayOfWeek,
