@@ -111,6 +111,8 @@ export function BarberAdminPanel({
   const [smsConfirmationEnabled, setSmsConfirmationEnabled] = useState(true);
   const [smsReminderEnabled, setSmsReminderEnabled] = useState(true);
   const [reminderMinutesBefore, setReminderMinutesBefore] = useState(30);
+  const [smsQuota, setSmsQuota] = useState(0);
+  const [smsRemaining, setSmsRemaining] = useState(0);
   const [barberPhone, setBarberPhone] = useState("");
   const [notifyOnCustomerCancel, setNotifyOnCustomerCancel] = useState(true);
   const [offDate, setOffDate] = useState("");
@@ -230,6 +232,8 @@ export function BarberAdminPanel({
           setSmsConfirmationEnabled(!!sData.settings.smsConfirmationEnabled);
           setSmsReminderEnabled(!!sData.settings.smsReminderEnabled);
           setReminderMinutesBefore(sData.settings.reminderMinutesBefore ?? 30);
+          setSmsQuota(sData.settings.smsQuota ?? 0);
+          setSmsRemaining(sData.settings.smsRemaining ?? 0);
           setBarberPhone(sData.settings.phone || "");
           setNotifyOnCustomerCancel(
             sData.settings.notifyOnCustomerCancel !== false,
@@ -1053,6 +1057,22 @@ export function BarberAdminPanel({
 
                 {smsPlanEnabled ? (
                   <>
+                    <div className="rounded-xl border border-[var(--line)] bg-white/80 px-4 py-3">
+                      <p className="text-sm font-semibold text-[var(--ink)]">
+                        {t(locale, "smsQuotaTitle")}
+                      </p>
+                      <p className="mt-1 text-sm text-[var(--muted)]">
+                        {t(locale, "smsQuotaBalance", {
+                          remaining: smsRemaining,
+                          quota: smsQuota,
+                        })}
+                      </p>
+                      {smsRemaining <= 0 ? (
+                        <p className="mt-2 text-sm text-red-700">
+                          {t(locale, "smsQuotaEmpty")}
+                        </p>
+                      ) : null}
+                    </div>
                     <p className="text-sm text-[var(--muted)]">
                       {t(locale, "smsHelp")}
                     </p>

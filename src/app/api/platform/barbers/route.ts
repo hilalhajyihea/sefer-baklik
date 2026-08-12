@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requirePlatformSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createBarber, isValidSlug, resetBarberPassword } from "@/lib/barbers";
+import { addBarberSmsCredits, setBarberSmsQuota } from "@/lib/smsQuota";
 
 export async function GET() {
   const session = await requirePlatformSession();
@@ -22,6 +23,8 @@ export async function GET() {
       slotMinutes: true,
       smsPlanEnabled: true,
       customerCancelEnabled: true,
+      smsQuota: true,
+      smsRemaining: true,
       createdAt: true,
       _count: { select: { appointments: true } },
       staff: {
@@ -99,6 +102,9 @@ const patchSchema = z.object({
   password: z.string().min(6).max(100).optional(),
   displayName: z.string().min(2).max(80).optional(),
   locale: z.enum(["he", "ar"]).optional(),
+  smsQuota: z.number().int().min(0).optional(),
+  smsRemaining: z.number().int().min(0).optional(),
+  smsCreditsAdd: z.number().int().min(1).max(100_000).optional(),
 });
 
 export async function PATCH(request: Request) {
@@ -115,6 +121,16 @@ export async function PATCH(request: Request) {
 
   if (parsed.data.password) {
     await resetBarberPassword(parsed.data.id, parsed.data.password);
+  }
+
+  if (parsed.data.smsCreditsAdd !== undefined) {
+    await addBarberSmsCredits(parsed.data.id, parsed.data.smsCreditsAdd);
+  } else if (parsed.data.smsQuota !== undefined) {
+    await setBarberSmsQuota({
+      barberId: parsed.data.id,
+      quota: parsed.data.smsQuota,
+      remaining: parsed.data.smsRemaining,
+    });
   }
 
   const barber = await prisma.barber.update({
@@ -145,6 +161,8 @@ export async function PATCH(request: Request) {
       locale: barber.locale,
       smsPlanEnabled: barber.smsPlanEnabled,
       customerCancelEnabled: barber.customerCancelEnabled,
+      smsQuota: barber.smsQuota,
+      smsRemaining: barber.smsRemaining,
     },
   });
 }

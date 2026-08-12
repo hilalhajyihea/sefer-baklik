@@ -28,6 +28,12 @@ model Barber {
   phone                   String?
   /// Notify barber by SMS when a customer self-cancels
   notifyOnCustomerCancel  Boolean  @default(true)
+  /// Platform-set SMS allowance shown to the barber
+  smsQuota                Int      @default(0)
+  /// Remaining customer SMS sends (1 per successful send)
+  smsRemaining            Int      @default(0)
+  /// True after low-quota (≤10) alert was sent; cleared when topped up above 10
+  smsLowNotified          Boolean  @default(false)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 

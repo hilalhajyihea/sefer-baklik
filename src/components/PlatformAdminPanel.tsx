@@ -20,6 +20,8 @@ type Barber = {
   locale: string;
   smsPlanEnabled: boolean;
   customerCancelEnabled: boolean;
+  smsQuota: number;
+  smsRemaining: number;
   slotMinutes: number;
   _count: { appointments: number };
   staff: StaffMember[];
@@ -115,6 +117,79 @@ export function PlatformAdminPanel() {
     setMessage(
       barber.smsPlanEnabled ? "שירות SMS הושבת לספר" : "שירות SMS הופעל לספר",
     );
+    load();
+  }
+
+  async function setSmsQuota(barber: Barber) {
+    const quotaRaw = prompt(
+      `מכסת SMS כוללת עבור ${barber.displayName} (כרגע ${barber.smsRemaining}/${barber.smsQuota})`,
+      String(barber.smsQuota || 100),
+    );
+    if (quotaRaw == null) return;
+    const quota = Number(quotaRaw);
+    if (!Number.isFinite(quota) || quota < 0) {
+      setError("מכסה לא תקינה");
+      return;
+    }
+    const remRaw = prompt(
+      "יתרה נוכחית (השאירו ריק = שווה למכסה)",
+      String(quota),
+    );
+    if (remRaw == null) return;
+    const remaining =
+      remRaw.trim() === "" ? undefined : Number(remRaw);
+    if (
+      remaining !== undefined &&
+      (!Number.isFinite(remaining) || remaining < 0)
+    ) {
+      setError("יתרה לא תקינה");
+      return;
+    }
+    setError("");
+    const res = await fetch("/api/platform/barbers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: barber.id,
+        smsQuota: Math.floor(quota),
+        ...(remaining !== undefined
+          ? { smsRemaining: Math.floor(remaining) }
+          : {}),
+      }),
+    });
+    if (!res.ok) {
+      setError("עדכון מכסת SMS נכשל");
+      return;
+    }
+    setMessage(`מכסת SMS עודכנה ל־${Math.floor(quota)}`);
+    load();
+  }
+
+  async function addSmsCredits(barber: Barber) {
+    const raw = prompt(
+      `כמה הודעות להוסיף ל־${barber.displayName}? (יתרה כרגע ${barber.smsRemaining})`,
+      "100",
+    );
+    if (raw == null) return;
+    const amount = Number(raw);
+    if (!Number.isFinite(amount) || amount < 1) {
+      setError("כמות לא תקינה");
+      return;
+    }
+    setError("");
+    const res = await fetch("/api/platform/barbers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: barber.id,
+        smsCreditsAdd: Math.floor(amount),
+      }),
+    });
+    if (!res.ok) {
+      setError("הוספת קרדיטים נכשלה");
+      return;
+    }
+    setMessage(`נוספו ${Math.floor(amount)} הודעות SMS`);
     load();
   }
 
@@ -412,7 +487,11 @@ export function PlatformAdminPanel() {
                         משתמש: {b.username} · תורים: {b._count.appointments} ·{" "}
                         {b.isActive ? "פעיל" : "מושבת"} · שפה:{" "}
                         {b.locale === "ar" ? "ערבית" : "עברית"} · SMS:{" "}
-                        {b.smsPlanEnabled ? "מופעל" : "לא במנוי"} · ביטול לקוח:{" "}
+                        {b.smsPlanEnabled ? "מופעל" : "לא במנוי"}
+                        {b.smsPlanEnabled
+                          ? ` (${b.smsRemaining}/${b.smsQuota})`
+                          : ""}{" "}
+                        · ביטול לקוח:{" "}
                         {b.customerCancelEnabled ? "מופעל" : "כבוי"} · צוות:{" "}
                         {teamMode
                           ? `${activeStaff.length} ספרים פעילים`
@@ -463,6 +542,22 @@ export function PlatformAdminPanel() {
                         className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
                       >
                         {b.smsPlanEnabled ? "ביטול SMS" : "הפעל SMS"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSmsQuota(b)}
+                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                        title="הגדרת מכסה ויתרה"
+                      >
+                        מכסת SMS
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => addSmsCredits(b)}
+                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                        title="הוספת הודעות למכסה וליתרה"
+                      >
+                        הוסף SMS
                       </button>
                       <button
                         type="button"

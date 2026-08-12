@@ -3,8 +3,8 @@ import { buildCancelUrl, ensureCancelToken } from "@/lib/cancel";
 import {
   buildConfirmationSms,
   buildReminderSms,
-  sendSms,
 } from "@/lib/sms";
+import { sendCustomerSms } from "@/lib/smsQuota";
 
 export async function sendBookingConfirmation(appointmentId: string) {
   const appointment = await prisma.appointment.findUnique({
@@ -27,15 +27,21 @@ export async function sendBookingConfirmation(appointmentId: string) {
     return { ok: true, skipped: true, error: "אישור כבר נשלח" };
   }
 
+  const phone = (appointment.customerPhone || "").trim();
+  if (!phone) {
+    return { ok: false, skipped: true, error: "אין טלפון ללקוח" };
+  }
+
   let cancelUrl: string | undefined;
   if (appointment.barber.customerCancelEnabled) {
     const cancelToken = await ensureCancelToken(appointment);
     cancelUrl = buildCancelUrl(cancelToken);
   }
 
-  const result = await sendSms(
-    appointment.customerPhone,
-    buildConfirmationSms({
+  const result = await sendCustomerSms({
+    barberId: appointment.barberId,
+    to: phone,
+    body: buildConfirmationSms({
       customerName: appointment.customerName,
       barberName: appointment.barber.displayName,
       staffName: appointment.staff?.displayName,
@@ -43,7 +49,7 @@ export async function sendBookingConfirmation(appointmentId: string) {
       cancelUrl,
       locale: appointment.barber.locale,
     }),
-  );
+  });
 
   if (result.ok && !result.skipped) {
     await prisma.appointment.update({
@@ -66,6 +72,7 @@ export async function processDueReminders() {
       reminderMinutesBefore: true,
       customerCancelEnabled: true,
       locale: true,
+      smsRemaining: true,
     },
   });
 
@@ -74,6 +81,10 @@ export async function processDueReminders() {
   let skipped = 0;
 
   for (const barber of barbers) {
+    if (barber.smsRemaining <= 0) {
+      continue;
+    }
+
     const minutes = Math.max(5, Math.min(24 * 60, barber.reminderMinutesBefore));
     const windowEnd = new Date(now.getTime() + minutes * 60_000);
 
@@ -103,9 +114,10 @@ export async function processDueReminders() {
         cancelUrl = buildCancelUrl(cancelToken);
       }
 
-      const result = await sendSms(
-        phone,
-        buildReminderSms({
+      const result = await sendCustomerSms({
+        barberId: barber.id,
+        to: phone,
+        body: buildReminderSms({
           customerName: appointment.customerName,
           barberName: barber.displayName,
           staffName: appointment.staff?.displayName,
@@ -114,7 +126,7 @@ export async function processDueReminders() {
           cancelUrl,
           locale: barber.locale,
         }),
-      );
+      });
 
       if (result.ok && !result.skipped) {
         await prisma.appointment.update({

@@ -20,6 +20,8 @@ export async function GET() {
       reminderMinutesBefore: true,
       phone: true,
       notifyOnCustomerCancel: true,
+      smsQuota: true,
+      smsRemaining: true,
     },
   });
 
@@ -112,6 +114,8 @@ export async function PUT(request: Request) {
       reminderMinutesBefore: true,
       phone: true,
       notifyOnCustomerCancel: true,
+      smsQuota: true,
+      smsRemaining: true,
     },
   });
 
