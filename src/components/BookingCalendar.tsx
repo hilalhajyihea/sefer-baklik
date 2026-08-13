@@ -309,6 +309,15 @@ export function BookingCalendar({
               {submitting ? t(locale, "bookingSaving") : t(locale, "bookCta")}
             </button>
           </form>
+
+          <p className="mt-8 pb-2 text-center text-sm text-[rgba(248,243,236,0.62)]">
+            <Link
+              href="/"
+              className="font-semibold text-[var(--copper)] underline-offset-2 transition hover:text-[var(--cream)] hover:underline"
+            >
+              {t(locale, "wantThisToo")}
+            </Link>
+          </p>
         </div>
       </div>
     </div>
