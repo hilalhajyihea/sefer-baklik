@@ -15,6 +15,7 @@ type StaffOption = {
 type Props = {
   slug: string;
   displayName: string;
+  logoUrl?: string | null;
   locale?: Locale | string;
   staff?: StaffOption[];
 };
@@ -22,6 +23,7 @@ type Props = {
 export function BookingCalendar({
   slug,
   displayName,
+  logoUrl,
   locale: localeProp,
   staff = [],
 }: Props) {
@@ -162,9 +164,20 @@ export function BookingCalendar({
             <p className="text-xs font-semibold tracking-[0.22em] text-[rgba(248,243,236,0.78)]">
               {t(locale, "bookTitle")}
             </p>
-            <h1 className="font-display mt-3 max-w-xl text-4xl leading-[1.08] text-[var(--cream)] sm:text-6xl">
-              {displayName}
-            </h1>
+            {logoUrl ? (
+              <div className="mt-4 max-w-xl">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={logoUrl}
+                  alt={displayName}
+                  className="h-auto max-h-24 w-auto max-w-full object-contain object-right sm:max-h-32"
+                />
+              </div>
+            ) : (
+              <h1 className="font-display mt-3 max-w-xl text-4xl leading-[1.08] text-[var(--cream)] sm:text-6xl">
+                {displayName}
+              </h1>
+            )}
             <div className="mt-5 h-0.5 w-16 bg-[var(--copper)]" />
             <p className="mt-4 max-w-md text-base text-[rgba(248,243,236,0.82)] sm:text-lg">
               {t(locale, "pickDateTime")}

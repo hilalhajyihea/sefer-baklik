@@ -37,6 +37,7 @@ export default async function BarberPublicPage({ params }: Props) {
       <BookingCalendar
         slug={barber.slug}
         displayName={barber.displayName}
+        logoUrl={barber.logoUrl}
         locale={locale}
         staff={staff}
       />

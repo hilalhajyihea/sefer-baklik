@@ -31,6 +31,7 @@ export async function GET() {
       customerCancelEnabled: true,
       smsQuota: true,
       smsRemaining: true,
+      logoUrl: true,
       createdAt: true,
       _count: { select: { appointments: true } },
       staff: {

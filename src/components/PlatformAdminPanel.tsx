@@ -22,6 +22,7 @@ type Barber = {
   customerCancelEnabled: boolean;
   smsQuota: number;
   smsRemaining: number;
+  logoUrl: string | null;
   slotMinutes: number;
   _count: { appointments: number };
   staff: StaffMember[];
@@ -190,6 +191,45 @@ export function PlatformAdminPanel() {
       return;
     }
     setMessage(`נוספו ${Math.floor(amount)} הודעות SMS`);
+    load();
+  }
+
+  async function uploadLogo(barber: Barber, file: File | null) {
+    if (!file) return;
+    setError("");
+    const form = new FormData();
+    form.set("barberId", barber.id);
+    form.set("file", file);
+    const res = await fetch("/api/platform/barbers/logo", {
+      method: "POST",
+      body: form,
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || "העלאת לוגו נכשלה");
+      return;
+    }
+    setMessage(`לוגו עודכן ל־${barber.displayName} (השם נשאר להודעות SMS)`);
+    load();
+  }
+
+  async function removeLogo(barber: Barber) {
+    if (!barber.logoUrl) return;
+    if (!confirm(`להסיר את הלוגו של ${barber.displayName}? השם יוצג שוב באתר.`)) {
+      return;
+    }
+    setError("");
+    const res = await fetch("/api/platform/barbers/logo", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: barber.id }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || "הסרת לוגו נכשלה");
+      return;
+    }
+    setMessage(`הלוגו הוסר — באתר יוצג שוב השם: ${barber.displayName}`);
     load();
   }
 
@@ -486,6 +526,11 @@ export function PlatformAdminPanel() {
                         <span className="text-sm font-normal text-[rgba(248,243,236,0.55)]">
                           /{b.slug}
                         </span>
+                        {b.logoUrl ? (
+                          <span className="mr-2 text-xs font-normal text-[var(--copper)]">
+                            · יש לוגו
+                          </span>
+                        ) : null}
                       </p>
                       <p className="text-sm text-[rgba(248,243,236,0.62)]">
                         משתמש: {b.username} · תורים: {b._count.appointments} ·{" "}
@@ -525,6 +570,28 @@ export function PlatformAdminPanel() {
                       >
                         שם תצוגה
                       </button>
+                      <label className="shop-chip cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium">
+                        {b.logoUrl ? "החלף לוגו" : "העלה לוגו"}
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            e.target.value = "";
+                            void uploadLogo(b, file);
+                          }}
+                        />
+                      </label>
+                      {b.logoUrl ? (
+                        <button
+                          type="button"
+                          onClick={() => removeLogo(b)}
+                          className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
+                        >
+                          הסר לוגו
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         onClick={() => resetPassword(b)}

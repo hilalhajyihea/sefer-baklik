@@ -36,6 +36,10 @@ yarn-error.log*
 .env.*.local
 !.env.example
 
+# uploaded barber logos (kept on disk at runtime)
+/public/uploads/barbers/**
+!/public/uploads/barbers/.gitkeep
+
 # vercel
 .vercel
 

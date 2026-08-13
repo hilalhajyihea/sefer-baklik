@@ -36,6 +36,8 @@ model Barber {
   smsLowNotified          Boolean  @default(false)
   /// YYYY-MM (Asia/Jerusalem) of the last monthly quota reset
   smsQuotaMonth           String?
+  /// Optional public logo URL (platform-uploaded). When set, replaces name in hero.
+  logoUrl                 String?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
