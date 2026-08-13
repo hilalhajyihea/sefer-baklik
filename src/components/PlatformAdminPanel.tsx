@@ -23,6 +23,7 @@ type Barber = {
   smsQuota: number;
   smsRemaining: number;
   logoUrl: string | null;
+  logoMimeType: string | null;
   slotMinutes: number;
   _count: { appointments: number };
   staff: StaffMember[];
@@ -214,7 +215,7 @@ export function PlatformAdminPanel() {
   }
 
   async function removeLogo(barber: Barber) {
-    if (!barber.logoUrl) return;
+    if (!barber.logoMimeType && !barber.logoUrl) return;
     if (!confirm(`להסיר את הלוגו של ${barber.displayName}? השם יוצג שוב באתר.`)) {
       return;
     }
@@ -526,7 +527,7 @@ export function PlatformAdminPanel() {
                         <span className="text-sm font-normal text-[rgba(248,243,236,0.55)]">
                           /{b.slug}
                         </span>
-                        {b.logoUrl ? (
+                        {b.logoMimeType || b.logoUrl ? (
                           <span className="mr-2 text-xs font-normal text-[var(--copper)]">
                             · יש לוגו
                           </span>
@@ -571,7 +572,7 @@ export function PlatformAdminPanel() {
                         שם תצוגה
                       </button>
                       <label className="shop-chip cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium">
-                        {b.logoUrl ? "החלף לוגו" : "העלה לוגו"}
+                        {b.logoMimeType || b.logoUrl ? "החלף לוגו" : "העלה לוגו"}
                         <input
                           type="file"
                           accept="image/png,image/jpeg,image/webp,image/svg+xml"
@@ -583,7 +584,7 @@ export function PlatformAdminPanel() {
                           }}
                         />
                       </label>
-                      {b.logoUrl ? (
+                      {b.logoMimeType || b.logoUrl ? (
                         <button
                           type="button"
                           onClick={() => removeLogo(b)}

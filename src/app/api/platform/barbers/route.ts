@@ -32,6 +32,7 @@ export async function GET() {
       smsQuota: true,
       smsRemaining: true,
       logoUrl: true,
+      logoMimeType: true,
       createdAt: true,
       _count: { select: { appointments: true } },
       staff: {

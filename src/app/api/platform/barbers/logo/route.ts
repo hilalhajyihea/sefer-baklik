@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requirePlatformSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { removeBarberLogoFile, saveBarberLogo } from "@/lib/barberLogo";
+import { logoApiUrl, readLogoUpload } from "@/lib/barberLogo";
 
 export async function POST(request: Request) {
   const session = await requirePlatformSession();
@@ -22,18 +22,22 @@ export async function POST(request: Request) {
 
   const barber = await prisma.barber.findUnique({
     where: { id: barberId },
-    select: { id: true, slug: true, logoUrl: true, displayName: true },
+    select: { id: true, slug: true, displayName: true },
   });
   if (!barber) {
     return NextResponse.json({ error: "ספר לא נמצא" }, { status: 404 });
   }
 
   try {
-    await removeBarberLogoFile(barber.logoUrl);
-    const { logoUrl } = await saveBarberLogo({ slug: barber.slug, file });
+    const { data, mimeType } = await readLogoUpload(file);
+    const logoUrl = logoApiUrl(barber.slug);
     const updated = await prisma.barber.update({
       where: { id: barber.id },
-      data: { logoUrl },
+      data: {
+        logoData: data,
+        logoMimeType: mimeType,
+        logoUrl,
+      },
       select: { id: true, slug: true, displayName: true, logoUrl: true },
     });
     return NextResponse.json({ barber: updated });
@@ -58,16 +62,19 @@ export async function DELETE(request: Request) {
 
   const barber = await prisma.barber.findUnique({
     where: { id: barberId },
-    select: { id: true, logoUrl: true, displayName: true, slug: true },
+    select: { id: true, displayName: true, slug: true },
   });
   if (!barber) {
     return NextResponse.json({ error: "ספר לא נמצא" }, { status: 404 });
   }
 
-  await removeBarberLogoFile(barber.logoUrl);
   const updated = await prisma.barber.update({
     where: { id: barber.id },
-    data: { logoUrl: null },
+    data: {
+      logoUrl: null,
+      logoData: null,
+      logoMimeType: null,
+    },
     select: { id: true, slug: true, displayName: true, logoUrl: true },
   });
 

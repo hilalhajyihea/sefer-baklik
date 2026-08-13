@@ -25,19 +25,33 @@ export default async function BarberPublicPage({ params }: Props) {
     notFound();
   }
 
-  const barber = await prisma.barber.findUnique({ where: { slug } });
+  const barber = await prisma.barber.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      slug: true,
+      displayName: true,
+      isActive: true,
+      locale: true,
+      logoUrl: true,
+      logoMimeType: true,
+    },
+  });
   if (!barber || !barber.isActive) notFound();
 
   const locale = normalizeLocale(barber.locale);
   const teamMode = await isTeamMode(barber.id);
   const staff = teamMode ? await getActiveStaff(barber.id) : [];
+  const logoUrl = barber.logoMimeType
+    ? barber.logoUrl || `/api/barbers/${barber.slug}/logo`
+    : null;
 
   return (
     <main className="flex-1" lang={locale}>
       <BookingCalendar
         slug={barber.slug}
         displayName={barber.displayName}
-        logoUrl={barber.logoUrl}
+        logoUrl={logoUrl}
         locale={locale}
         staff={staff}
       />
