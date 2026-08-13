@@ -368,23 +368,25 @@ export function PlatformAdminPanel() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8">
+    <div className="shop-chrome mx-auto w-full max-w-4xl px-4 py-8">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-[var(--muted)]">ניהול מערכת</p>
-          <h1 className="font-display text-3xl sm:text-4xl">ספר בקליק</h1>
+          <p className="text-sm shop-muted">ניהול מערכת</p>
+          <h1 className="font-display text-3xl text-[var(--cream)] sm:text-4xl">
+            ספר בקליק
+          </h1>
         </div>
         <div className="flex gap-2">
           <Link
             href="/"
-            className="rounded-xl border border-[var(--line)] bg-white/70 px-4 py-2 text-sm font-semibold"
+            className="rounded-xl border border-white/20 bg-black/30 px-4 py-2 text-sm font-semibold text-[var(--cream)] backdrop-blur-sm transition hover:bg-black/45"
           >
             לדף הבית
           </Link>
           <button
             type="button"
             onClick={logout}
-            className="rounded-xl border border-[var(--line)] bg-white/70 px-4 py-2 text-sm font-semibold"
+            className="rounded-xl border border-white/20 bg-black/30 px-4 py-2 text-sm font-semibold text-[var(--cream)] backdrop-blur-sm transition hover:bg-black/45"
           >
             יציאה
           </button>
@@ -392,53 +394,55 @@ export function PlatformAdminPanel() {
       </header>
 
       {message ? (
-        <p className="mb-4 rounded-lg bg-[var(--olive-soft)] px-3 py-2 text-sm text-[var(--olive)]">
+        <p className="mb-4 rounded-lg border border-[var(--olive)]/40 bg-[rgba(47,74,52,0.35)] px-3 py-2 text-sm text-[var(--olive-soft)]">
           {message}
         </p>
       ) : null}
       {error ? (
-        <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mb-4 rounded-lg border border-red-400/30 bg-red-950/70 px-3 py-2 text-sm text-red-200">
           {error}
         </p>
       ) : null}
 
-      <section className="surface mb-6 rounded-2xl p-5 sm:p-6">
-        <h2 className="text-lg font-semibold">הוספת ספר חדש</h2>
+      <section className="surface-dark mb-6 rounded-2xl p-5 sm:p-6">
+        <h2 className="text-lg font-semibold text-[var(--cream)]">
+          הוספת ספר חדש
+        </h2>
         <form
           onSubmit={createBarber}
           className="mt-4 grid gap-3 sm:grid-cols-2"
         >
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-[var(--cream)]">
             שם תצוגה
             <input
               required
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+              className="shop-field mt-1 w-full rounded-xl px-3 py-2.5"
               placeholder="דני הספר"
             />
           </label>
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-[var(--cream)]">
             כתובת (slug)
             <input
               required
               value={slug}
               onChange={(e) => setSlug(e.target.value.toLowerCase())}
-              className="mt-1 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+              className="shop-field mt-1 w-full rounded-xl px-3 py-2.5"
               placeholder="dani"
               pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
             />
           </label>
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-[var(--cream)]">
             שם משתמש להתחברות
             <input
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+              className="shop-field mt-1 w-full rounded-xl px-3 py-2.5"
             />
           </label>
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-[var(--cream)]">
             סיסמה התחלתית
             <input
               required
@@ -446,7 +450,7 @@ export function PlatformAdminPanel() {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+              className="shop-field mt-1 w-full rounded-xl px-3 py-2.5"
             />
           </label>
           <button
@@ -458,12 +462,12 @@ export function PlatformAdminPanel() {
         </form>
       </section>
 
-      <section className="surface rounded-2xl p-5 sm:p-6">
-        <h2 className="mb-4 text-lg font-semibold">ספרים</h2>
+      <section className="surface-dark rounded-2xl p-5 sm:p-6">
+        <h2 className="mb-4 text-lg font-semibold text-[var(--cream)]">ספרים</h2>
         {loading ? (
-          <p className="text-[var(--muted)]">טוען...</p>
+          <p className="text-[rgba(248,243,236,0.62)]">טוען...</p>
         ) : barbers.length === 0 ? (
-          <p className="text-[var(--muted)]">עדיין אין ספרים</p>
+          <p className="text-[rgba(248,243,236,0.62)]">עדיין אין ספרים</p>
         ) : (
           <div className="space-y-3">
             {barbers.map((b) => {
@@ -473,17 +477,17 @@ export function PlatformAdminPanel() {
               return (
                 <div
                   key={b.id}
-                  className="rounded-xl border border-[var(--line)] bg-white/80 px-4 py-3"
+                  className="rounded-xl border border-white/12 bg-black/30 px-4 py-3"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="font-semibold">
+                      <p className="font-semibold text-[var(--cream)]">
                         {b.displayName}{" "}
-                        <span className="text-sm font-normal text-[var(--muted)]">
+                        <span className="text-sm font-normal text-[rgba(248,243,236,0.55)]">
                           /{b.slug}
                         </span>
                       </p>
-                      <p className="text-sm text-[var(--muted)]">
+                      <p className="text-sm text-[rgba(248,243,236,0.62)]">
                         משתמש: {b.username} · תורים: {b._count.appointments} ·{" "}
                         {b.isActive ? "פעיל" : "מושבת"} · שפה:{" "}
                         {b.locale === "ar" ? "ערבית" : "עברית"} · SMS:{" "}
@@ -501,7 +505,7 @@ export function PlatformAdminPanel() {
                     <div className="flex flex-wrap gap-2">
                       <Link
                         href={`/${b.slug}`}
-                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
                       >
                         יומן
                       </Link>
@@ -510,28 +514,28 @@ export function PlatformAdminPanel() {
                         onClick={() =>
                           setExpandedStaffFor(expanded ? null : b.id)
                         }
-                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
                       >
                         צוות
                       </button>
                       <button
                         type="button"
                         onClick={() => renameDisplayName(b)}
-                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
                       >
                         שם תצוגה
                       </button>
                       <button
                         type="button"
                         onClick={() => resetPassword(b)}
-                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
                       >
                         איפוס סיסמה
                       </button>
                       <button
                         type="button"
                         onClick={() => toggleLocale(b)}
-                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
                         title="מחליף את שפת דף ההזמנה, ניהול הספר והודעות ה-SMS"
                       >
                         {b.locale === "ar" ? "שפה: ערבית" : "שפה: עברית"}
@@ -539,14 +543,14 @@ export function PlatformAdminPanel() {
                       <button
                         type="button"
                         onClick={() => toggleSmsPlan(b)}
-                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
                       >
                         {b.smsPlanEnabled ? "ביטול SMS" : "הפעל SMS"}
                       </button>
                       <button
                         type="button"
                         onClick={() => setSmsQuota(b)}
-                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
                         title="מכסה חודשית — מתאפסת בראשון לחודש"
                       >
                         מכסה חודשית
@@ -554,7 +558,7 @@ export function PlatformAdminPanel() {
                       <button
                         type="button"
                         onClick={() => addSmsCredits(b)}
-                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
                         title="תוספת ליתרה בחודש הנוכחי בלבד"
                       >
                         הוסף SMS
@@ -562,7 +566,7 @@ export function PlatformAdminPanel() {
                       <button
                         type="button"
                         onClick={() => toggleCustomerCancel(b)}
-                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-40"
                         disabled={!b.smsPlanEnabled && !b.customerCancelEnabled}
                         title={
                           !b.smsPlanEnabled && !b.customerCancelEnabled
@@ -577,7 +581,7 @@ export function PlatformAdminPanel() {
                       <button
                         type="button"
                         onClick={() => toggleActive(b)}
-                        className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-sm font-medium"
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
                       >
                         {b.isActive ? "השבתה" : "הפעלה"}
                       </button>
@@ -585,12 +589,12 @@ export function PlatformAdminPanel() {
                   </div>
 
                   {expanded ? (
-                    <div className="mt-3 rounded-lg border border-[var(--line)] bg-[var(--cream)]/60 p-3">
+                    <div className="mt-3 rounded-lg border border-white/12 bg-black/35 p-3">
                       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm font-semibold">
+                        <p className="text-sm font-semibold text-[var(--cream)]">
                           צוות המספרה
                           {!teamMode ? (
-                            <span className="mr-2 font-normal text-[var(--muted)]">
+                            <span className="mr-2 font-normal text-[rgba(248,243,236,0.55)]">
                               (צריך לפחות 2 ספרים פעילים למצב צוות)
                             </span>
                           ) : null}
@@ -598,13 +602,13 @@ export function PlatformAdminPanel() {
                         <button
                           type="button"
                           onClick={() => addStaff(b)}
-                          className="rounded-lg border border-[var(--line)] bg-white px-3 py-1.5 text-sm font-medium"
+                          className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
                         >
                           הוסף ספר לצוות
                         </button>
                       </div>
                       {(b.staff || []).length === 0 ? (
-                        <p className="text-sm text-[var(--muted)]">
+                        <p className="text-sm text-[rgba(248,243,236,0.62)]">
                           אין ספרי צוות — המספרה פועלת כספר יחיד
                         </p>
                       ) : (
@@ -612,11 +616,11 @@ export function PlatformAdminPanel() {
                           {b.staff.map((s) => (
                             <div
                               key={s.id}
-                              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--line)] bg-white px-3 py-2"
+                              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/12 bg-black/30 px-3 py-2"
                             >
-                              <p className="text-sm font-medium">
+                              <p className="text-sm font-medium text-[var(--cream)]">
                                 {s.displayName}{" "}
-                                <span className="text-[var(--muted)]">
+                                <span className="text-[rgba(248,243,236,0.55)]">
                                   · {s.isActive ? "פעיל" : "מושבת"}
                                 </span>
                               </p>
@@ -624,21 +628,21 @@ export function PlatformAdminPanel() {
                                 <button
                                   type="button"
                                   onClick={() => renameStaff(s)}
-                                  className="rounded-lg border border-[var(--line)] px-2.5 py-1 text-xs font-medium"
+                                  className="shop-chip rounded-lg px-2.5 py-1 text-xs font-medium"
                                 >
                                   שם
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => toggleStaffActive(s)}
-                                  className="rounded-lg border border-[var(--line)] px-2.5 py-1 text-xs font-medium"
+                                  className="shop-chip rounded-lg px-2.5 py-1 text-xs font-medium"
                                 >
                                   {s.isActive ? "השבתה" : "הפעלה"}
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => deleteStaff(s)}
-                                  className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700"
+                                  className="rounded-lg border border-red-400/35 bg-red-950/40 px-2.5 py-1 text-xs font-medium text-red-200"
                                 >
                                   מחק
                                 </button>

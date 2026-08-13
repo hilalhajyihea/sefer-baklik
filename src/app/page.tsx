@@ -37,7 +37,7 @@ const customFeatures = [
 function CheckIcon() {
   return (
     <svg
-      className="mt-0.5 h-4 w-4 shrink-0 text-[var(--olive)]"
+      className="mt-0.5 h-4 w-4 shrink-0 text-[var(--copper)]"
       viewBox="0 0 20 20"
       fill="none"
       aria-hidden
@@ -152,7 +152,7 @@ function SocialButtons({ size = "md" }: { size?: "sm" | "md" }) {
 
 export default function HomePage() {
   return (
-    <main className="relative flex flex-1 flex-col">
+    <main className="shop-shell relative flex flex-1 flex-col">
       <section className="relative isolate min-h-[88svh] overflow-hidden sm:min-h-[92svh]">
         <Image
           src="/images/barber-hero-default.jpg"
@@ -164,7 +164,7 @@ export default function HomePage() {
         />
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-t from-[rgba(20,16,12,0.94)] via-[rgba(20,16,12,0.62)] to-[rgba(20,16,12,0.38)]"
+          className="absolute inset-0 bg-gradient-to-t from-[#0e0b09] via-[rgba(18,14,11,0.62)] to-[rgba(18,14,11,0.28)]"
         />
         <div
           aria-hidden
@@ -232,39 +232,41 @@ export default function HomePage() {
         className="relative scroll-mt-8 px-6 py-16 sm:px-10 sm:py-20"
       >
         <div className="mx-auto max-w-6xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--copper-deep)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--copper)]">
             מחירון
           </p>
-          <h2 className="font-display mt-3 text-4xl text-[var(--ink)] sm:text-5xl">
+          <h2 className="font-display mt-3 text-4xl text-[var(--cream)] sm:text-5xl">
             חבילות חודשיות
           </h2>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--muted)] sm:text-lg">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-[rgba(248,243,236,0.68)] sm:text-lg">
             המחיר הוא לחודש. כל החבילות כוללות את כלי הניהול באפליקציה —
             ההבדל הוא בשירות ה-SMS.
           </p>
 
           <div className="mt-10 grid gap-5 lg:grid-cols-3">
-            <article className="surface flex flex-col rounded-2xl p-6 sm:p-7">
-              <p className="text-sm font-semibold text-[var(--muted)]">
+            <article className="surface-dark flex flex-col rounded-2xl p-6 sm:p-7">
+              <p className="text-sm font-semibold text-[rgba(248,243,236,0.62)]">
                 חבילת בסיס
               </p>
               <p className="mt-3 flex items-baseline gap-1">
-                <span className="font-display text-5xl text-[var(--ink)]">
+                <span className="font-display text-5xl text-[var(--cream)]">
                   ₪99
                 </span>
-                <span className="text-sm text-[var(--muted)]">/ לחודש</span>
+                <span className="text-sm text-[rgba(248,243,236,0.55)]">
+                  / לחודש
+                </span>
               </p>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
+              <p className="mt-3 text-sm leading-relaxed text-[rgba(248,243,236,0.68)]">
                 כל הפיצ׳רים לניהול המספרה — בלי הודעות SMS ללקוחות.
               </p>
-              <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm text-[var(--ink)]">
+              <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm text-[var(--cream)]">
                 {baseFeatures.map((item) => (
                   <li key={item} className="flex items-start gap-2.5">
                     <CheckIcon />
                     <span>{item}</span>
                   </li>
                 ))}
-                <li className="flex items-start gap-2.5 text-[var(--muted)]">
+                <li className="flex items-start gap-2.5 text-[rgba(248,243,236,0.55)]">
                   <span className="mt-0.5 inline-block w-4 shrink-0 text-center font-bold">
                     —
                   </span>
@@ -275,29 +277,31 @@ export default function HomePage() {
                 href={SITE_ADMIN_WHATSAPP}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-8 inline-flex items-center justify-center rounded-xl border border-[var(--ink)]/15 px-5 py-3 text-sm font-semibold transition hover:bg-white"
+                className="mt-8 inline-flex items-center justify-center rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-[var(--cream)] transition hover:bg-white/10"
               >
                 להתחיל ב-WhatsApp
               </a>
             </article>
 
-            <article className="relative flex flex-col rounded-2xl border-2 border-[var(--copper)] bg-[var(--cream)] p-6 shadow-[0_22px_60px_rgba(196,90,40,0.16)] sm:p-7">
+            <article className="relative flex flex-col rounded-2xl border-2 border-[var(--copper)] bg-[rgba(22,18,14,0.96)] p-6 shadow-[0_22px_60px_rgba(196,90,40,0.22)] sm:p-7">
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[var(--copper)] px-3 py-1 text-xs font-bold text-white">
                 מומלץ
               </span>
-              <p className="text-sm font-semibold text-[var(--copper-deep)]">
+              <p className="text-sm font-semibold text-[var(--copper)]">
                 חבילה מומלצת
               </p>
               <p className="mt-3 flex items-baseline gap-1">
-                <span className="font-display text-5xl text-[var(--ink)]">
+                <span className="font-display text-5xl text-[var(--cream)]">
                   ₪149
                 </span>
-                <span className="text-sm text-[var(--muted)]">/ לחודש</span>
+                <span className="text-sm text-[rgba(248,243,236,0.55)]">
+                  / לחודש
+                </span>
               </p>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
+              <p className="mt-3 text-sm leading-relaxed text-[rgba(248,243,236,0.68)]">
                 כל מה שיש בבסיס, ועוד 500 הודעות SMS בחודש ללקוחות.
               </p>
-              <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm text-[var(--ink)]">
+              <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm text-[var(--cream)]">
                 <li className="flex items-start gap-2.5 font-medium">
                   <CheckIcon />
                   <span>כל פיצ׳רי חבילת הבסיס</span>
@@ -319,17 +323,17 @@ export default function HomePage() {
               </a>
             </article>
 
-            <article className="surface flex flex-col rounded-2xl p-6 sm:p-7">
-              <p className="text-sm font-semibold text-[var(--muted)]">
+            <article className="surface-dark flex flex-col rounded-2xl p-6 sm:p-7">
+              <p className="text-sm font-semibold text-[rgba(248,243,236,0.62)]">
                 חבילה מותאמת אישית
               </p>
-              <p className="mt-3 font-display text-4xl leading-tight text-[var(--ink)] sm:text-5xl">
+              <p className="mt-3 font-display text-4xl leading-tight text-[var(--cream)] sm:text-5xl">
                 צור קשר
               </p>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
+              <p className="mt-3 text-sm leading-relaxed text-[rgba(248,243,236,0.68)]">
                 מחיר לפי צורך — מכסת SMS אחרת, צוות גדול או התאמות נוספות.
               </p>
-              <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm text-[var(--ink)]">
+              <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm text-[var(--cream)]">
                 <li className="flex items-start gap-2.5 font-medium">
                   <CheckIcon />
                   <span>כל פיצ׳רי האפליקציה</span>
@@ -345,7 +349,7 @@ export default function HomePage() {
                 href={SITE_ADMIN_WHATSAPP}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-8 inline-flex items-center justify-center rounded-xl border border-[var(--ink)]/15 px-5 py-3 text-sm font-semibold transition hover:bg-white"
+                className="mt-8 inline-flex items-center justify-center rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-[var(--cream)] transition hover:bg-white/10"
               >
                 לקבל הצעת מחיר
               </a>
@@ -356,9 +360,9 @@ export default function HomePage() {
 
       <section
         id="contact"
-        className="relative scroll-mt-8 border-t border-[var(--line)] bg-[var(--charcoal)] px-6 py-14 sm:px-10"
+        className="relative scroll-mt-8 border-t border-white/10 px-6 py-14 sm:px-10"
       >
-        <div className="barber-stripes-soft pointer-events-none absolute inset-0 opacity-30" />
+        <div className="barber-stripes-soft pointer-events-none absolute inset-0 opacity-20" />
         <div className="relative mx-auto flex max-w-6xl flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--copper)]">
@@ -394,7 +398,7 @@ export default function HomePage() {
             WhatsApp {SITE_ADMIN_PHONE}
           </a>
         </div>
-        <p className="relative mx-auto mt-10 max-w-6xl text-center text-sm text-[var(--stripe)] sm:text-start">
+        <p className="relative mx-auto mt-10 max-w-6xl text-center text-sm text-[rgba(248,243,236,0.45)] sm:text-start">
           ספר בקליק · יומן תורים דיגיטלי
         </p>
       </section>

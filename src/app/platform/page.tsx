@@ -14,7 +14,7 @@ export default async function PlatformPage() {
   if (!session) redirect("/platform/login");
 
   return (
-    <main className="flex-1">
+    <main className="shop-shell flex-1">
       <PlatformAdminPanel />
     </main>
   );

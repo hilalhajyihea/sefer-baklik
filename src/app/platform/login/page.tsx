@@ -16,7 +16,7 @@ export default async function PlatformLoginPage() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-12">
+    <main className="shop-shell flex flex-1 items-center justify-center px-4 py-12">
       <LoginForm
         endpoint="/api/auth/platform/login"
         title="מנהל מערכת"

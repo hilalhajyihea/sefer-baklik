@@ -25,11 +25,8 @@
 }
 
 body {
-  background:
-    radial-gradient(ellipse 90% 55% at 100% -15%, rgba(196, 90, 40, 0.22), transparent 55%),
-    radial-gradient(ellipse 70% 50% at -10% 90%, rgba(47, 74, 52, 0.14), transparent 50%),
-    linear-gradient(168deg, #e5ddd2 0%, var(--cream) 42%, #f3ebe2 100%);
-  color: var(--foreground);
+  background: #0e0b09;
+  color: rgba(248, 243, 236, 0.92);
   font-family: var(--font-rubik), "Segoe UI", Tahoma, sans-serif;
   min-height: 100vh;
 }
