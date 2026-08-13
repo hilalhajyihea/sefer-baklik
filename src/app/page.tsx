@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  SITE_ADMIN_EMAIL,
   SITE_ADMIN_NAME,
   SITE_ADMIN_PHONE,
   SITE_ADMIN_WHATSAPP,
@@ -281,8 +282,14 @@ export default function HomePage() {
             </h2>
             <p className="mt-2 text-[rgba(248,243,236,0.72)]">מנהל האתר</p>
             <p className="mt-5 max-w-md text-sm leading-relaxed text-[rgba(248,243,236,0.7)]">
-              רוצה את זה אצלך במספרה? כתבו בוואטסאפ ונחבר אתכם.
+              רוצה את זה אצלך במספרה? כתבו בוואטסאפ או במייל ונחבר אתכם.
             </p>
+            <a
+              href={`mailto:${SITE_ADMIN_EMAIL}`}
+              className="mt-3 inline-block text-sm font-semibold text-[var(--copper)] underline-offset-2 hover:underline"
+            >
+              {SITE_ADMIN_EMAIL}
+            </a>
           </div>
           <a
             href={SITE_ADMIN_WHATSAPP}
@@ -299,28 +306,36 @@ export default function HomePage() {
         </p>
       </section>
 
-      <a
-        href={SITE_ADMIN_WHATSAPP}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-5 left-5 z-50 flex max-w-[16.5rem] items-center gap-3 rounded-2xl bg-[#25D366] px-3.5 py-3 text-white shadow-[0_12px_32px_rgba(37,211,102,0.38)] transition hover:brightness-110"
-        aria-label={`WhatsApp ${SITE_ADMIN_NAME}`}
-      >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20">
-          <WhatsAppIcon className="h-6 w-6" />
-        </span>
-        <span className="min-w-0 text-start leading-tight">
-          <span className="block text-[11px] font-medium text-white/85">
-            מנהל האתר
+      <div className="fixed bottom-5 left-5 z-50 flex max-w-[17.5rem] flex-col overflow-hidden rounded-2xl bg-[#25D366] text-white shadow-[0_12px_32px_rgba(37,211,102,0.38)]">
+        <a
+          href={SITE_ADMIN_WHATSAPP}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 px-3.5 py-3 transition hover:brightness-110"
+          aria-label={`WhatsApp ${SITE_ADMIN_NAME}`}
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20">
+            <WhatsAppIcon className="h-6 w-6" />
           </span>
-          <span className="block truncate text-sm font-bold">
-            {SITE_ADMIN_NAME}
+          <span className="min-w-0 text-start leading-tight">
+            <span className="block text-[11px] font-medium text-white/85">
+              מנהל האתר
+            </span>
+            <span className="block truncate text-sm font-bold">
+              {SITE_ADMIN_NAME}
+            </span>
+            <span className="block text-xs font-semibold tracking-wide">
+              {SITE_ADMIN_PHONE}
+            </span>
           </span>
-          <span className="block text-xs font-semibold tracking-wide">
-            {SITE_ADMIN_PHONE}
-          </span>
-        </span>
-      </a>
+        </a>
+        <a
+          href={`mailto:${SITE_ADMIN_EMAIL}`}
+          className="border-t border-white/20 bg-black/10 px-3.5 py-2 text-center text-xs font-semibold tracking-wide transition hover:bg-black/20"
+        >
+          {SITE_ADMIN_EMAIL}
+        </a>
+      </div>
     </main>
   );
 }
