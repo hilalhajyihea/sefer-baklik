@@ -127,7 +127,7 @@ export function BookingCalendar({
   }
 
   return (
-    <div className="relative min-h-[100svh]" lang={locale}>
+    <div className="shop-shell relative min-h-[100svh]" lang={locale}>
       {/* Full-bleed hero */}
       <section className="relative isolate min-h-[52svh] overflow-hidden sm:min-h-[58svh]">
         <Image
@@ -140,7 +140,7 @@ export function BookingCalendar({
         />
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-t from-[rgba(20,16,12,0.92)] via-[rgba(20,16,12,0.55)] to-[rgba(20,16,12,0.35)]"
+          className="absolute inset-0 bg-gradient-to-t from-[#0e0b09] via-[rgba(18,14,11,0.62)] to-[rgba(18,14,11,0.28)]"
         />
         <div
           aria-hidden
@@ -152,7 +152,7 @@ export function BookingCalendar({
             <BrandMark tone="light" label={t(locale, "brand")} />
             <Link
               href={`/${slug}/login`}
-              className="shrink-0 rounded-xl border border-white/25 bg-black/25 px-4 py-2 text-sm font-semibold text-[var(--cream)] backdrop-blur-sm transition hover:bg-black/40"
+              className="shrink-0 rounded-xl border border-white/25 bg-black/35 px-4 py-2 text-sm font-semibold text-[var(--cream)] backdrop-blur-sm transition hover:bg-black/50"
             >
               {t(locale, "admin")}
             </Link>
@@ -174,7 +174,7 @@ export function BookingCalendar({
       </section>
 
       {/* Booking panel */}
-      <div className="relative -mt-8 pb-12 sm:-mt-10 sm:pb-16">
+      <div className="relative -mt-8 pb-14 sm:-mt-10 sm:pb-20">
         <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
           <form
             onSubmit={onSubmit}

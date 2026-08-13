@@ -96,6 +96,63 @@ body {
   mix-blend-mode: multiply;
 }
 
+/* Barber shop pages — continue the hero photo mood (dark, worn, serious) */
+.shop-shell {
+  position: relative;
+  isolation: isolate;
+  min-height: 100%;
+  background-color: #120e0b;
+}
+
+.shop-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18, 14, 11, 0.42) 0%,
+      rgba(18, 14, 11, 0.78) 38%,
+      rgba(14, 11, 9, 0.94) 72%,
+      #0e0b09 100%
+    ),
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(196, 90, 40, 0.14), transparent 55%),
+    url("/images/barber-hero-default.jpg") center top / cover no-repeat;
+  pointer-events: none;
+}
+
+.shop-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  opacity: 0.14;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.shop-shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+.shop-shell .surface {
+  background: rgba(248, 243, 236, 0.94);
+  border-color: rgba(212, 200, 186, 0.55);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.42);
+}
+
+.shop-chrome {
+  color: rgba(248, 243, 236, 0.9);
+}
+
+.shop-chrome .shop-muted {
+  color: rgba(248, 243, 236, 0.62);
+}
+
 @keyframes fade-up {
   from {
     opacity: 0;

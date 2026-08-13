@@ -33,7 +33,7 @@ export default async function BarberLoginPage({ params }: Props) {
   const locale = normalizeLocale(barber.locale);
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-12" lang={locale}>
+    <main className="shop-shell flex flex-1 items-center justify-center px-4 py-12" lang={locale}>
       <LoginForm
         endpoint="/api/auth/barber/login"
         title={t(locale, "loginTitle")}

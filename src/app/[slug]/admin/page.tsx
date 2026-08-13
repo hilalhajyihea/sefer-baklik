@@ -31,7 +31,7 @@ export default async function BarberAdminPage({ params }: Props) {
   const locale = normalizeLocale(barber.locale);
 
   return (
-    <main className="flex-1" lang={locale}>
+    <main className="shop-shell flex-1" lang={locale}>
       <BarberAdminPanel
         slug={barber.slug}
         displayName={barber.displayName}

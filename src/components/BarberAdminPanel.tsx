@@ -509,28 +509,30 @@ export function BarberAdminPanel({
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8" lang={locale}>
+    <div className="shop-chrome mx-auto w-full max-w-4xl px-4 py-8" lang={locale}>
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-[var(--muted)]">
+          <p className="text-sm shop-muted">
             {t(locale, "adminEyebrow")}
           </p>
-          <h1 className="font-display text-3xl sm:text-4xl">{displayName}</h1>
-          <p className="mt-1 text-xs text-[var(--muted)]">
+          <h1 className="font-display text-3xl text-[var(--cream)] sm:text-4xl">
+            {displayName}
+          </h1>
+          <p className="mt-1 text-xs shop-muted">
             {t(locale, "autoRefresh")}
           </p>
         </div>
         <div className="flex gap-2">
           <Link
             href={`/${slug}`}
-            className="rounded-xl border border-[var(--line)] bg-white/70 px-4 py-2 text-sm font-semibold"
+            className="rounded-xl border border-white/20 bg-black/30 px-4 py-2 text-sm font-semibold text-[var(--cream)] backdrop-blur-sm transition hover:bg-black/45"
           >
             {t(locale, "publicCalendar")}
           </Link>
           <button
             type="button"
             onClick={logout}
-            className="rounded-xl border border-[var(--line)] bg-white/70 px-4 py-2 text-sm font-semibold"
+            className="rounded-xl border border-white/20 bg-black/30 px-4 py-2 text-sm font-semibold text-[var(--cream)] backdrop-blur-sm transition hover:bg-black/45"
           >
             {t(locale, "logout")}
           </button>
@@ -553,8 +555,8 @@ export function BarberAdminPanel({
             onClick={() => setTab(key)}
             className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
               tab === key
-                ? "bg-[var(--ink)] text-white"
-                : "border border-[var(--line)] bg-white/70"
+                ? "bg-[var(--copper)] text-white shadow-md"
+                : "border border-white/20 bg-black/30 text-[var(--cream)] backdrop-blur-sm hover:bg-black/45"
             }`}
           >
             {t(locale, labelKey)}
@@ -574,7 +576,7 @@ export function BarberAdminPanel({
       ) : null}
 
       {loading ? (
-        <p className="text-[var(--muted)]">{t(locale, "loading")}</p>
+        <p className="shop-muted">{t(locale, "loading")}</p>
       ) : (
         <div className="surface rounded-2xl p-5 sm:p-6">
           {tab === "appointments" && (
