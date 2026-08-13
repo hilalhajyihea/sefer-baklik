@@ -5,6 +5,9 @@ import {
   SITE_ADMIN_NAME,
   SITE_ADMIN_PHONE,
   SITE_ADMIN_WHATSAPP,
+  SITE_INSTAGRAM,
+  SITE_SOCIAL_HANDLE,
+  SITE_TIKTOK,
 } from "@/lib/site";
 import { BrandMark } from "@/components/BrandGraphics";
 
@@ -50,11 +53,92 @@ function CheckIcon() {
   );
 }
 
-function WhatsAppIcon({ className = "h-5 w-5" }: { className?: string }) {
+function InstagramIcon({
+  className = "h-5 w-5",
+  gradientId = "ig-bg",
+}: {
+  className?: string;
+  gradientId?: string;
+}) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M12.04 2C6.58 2 2.15 6.4 2.15 11.83c0 1.74.46 3.44 1.34 4.94L2 22l5.38-1.41a10.1 10.1 0 0 0 4.66 1.12h.01c5.46 0 9.89-4.4 9.89-9.84C21.94 6.4 17.5 2 12.04 2Zm5.76 14.16c-.24.67-1.4 1.24-1.94 1.32-.5.07-1.12.1-1.81-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.13-4.9-4.32-.14-.19-1.17-1.55-1.17-2.96 0-1.4.74-2.09 1-2.37.24-.26.64-.38 1.02-.38.12 0 .23 0 .33.01.29.01.44.03.63.49.24.58.82 2 .89 2.15.07.15.12.32.02.51-.09.2-.14.32-.28.5-.14.17-.29.38-.42.51-.14.14-.28.29-.12.56.16.26.7 1.15 1.5 1.86 1.03.92 1.9 1.21 2.18 1.35.27.13.43.11.59-.07.16-.17.7-.81.89-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.91.28.14.47.21.54.33.07.12.07.68-.17 1.35Z" />
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect width="24" height="24" rx="7" fill={`url(#${gradientId})`} />
+      <rect
+        x="5.4"
+        y="5.4"
+        width="13.2"
+        height="13.2"
+        rx="4.2"
+        stroke="white"
+        strokeWidth="1.7"
+      />
+      <circle cx="12" cy="12" r="3.35" stroke="white" strokeWidth="1.7" />
+      <circle cx="16.35" cy="7.65" r="1.05" fill="white" />
+      <defs>
+        <radialGradient
+          id={gradientId}
+          cx="0"
+          cy="0"
+          r="1"
+          gradientUnits="userSpaceOnUse"
+          gradientTransform="translate(6 22) rotate(-90) scale(24 18)"
+        >
+          <stop stopColor="#f58529" />
+          <stop offset="0.35" stopColor="#dd2a7b" />
+          <stop offset="0.7" stopColor="#8134af" />
+          <stop offset="1" stopColor="#515bd4" />
+        </radialGradient>
+      </defs>
     </svg>
+  );
+}
+
+function TikTokIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect width="24" height="24" rx="7" fill="#111111" />
+      <path
+        d="M14.2 6.2c.55 1.85 1.9 3.15 3.85 3.45v2.15c-1.22-.03-2.35-.4-3.35-1.05v4.7c0 2.55-2.05 4.55-4.7 4.55A4.58 4.58 0 0 1 5.5 15.4c0-2.55 2.05-4.55 4.5-4.55.28 0 .55.03.8.08v2.25a2.4 2.4 0 0 0-.8-.14 2.32 2.32 0 0 0-2.3 2.36c0 1.3 1.05 2.36 2.3 2.36 1.28 0 2.32-1.04 2.32-2.36V6.2h2.88Z"
+        fill="#25F4EE"
+      />
+      <path
+        d="M13.85 5.85c.55 1.85 1.9 3.15 3.85 3.45v2.15c-1.22-.03-2.35-.4-3.35-1.05v4.7c0 2.55-2.05 4.55-4.7 4.55A4.58 4.58 0 0 1 5.15 15.05c0-2.55 2.05-4.55 4.5-4.55.28 0 .55.03.8.08v2.25a2.4 2.4 0 0 0-.8-.14 2.32 2.32 0 0 0-2.3 2.36c0 1.3 1.05 2.36 2.3 2.36 1.28 0 2.32-1.04 2.32-2.36V5.85h2.88Z"
+        fill="#FE2C55"
+      />
+      <path
+        d="M13.55 6c.55 1.85 1.9 3.15 3.85 3.45v2.15c-1.22-.03-2.35-.4-3.35-1.05v4.7c0 2.55-2.05 4.55-4.7 4.55A4.58 4.58 0 0 1 4.85 15.2c0-2.55 2.05-4.55 4.5-4.55.28 0 .55.03.8.08v2.25a2.4 2.4 0 0 0-.8-.14 2.32 2.32 0 0 0-2.3 2.36c0 1.3 1.05 2.36 2.3 2.36 1.28 0 2.32-1.04 2.32-2.36V6h2.88Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
+function SocialButtons({ size = "md" }: { size?: "sm" | "md" }) {
+  const box = size === "sm" ? "h-10 w-10" : "h-12 w-12";
+  const icon = size === "sm" ? "h-10 w-10" : "h-12 w-12";
+  return (
+    <div className="flex items-center gap-2.5">
+      <a
+        href={SITE_INSTAGRAM}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`${box} overflow-hidden rounded-xl shadow-md transition hover:scale-105`}
+        aria-label={`Instagram @${SITE_SOCIAL_HANDLE}`}
+        title={`Instagram @${SITE_SOCIAL_HANDLE}`}
+      >
+        <InstagramIcon className={icon} gradientId={`ig-bg-${size}`} />
+      </a>
+      <a
+        href={SITE_TIKTOK}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`${box} overflow-hidden rounded-xl shadow-md transition hover:scale-105`}
+        aria-label={`TikTok @${SITE_SOCIAL_HANDLE}`}
+        title={`TikTok @${SITE_SOCIAL_HANDLE}`}
+      >
+        <TikTokIcon className={icon} />
+      </a>
+    </div>
   );
 }
 
@@ -284,6 +368,12 @@ export default function HomePage() {
             >
               {SITE_ADMIN_EMAIL}
             </a>
+            <div className="mt-5 flex items-center gap-3">
+              <SocialButtons />
+              <span className="text-sm font-semibold text-[rgba(248,243,236,0.78)]">
+                @{SITE_SOCIAL_HANDLE}
+              </span>
+            </div>
           </div>
           <a
             href={SITE_ADMIN_WHATSAPP}
@@ -329,6 +419,12 @@ export default function HomePage() {
         >
           {SITE_ADMIN_EMAIL}
         </a>
+        <div className="flex items-center justify-center gap-3 border-t border-white/20 bg-black/15 px-3 py-2.5">
+          <SocialButtons size="sm" />
+          <span className="text-[11px] font-semibold text-white/90">
+            @{SITE_SOCIAL_HANDLE}
+          </span>
+        </div>
       </div>
     </main>
   );
