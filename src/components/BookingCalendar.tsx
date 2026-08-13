@@ -165,7 +165,7 @@ export function BookingCalendar({
               {t(locale, "bookTitle")}
             </p>
             {logoUrl ? (
-              <div className="mt-4 max-w-xl">
+              <div className="mt-4 flex w-full justify-start">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={logoUrl}

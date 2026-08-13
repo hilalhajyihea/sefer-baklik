@@ -19,8 +19,9 @@ Salon Sami — דוגמאות לוגו
   /sami/preview-b-header.png
   /sami/preview-c-emblem.png
 
-• option-b-header-transparent.png  — PNG שקוף אמיתי (מומלץ להעלאה!)
+• option-b-header-transparent.png  — PNG שקוף (בלי EST, מספריים בימין ל-RTL)
 • option-b-header-transparent.svg  — מקור וקטורי
 
 המלצה להעלאה באתר: option-b-header-transparent.png
+(אחרי שינוי הקובץ — להעלות מחדש מפאנל הפלטפורמה)
 לפרופיל רשתות / אייקון: option-a או option-c.

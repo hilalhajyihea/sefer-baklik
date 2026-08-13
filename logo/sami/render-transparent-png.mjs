@@ -22,12 +22,12 @@ const publicOut = path.join(
 const svg = fs.readFileSync(svgPath);
 
 const png = await sharp(svg, { density: 300 })
-  .resize({
-    width: 1280,
-    height: 360,
-    fit: "contain",
-    background: { r: 0, g: 0, b: 0, alpha: 0 },
-  })
+.resize({
+        width: 840,
+        height: 280,
+        fit: "contain",
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
   .png()
   .toBuffer();
 
