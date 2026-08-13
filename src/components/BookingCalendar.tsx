@@ -178,21 +178,21 @@ export function BookingCalendar({
         <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
           <form
             onSubmit={onSubmit}
-            className="surface animate-fade-up rounded-2xl p-5 sm:p-7"
+            className="surface-dark animate-fade-up rounded-2xl p-5 sm:p-7"
           >
             {teamMode ? (
               <>
-                <h2 className="text-lg font-semibold text-[var(--ink)]">
+                <h2 className="text-lg font-semibold text-[var(--cream)]">
                   {t(locale, "pickStaff")}
                 </h2>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => setStaffKey("any")}
-                    className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
+                    className={`rounded-xl px-3 py-2.5 text-sm font-medium transition ${
                       staffKey === "any"
-                        ? "border-[var(--copper)] bg-[var(--copper)] text-white shadow-md"
-                        : "border-[var(--line)] bg-white/80 hover:border-[var(--copper)]"
+                        ? "border border-[var(--copper)] bg-[var(--copper)] text-white shadow-md"
+                        : "shop-chip"
                     }`}
                   >
                     {t(locale, "staffAnyone")}
@@ -202,10 +202,10 @@ export function BookingCalendar({
                       key={s.id}
                       type="button"
                       onClick={() => setStaffKey(s.id)}
-                      className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
+                      className={`rounded-xl px-3 py-2.5 text-sm font-medium transition ${
                         staffKey === s.id
-                          ? "border-[var(--copper)] bg-[var(--copper)] text-white shadow-md"
-                          : "border-[var(--line)] bg-white/80 hover:border-[var(--copper)]"
+                          ? "border border-[var(--copper)] bg-[var(--copper)] text-white shadow-md"
+                          : "shop-chip"
                       }`}
                     >
                       {s.displayName}
@@ -216,7 +216,7 @@ export function BookingCalendar({
             ) : null}
 
             <h2
-              className={`text-lg font-semibold text-[var(--ink)] ${teamMode ? "mt-7" : ""}`}
+              className={`text-lg font-semibold text-[var(--cream)] ${teamMode ? "mt-7" : ""}`}
             >
               {t(locale, "date")}
             </h2>
@@ -226,10 +226,10 @@ export function BookingCalendar({
                   key={d.key}
                   type="button"
                   onClick={() => setDate(d.key)}
-                  className={`min-w-[8.5rem] rounded-xl border px-3 py-3 text-right text-sm transition ${
+                  className={`min-w-[8.5rem] rounded-xl px-3 py-3 text-right text-sm transition ${
                     date === d.key
-                      ? "border-[var(--copper)] bg-[var(--copper)] text-white shadow-md"
-                      : "border-[var(--line)] bg-white/80 text-[var(--ink)] hover:border-[var(--copper)]"
+                      ? "border border-[var(--copper)] bg-[var(--copper)] text-white shadow-md"
+                      : "shop-chip"
                   }`}
                 >
                   {d.label}
@@ -237,15 +237,15 @@ export function BookingCalendar({
               ))}
             </div>
 
-            <h2 className="mt-7 text-lg font-semibold text-[var(--ink)]">
+            <h2 className="mt-7 text-lg font-semibold text-[var(--cream)]">
               {t(locale, "time")}
             </h2>
             {loadingSlots ? (
-              <p className="mt-3 text-sm text-[var(--muted)]">
+              <p className="mt-3 text-sm text-[rgba(248,243,236,0.62)]">
                 {t(locale, "loadingSlots")}
               </p>
             ) : slots.length === 0 ? (
-              <p className="mt-3 text-sm text-[var(--muted)]">
+              <p className="mt-3 text-sm text-[rgba(248,243,236,0.62)]">
                 {t(locale, "noSlots")}
               </p>
             ) : (
@@ -255,10 +255,10 @@ export function BookingCalendar({
                     key={s}
                     type="button"
                     onClick={() => setTime(s)}
-                    className={`rounded-xl border py-2.5 text-sm font-medium transition ${
+                    className={`rounded-xl py-2.5 text-sm font-medium transition ${
                       time === s
-                        ? "border-[var(--olive)] bg-[var(--olive)] text-white shadow-md"
-                        : "border-[var(--line)] bg-white/80 hover:border-[var(--olive)]"
+                        ? "border border-[var(--copper)] bg-[var(--copper)] text-white shadow-md"
+                        : "shop-chip"
                     }`}
                   >
                     {s}
@@ -268,20 +268,20 @@ export function BookingCalendar({
             )}
 
             <div className="mt-7 grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm font-medium">
+              <label className="block text-sm font-medium text-[var(--cream)]">
                 {t(locale, "fullName")}
                 <input
-                  className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 outline-none focus:border-[var(--copper)]"
+                  className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
                   minLength={2}
                 />
               </label>
-              <label className="block text-sm font-medium">
+              <label className="block text-sm font-medium text-[var(--cream)]">
                 {t(locale, "phone")}
                 <input
-                  className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 outline-none focus:border-[var(--copper)]"
+                  className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   required
@@ -291,12 +291,12 @@ export function BookingCalendar({
             </div>
 
             {error ? (
-              <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="mt-4 rounded-lg border border-red-400/30 bg-red-950/70 px-3 py-2 text-sm text-red-200">
                 {error}
               </p>
             ) : null}
             {success ? (
-              <p className="mt-4 rounded-lg bg-[var(--olive-soft)] px-3 py-2 text-sm text-[var(--olive)]">
+              <p className="mt-4 rounded-lg border border-[var(--olive)]/40 bg-[rgba(47,74,52,0.35)] px-3 py-2 text-sm text-[var(--olive-soft)]">
                 {success}
               </p>
             ) : null}

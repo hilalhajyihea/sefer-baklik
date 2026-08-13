@@ -145,6 +145,36 @@ body {
   box-shadow: 0 28px 70px rgba(0, 0, 0, 0.42);
 }
 
+.surface-dark {
+  background: rgba(22, 18, 14, 0.92);
+  border: 1px solid rgba(248, 243, 236, 0.14);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(14px);
+  color: rgba(248, 243, 236, 0.92);
+}
+
+.shop-field {
+  border: 1px solid rgba(248, 243, 236, 0.16);
+  background: rgba(10, 8, 6, 0.55);
+  color: var(--cream);
+}
+
+.shop-field:focus {
+  border-color: var(--copper);
+  outline: none;
+}
+
+.shop-chip {
+  border: 1px solid rgba(248, 243, 236, 0.16);
+  background: rgba(10, 8, 6, 0.45);
+  color: rgba(248, 243, 236, 0.9);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.shop-chip:hover {
+  border-color: rgba(196, 90, 40, 0.7);
+}
+
 .shop-chrome {
   color: rgba(248, 243, 236, 0.9);
 }
