@@ -29,7 +29,7 @@ const he = {
   bookSuccess: "התור נקבע ל-{date} בשעה {time}. נתראה!",
   bookSuccessSms: " נשלח SMS לטלפון.",
   bookSuccessSmsFail: "התור נקבע, אבל SMS לא נשלח: {error}",
-  wantThisToo: "ספר? רוצה אתה כזה, לחץ כאן.",
+  wantThisToo: "ספר? רוצה אתר כזה, לחץ כאן.",
 
   loginTitle: "כניסת מנהל",
   loginSubtitle: "ניהול היומן של {name}",
@@ -202,7 +202,7 @@ const ar: { [K in keyof typeof he]: string } = {
   bookSuccess: "تم حجز الموعد لـ {date} الساعة {time}. إلى اللقاء!",
   bookSuccessSms: " تم إرسال رسالة SMS إلى الهاتف.",
   bookSuccessSmsFail: "تم الحجز، لكن لم تُرسل رسالة SMS: {error}",
-  wantThisToo: "حلاق؟ بدك كمان هيك؟ اضغط هنا.",
+  wantThisToo: "حلاق؟ بدك موقع هيك؟ اضغط هنا.",
 
   loginTitle: "دخول المدير",
   loginSubtitle: "إدارة جدول {name}",
