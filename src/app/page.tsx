@@ -55,8 +55,12 @@ function CheckIcon() {
 
 function WhatsAppIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M12.04 2C6.58 2 2.15 6.4 2.15 11.83c0 1.74.46 3.44 1.34 4.94L2 22l5.38-1.41a10.1 10.1 0 0 0 4.66 1.12h.01c5.46 0 9.89-4.4 9.89-9.84C21.94 6.4 17.5 2 12.04 2Zm5.76 14.16c-.24.67-1.4 1.24-1.94 1.32-.5.07-1.12.1-1.81-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.13-4.9-4.32-.14-.19-1.17-1.55-1.17-2.96 0-1.4.74-2.09 1-2.37.24-.26.64-.38 1.02-.38.12 0 .23 0 .33.01.29.01.44.03.63.49.24.58.82 2 .89 2.15.07.15.12.32.02.51-.09.2-.14.32-.28.5-.14.17-.29.38-.42.51-.14.14-.28.29-.12.56.16.26.7 1.15 1.5 1.86 1.03.92 1.9 1.21 2.18 1.35.27.13.43.11.59-.07.16-.17.7-.81.89-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.91.28.14.47.21.54.33.07.12.07.68-.17 1.35Z" />
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect width="24" height="24" rx="7" fill="#25D366" />
+      <path
+        d="M12.04 5.2c-3.55 0-6.43 2.86-6.43 6.39 0 1.13.3 2.23.87 3.2L5.6 17.9l3.2-0.84a6.4 6.4 0 0 0 3.04.73h.01c3.55 0 6.43-2.86 6.43-6.39 0-3.53-2.88-6.39-6.24-6.39Zm3.74 9.2c-.16.44-.91.81-1.26.86-.32.05-.73.07-1.18-.07-.27-.08-.62-.2-1.07-.39-1.87-.81-3.09-2.69-3.18-2.81-.09-.12-.76-1.01-.76-1.92 0-.92.48-1.36.65-1.54.16-.17.42-.25.66-.25.08 0 .15 0 .21.01.19.01.29.02.41.32.16.38.53 1.3.58 1.4.05.1.08.21.01.33-.06.13-.09.21-.18.32-.09.11-.19.25-.27.33-.09.09-.18.19-.08.36.1.17.46.75.98 1.21.67.6 1.24.79 1.42.88.18.09.28.07.38-.04.1-.11.46-.53.58-.71.12-.18.24-.15.41-.09.17.06 1.07.5 1.25.59.18.09.3.14.35.21.05.08.05.44-.11.88Z"
+        fill="white"
+      />
     </svg>
   );
 }
@@ -126,6 +130,16 @@ function SocialButtons({ size = "md" }: { size?: "sm" | "md" }) {
   const icon = size === "sm" ? "h-10 w-10" : "h-12 w-12";
   return (
     <div className="flex items-center gap-2.5">
+      <a
+        href={SITE_ADMIN_WHATSAPP}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`${box} overflow-hidden rounded-xl shadow-md transition hover:scale-105`}
+        aria-label={`WhatsApp ${SITE_ADMIN_PHONE}`}
+        title={`WhatsApp ${SITE_ADMIN_PHONE}`}
+      >
+        <WhatsAppIcon className={icon} />
+      </a>
       <a
         href={SITE_INSTAGRAM}
         target="_blank"
@@ -381,22 +395,23 @@ export default function HomePage() {
             >
               {SITE_ADMIN_EMAIL}
             </a>
-            <div className="mt-5 flex items-center gap-3">
+            <div className="mt-5 flex flex-wrap items-center gap-3">
               <SocialButtons />
-              <span className="text-sm font-semibold text-[rgba(248,243,236,0.78)]">
-                @{SITE_SOCIAL_HANDLE}
-              </span>
+              <div className="text-sm leading-tight">
+                <a
+                  href={SITE_ADMIN_WHATSAPP}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block font-semibold text-[var(--cream)] underline-offset-2 hover:underline"
+                >
+                  {SITE_ADMIN_PHONE}
+                </a>
+                <span className="text-[rgba(248,243,236,0.62)]">
+                  @{SITE_SOCIAL_HANDLE}
+                </span>
+              </div>
             </div>
           </div>
-          <a
-            href={SITE_ADMIN_WHATSAPP}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-3 rounded-2xl bg-[#25D366] px-6 py-4 text-base font-semibold text-white shadow-lg transition hover:brightness-110"
-          >
-            <WhatsAppIcon className="h-6 w-6" />
-            WhatsApp {SITE_ADMIN_PHONE}
-          </a>
         </div>
         <p className="relative mx-auto mt-10 max-w-6xl text-center text-sm text-[rgba(248,243,236,0.45)] sm:text-start">
           ספר בקליק · יומן תורים דיגיטלי
