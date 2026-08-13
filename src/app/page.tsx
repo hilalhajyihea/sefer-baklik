@@ -205,8 +205,9 @@ export default function HomePage() {
             </h1>
             <div className="mt-5 h-1 w-24 rounded-full bg-[var(--copper)]" />
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-[rgba(248,243,236,0.86)] sm:text-xl">
-              כתובת ייחודית לכל ספר. הלקוח נכנס וקובע תור מהטלפון — בלי שיחות
-              ובלי המתנה.
+              כתובת ייחודית לכל ספר. הלקוח קובע תור מהטלפון — בלי שיחות ובלי
+              המתנה. ניהול יומן נוח לספר, הודעות SMS ותזכורות ללקוח, והכל במחיר
+              החל מ־₪99 לחודש.
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
               <Link
