@@ -94,6 +94,12 @@ export default function HomePage() {
               >
                 יצירת קשר
               </a>
+              <Link
+                href="/platform/login"
+                className="rounded-xl border border-white/25 bg-black/25 px-4 py-2 text-[var(--cream)] backdrop-blur-sm transition hover:bg-black/40"
+              >
+                ניהול
+              </Link>
             </nav>
           </div>
 
@@ -115,6 +121,12 @@ export default function HomePage() {
                 className="btn-primary inline-flex items-center justify-center rounded-xl px-7 py-3.5 text-base font-semibold"
               >
                 דוגמה: יומן של דני
+              </Link>
+              <Link
+                href="/platform/login"
+                className="inline-flex items-center justify-center rounded-xl border border-white/30 bg-[var(--charcoal)]/80 px-7 py-3.5 text-base font-semibold text-[var(--cream)] backdrop-blur-sm transition hover:bg-[var(--ink)]"
+              >
+                כניסת מנהל מערכת
               </Link>
               <a
                 href="#pricing"
