@@ -397,43 +397,6 @@ export default function HomePage() {
           ספר בקליק · יומן תורים דיגיטלי
         </p>
       </section>
-
-      <div className="fixed bottom-5 left-5 z-50 flex max-w-[17.5rem] flex-col overflow-hidden rounded-2xl bg-[#25D366] text-white shadow-[0_12px_32px_rgba(37,211,102,0.38)]">
-        <a
-          href={SITE_ADMIN_WHATSAPP}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 px-3.5 py-3 transition hover:brightness-110"
-          aria-label={`WhatsApp ${SITE_ADMIN_NAME}`}
-        >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20">
-            <WhatsAppIcon className="h-6 w-6" />
-          </span>
-          <span className="min-w-0 text-start leading-tight">
-            <span className="block text-[11px] font-medium text-white/85">
-              מנהל האתר
-            </span>
-            <span className="block truncate text-sm font-bold">
-              {SITE_ADMIN_NAME}
-            </span>
-            <span className="block text-xs font-semibold tracking-wide">
-              {SITE_ADMIN_PHONE}
-            </span>
-          </span>
-        </a>
-        <a
-          href={`mailto:${SITE_ADMIN_EMAIL}`}
-          className="border-t border-white/20 bg-black/10 px-3.5 py-2 text-center text-xs font-semibold tracking-wide transition hover:bg-black/20"
-        >
-          {SITE_ADMIN_EMAIL}
-        </a>
-        <div className="flex items-center justify-center gap-3 border-t border-white/20 bg-black/15 px-3 py-2.5">
-          <SocialButtons size="sm" />
-          <span className="text-[11px] font-semibold text-white/90">
-            @{SITE_SOCIAL_HANDLE}
-          </span>
-        </div>
-      </div>
     </main>
   );
 }
