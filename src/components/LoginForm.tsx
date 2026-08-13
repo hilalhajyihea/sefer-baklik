@@ -57,22 +57,19 @@ export function LoginForm({
     <form
       onSubmit={onSubmit}
       lang={locale}
-      className="surface relative w-full max-w-md overflow-hidden rounded-2xl p-6 sm:p-8"
+      className="surface-dark relative w-full max-w-md overflow-hidden rounded-2xl p-6 sm:p-8"
     >
       <div className="barber-stripes absolute inset-y-0 right-0 w-1.5 opacity-80" />
-      <BrandMark
-        className="mb-6"
-        label={t(locale, "brand")}
-      />
-      <h1 className="font-display text-3xl text-[var(--ink)]">{title}</h1>
+      <BrandMark className="mb-6" tone="light" label={t(locale, "brand")} />
+      <h1 className="font-display text-3xl text-[var(--cream)]">{title}</h1>
       {subtitle ? (
-        <p className="mt-2 text-sm text-[var(--muted)]">{subtitle}</p>
+        <p className="mt-2 text-sm text-[rgba(248,243,236,0.62)]">{subtitle}</p>
       ) : null}
 
-      <label className="mt-6 block text-sm font-medium text-[var(--ink)]">
+      <label className="mt-6 block text-sm font-medium text-[var(--cream)]">
         {t(locale, "username")}
         <input
-          className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 outline-none focus:border-[var(--copper)]"
+          className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoComplete="username"
@@ -80,11 +77,11 @@ export function LoginForm({
         />
       </label>
 
-      <label className="mt-4 block text-sm font-medium text-[var(--ink)]">
+      <label className="mt-4 block text-sm font-medium text-[var(--cream)]">
         {t(locale, "password")}
         <input
           type="password"
-          className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 outline-none focus:border-[var(--copper)]"
+          className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
@@ -93,7 +90,7 @@ export function LoginForm({
       </label>
 
       {error ? (
-        <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mt-4 rounded-lg border border-red-400/30 bg-red-950/70 px-3 py-2 text-sm text-red-200">
           {error}
         </p>
       ) : null}

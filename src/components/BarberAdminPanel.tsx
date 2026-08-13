@@ -565,12 +565,12 @@ export function BarberAdminPanel({
       </div>
 
       {message ? (
-        <p className="mb-4 rounded-lg bg-[var(--olive-soft)] px-3 py-2 text-sm text-[var(--olive)]">
+        <p className="mb-4 rounded-lg border border-[var(--olive)]/40 bg-[rgba(47,74,52,0.35)] px-3 py-2 text-sm text-[var(--olive-soft)]">
           {message}
         </p>
       ) : null}
       {error ? (
-        <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mb-4 rounded-lg border border-red-400/30 bg-red-950/70 px-3 py-2 text-sm text-red-200">
           {error}
         </p>
       ) : null}
@@ -578,7 +578,7 @@ export function BarberAdminPanel({
       {loading ? (
         <p className="shop-muted">{t(locale, "loading")}</p>
       ) : (
-        <div className="surface rounded-2xl p-5 sm:p-6">
+        <div className="surface-dark rounded-2xl p-5 sm:p-6">
           {tab === "appointments" && (
             <div className="space-y-8">
               {teamMode ? (
@@ -586,10 +586,10 @@ export function BarberAdminPanel({
                   <button
                     type="button"
                     onClick={() => setStaffFilter("all")}
-                    className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
+                    className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
                       staffFilter === "all"
-                        ? "border-[var(--ink)] bg-[var(--ink)] text-white"
-                        : "border-[var(--line)] bg-white/80"
+                        ? "border border-[var(--copper)] bg-[var(--copper)] text-white"
+                        : "shop-chip"
                     }`}
                   >
                     {t(locale, "filterAllStaff")}
@@ -599,10 +599,10 @@ export function BarberAdminPanel({
                       key={s.id}
                       type="button"
                       onClick={() => setStaffFilter(s.id)}
-                      className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
+                      className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
                         staffFilter === s.id
-                          ? "border-[var(--ink)] bg-[var(--ink)] text-white"
-                          : "border-[var(--line)] bg-white/80"
+                          ? "border border-[var(--copper)] bg-[var(--copper)] text-white"
+                          : "shop-chip"
                       }`}
                     >
                       {s.displayName}
@@ -612,7 +612,7 @@ export function BarberAdminPanel({
               ) : null}
 
               {groupedByDay.length === 0 ? (
-                <p className="text-[var(--muted)]">
+                <p className="text-[rgba(248,243,236,0.62)]">
                   {t(locale, "noAppointments")}
                 </p>
               ) : (
@@ -621,8 +621,8 @@ export function BarberAdminPanel({
                   const isToday = dateKey === toDateKey(new Date(nowMs));
                   return (
                     <section key={dateKey}>
-                      <div className="mb-3 flex items-baseline gap-2 border-b border-[var(--line)] pb-2">
-                        <h2 className="font-display text-2xl text-[var(--ink)]">
+                      <div className="mb-3 flex items-baseline gap-2 border-b border-white/15 pb-2">
+                        <h2 className="font-display text-2xl text-[var(--cream)]">
                           {formatDateLocalized(locale, labelDate)}
                         </h2>
                         {isToday ? (
@@ -646,17 +646,17 @@ export function BarberAdminPanel({
                               key={a.id}
                               className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 transition ${
                                 isCurrent
-                                  ? "border-[var(--copper)] bg-[rgba(182,92,44,0.14)] shadow-[0_0_0_1px_rgba(182,92,44,0.25)]"
+                                  ? "border-[var(--copper)] bg-[rgba(196,90,40,0.22)] shadow-[0_0_0_1px_rgba(196,90,40,0.3)]"
                                   : isNext
-                                    ? "border-[var(--olive)] bg-[var(--olive-soft)]"
+                                    ? "border-[var(--olive)] bg-[rgba(47,74,52,0.35)]"
                                     : status === "past"
-                                      ? "border-[var(--line)] bg-white/50 opacity-60"
-                                      : "border-[var(--line)] bg-white/80"
+                                      ? "border-white/10 bg-black/25 opacity-55"
+                                      : "border-white/12 bg-black/30"
                               }`}
                             >
                               <div>
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <p className="font-semibold">
+                                  <p className="font-semibold text-[var(--cream)]">
                                     {formatTime(new Date(a.startsAt))}–
                                     {formatTime(new Date(a.endsAt))}
                                   </p>
@@ -678,7 +678,7 @@ export function BarberAdminPanel({
                                     </span>
                                   ) : null}
                                 </div>
-                                <p className="text-sm text-[var(--muted)]">
+                                <p className="text-sm text-[rgba(248,243,236,0.62)]">
                                   {a.customerName}
                                   {a.customerPhone?.trim() ? (
                                     <>
@@ -686,7 +686,7 @@ export function BarberAdminPanel({
                                       <a
                                         href={`tel:${a.customerPhone.replace(/[^\d+]/g, "")}`}
                                         dir="ltr"
-                                        className="font-medium text-[var(--copper-deep)] underline-offset-2 hover:underline"
+                                        className="font-medium text-[var(--copper)] underline-offset-2 hover:underline"
                                         onClick={(e) => e.stopPropagation()}
                                       >
                                         {a.customerPhone}
@@ -698,7 +698,7 @@ export function BarberAdminPanel({
                               <button
                                 type="button"
                                 onClick={() => cancelAppointment(a.id)}
-                                className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
+                                className="rounded-lg border border-red-400/35 bg-red-950/40 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-950/70"
                               >
                                 {t(locale, "cancelAppointment")}
                               </button>
@@ -719,10 +719,10 @@ export function BarberAdminPanel({
                 <button
                   type="button"
                   onClick={() => setBookMode("once")}
-                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
                     bookMode === "once"
-                      ? "border-[var(--ink)] bg-[var(--ink)] text-white"
-                      : "border-[var(--line)] bg-white/80"
+                      ? "border border-[var(--copper)] bg-[var(--copper)] text-white"
+                      : "shop-chip"
                   }`}
                 >
                   {t(locale, "bookOnce")}
@@ -730,10 +730,10 @@ export function BarberAdminPanel({
                 <button
                   type="button"
                   onClick={() => setBookMode("recurring")}
-                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
                     bookMode === "recurring"
-                      ? "border-[var(--ink)] bg-[var(--ink)] text-white"
-                      : "border-[var(--line)] bg-white/80"
+                      ? "border border-[var(--copper)] bg-[var(--copper)] text-white"
+                      : "shop-chip"
                   }`}
                 >
                   {t(locale, "bookRecurring")}
@@ -741,13 +741,13 @@ export function BarberAdminPanel({
               </div>
 
               {teamMode ? (
-                <label className="block text-sm font-medium">
+                <label className="block text-sm font-medium text-[var(--cream)]">
                   {t(locale, "pickStaff")}
                   <select
                     required
                     value={bookStaffId}
                     onChange={(e) => setBookStaffId(e.target.value)}
-                    className="mt-1.5 w-full max-w-md rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                    className="shop-field mt-1.5 w-full max-w-md rounded-xl px-3 py-2.5"
                   >
                     {activeStaff.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -759,26 +759,26 @@ export function BarberAdminPanel({
               ) : null}
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-sm font-medium">
+                <label className="text-sm font-medium text-[var(--cream)]">
                   {t(locale, "fullName")}
                   <input
                     required
                     minLength={2}
                     value={bookName}
                     onChange={(e) => setBookName(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                    className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
                   />
                 </label>
-                <label className="text-sm font-medium">
+                <label className="text-sm font-medium text-[var(--cream)]">
                   {t(locale, "phoneOptional")}
                   <input
                     inputMode="tel"
                     value={bookPhone}
                     onChange={(e) => setBookPhone(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                    className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
                   />
                 </label>
-                <label className="text-sm font-medium">
+                <label className="text-sm font-medium text-[var(--cream)]">
                   {t(locale, "date")}
                   <input
                     type="date"
@@ -786,13 +786,13 @@ export function BarberAdminPanel({
                     min={toDateKey()}
                     value={bookDate}
                     onChange={(e) => setBookDate(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                    className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
                   />
                 </label>
-                <label className="text-sm font-medium">
+                <label className="text-sm font-medium text-[var(--cream)]">
                   {t(locale, "time")}
                   {bookLoadingSlots ? (
-                    <p className="mt-1.5 text-sm text-[var(--muted)]">
+                    <p className="mt-1.5 text-sm text-[rgba(248,243,236,0.62)]">
                       {t(locale, "loadingSlots")}
                     </p>
                   ) : (
@@ -800,7 +800,7 @@ export function BarberAdminPanel({
                       required
                       value={bookTime}
                       onChange={(e) => setBookTime(e.target.value)}
-                      className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                      className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
                       disabled={!bookDate || bookSlots.length === 0}
                     >
                       {bookSlots.length === 0 ? (
@@ -821,7 +821,7 @@ export function BarberAdminPanel({
 
               {bookMode === "recurring" ? (
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="text-sm font-medium">
+                  <label className="text-sm font-medium text-[var(--cream)]">
                     {t(locale, "bookRecurring")}
                     <select
                       value={bookInterval}
@@ -834,7 +834,7 @@ export function BarberAdminPanel({
                             | "MONTHLY",
                         )
                       }
-                      className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                      className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
                     >
                       <option value="WEEKLY">
                         {t(locale, "intervalWeekly")}
@@ -850,7 +850,7 @@ export function BarberAdminPanel({
                       </option>
                     </select>
                   </label>
-                  <label className="text-sm font-medium">
+                  <label className="text-sm font-medium text-[var(--cream)]">
                     {t(locale, "endDate")}
                     <input
                       type="date"
@@ -858,7 +858,7 @@ export function BarberAdminPanel({
                       min={bookDate || toDateKey()}
                       value={bookEndDate}
                       onChange={(e) => setBookEndDate(e.target.value)}
-                      className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                      className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
                     />
                   </label>
                 </div>
@@ -889,10 +889,10 @@ export function BarberAdminPanel({
                   key={s.id}
                   type="button"
                   onClick={() => setManageStaffId(s.id)}
-                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
                     manageStaffId === s.id
-                      ? "border-[var(--ink)] bg-[var(--ink)] text-white"
-                      : "border-[var(--line)] bg-white/80"
+                      ? "border border-[var(--copper)] bg-[var(--copper)] text-white"
+                      : "shop-chip"
                   }`}
                 >
                   {s.displayName}
@@ -906,9 +906,9 @@ export function BarberAdminPanel({
               {hours.map((h) => (
                 <div
                   key={h.dayOfWeek}
-                  className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-xl border border-[var(--line)] bg-white/80 px-3 py-2 sm:grid-cols-[7rem_auto_1fr_1fr]"
+                  className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-xl border border-white/12 bg-black/30 px-3 py-2 sm:grid-cols-[7rem_auto_1fr_1fr]"
                 >
-                  <label className="flex items-center gap-2 text-sm font-medium">
+                  <label className="flex items-center gap-2 text-sm font-medium text-[var(--cream)]">
                     <input
                       type="checkbox"
                       checked={h.enabled}
@@ -923,7 +923,7 @@ export function BarberAdminPanel({
                     />
                     {dayNameLocalized(locale, h.dayOfWeek)}
                   </label>
-                  <span className="hidden text-xs text-[var(--muted)] sm:inline">
+                  <span className="hidden text-xs text-[rgba(248,243,236,0.55)] sm:inline">
                     {t(locale, "active")}
                   </span>
                   <input
@@ -935,7 +935,7 @@ export function BarberAdminPanel({
                       next[h.dayOfWeek] = { ...h, startTime: e.target.value };
                       setHours(next);
                     }}
-                    className="rounded-lg border border-[var(--line)] px-2 py-1.5 disabled:opacity-40"
+                    className="shop-field rounded-lg px-2 py-1.5 disabled:opacity-40"
                   />
                   <input
                     type="time"
@@ -946,7 +946,7 @@ export function BarberAdminPanel({
                       next[h.dayOfWeek] = { ...h, endTime: e.target.value };
                       setHours(next);
                     }}
-                    className="rounded-lg border border-[var(--line)] px-2 py-1.5 disabled:opacity-40"
+                    className="shop-field rounded-lg px-2 py-1.5 disabled:opacity-40"
                   />
                 </div>
               ))}
@@ -965,7 +965,7 @@ export function BarberAdminPanel({
                 onSubmit={addDayOff}
                 className="flex flex-wrap items-end gap-3"
               >
-                <label className="text-sm font-medium">
+                <label className="text-sm font-medium text-[var(--cream)]">
                   {t(locale, "date")}
                   <input
                     type="date"
@@ -973,15 +973,15 @@ export function BarberAdminPanel({
                     value={offDate}
                     min={toDateKey()}
                     onChange={(e) => setOffDate(e.target.value)}
-                    className="mt-1 block rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+                    className="shop-field mt-1 block rounded-xl px-3 py-2"
                   />
                 </label>
-                <label className="text-sm font-medium">
+                <label className="text-sm font-medium text-[var(--cream)]">
                   {t(locale, "noteOptional")}
                   <input
                     value={offNote}
                     onChange={(e) => setOffNote(e.target.value)}
-                    className="mt-1 block rounded-xl border border-[var(--line)] bg-white px-3 py-2"
+                    className="shop-field mt-1 block rounded-xl px-3 py-2"
                   />
                 </label>
                 <button
@@ -994,17 +994,17 @@ export function BarberAdminPanel({
 
               <div className="space-y-2">
                 {dayOffs.length === 0 ? (
-                  <p className="text-[var(--muted)]">
+                  <p className="text-[rgba(248,243,236,0.62)]">
                     {t(locale, "noDaysOff")}
                   </p>
                 ) : (
                   dayOffs.map((d) => (
                     <div
                       key={d.id}
-                      className="flex items-center justify-between rounded-xl border border-[var(--line)] bg-white/80 px-4 py-3"
+                      className="flex items-center justify-between rounded-xl border border-white/12 bg-black/30 px-4 py-3"
                     >
                       <div>
-                        <p className="font-semibold">
+                        <p className="font-semibold text-[var(--cream)]">
                           {formatDateLocalized(
                             locale,
                             new Date(
@@ -1013,13 +1013,15 @@ export function BarberAdminPanel({
                           )}
                         </p>
                         {d.note ? (
-                          <p className="text-sm text-[var(--muted)]">{d.note}</p>
+                          <p className="text-sm text-[rgba(248,243,236,0.62)]">
+                            {d.note}
+                          </p>
                         ) : null}
                       </div>
                       <button
                         type="button"
                         onClick={() => removeDayOff(d.id)}
-                        className="text-sm font-medium text-red-700"
+                        className="text-sm font-medium text-red-300 hover:text-red-200"
                       >
                         {t(locale, "remove")}
                       </button>
@@ -1033,20 +1035,20 @@ export function BarberAdminPanel({
           {tab === "sms" && (
             <div className="space-y-6">
               <form onSubmit={saveSmsSettings} className="space-y-5">
-                <label className="block text-sm font-medium">
+                <label className="block text-sm font-medium text-[var(--cream)]">
                   {t(locale, "barberPhone")}
                   <input
                     value={barberPhone}
                     onChange={(e) => setBarberPhone(e.target.value)}
                     inputMode="tel"
                     placeholder="05..."
-                    className="mt-1.5 w-full max-w-sm rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                    className="shop-field mt-1.5 w-full max-w-sm rounded-xl px-3 py-2.5"
                   />
-                  <span className="mt-1 block text-xs text-[var(--muted)]">
+                  <span className="mt-1 block text-xs text-[rgba(248,243,236,0.55)]">
                     {t(locale, "barberPhoneHint")}
                   </span>
                 </label>
-                <label className="flex items-center gap-3 text-sm font-medium">
+                <label className="flex items-center gap-3 text-sm font-medium text-[var(--cream)]">
                   <input
                     type="checkbox"
                     checked={notifyOnCustomerCancel}
@@ -1059,29 +1061,29 @@ export function BarberAdminPanel({
 
                 {smsPlanEnabled ? (
                   <>
-                    <div className="rounded-xl border border-[var(--line)] bg-white/80 px-4 py-3">
-                      <p className="text-sm font-semibold text-[var(--ink)]">
+                    <div className="rounded-xl border border-white/12 bg-black/30 px-4 py-3">
+                      <p className="text-sm font-semibold text-[var(--cream)]">
                         {t(locale, "smsQuotaTitle")}
                       </p>
-                      <p className="mt-1 text-sm text-[var(--muted)]">
+                      <p className="mt-1 text-sm text-[rgba(248,243,236,0.62)]">
                         {t(locale, "smsQuotaBalance", {
                           remaining: smsRemaining,
                           quota: smsQuota,
                         })}
                       </p>
-                      <p className="mt-1 text-xs text-[var(--muted)]">
+                      <p className="mt-1 text-xs text-[rgba(248,243,236,0.55)]">
                         {t(locale, "smsQuotaResetHint")}
                       </p>
                       {smsRemaining <= 0 ? (
-                        <p className="mt-2 text-sm text-red-700">
+                        <p className="mt-2 text-sm text-red-300">
                           {t(locale, "smsQuotaEmpty")}
                         </p>
                       ) : null}
                     </div>
-                    <p className="text-sm text-[var(--muted)]">
+                    <p className="text-sm text-[rgba(248,243,236,0.62)]">
                       {t(locale, "smsHelp")}
                     </p>
-                    <label className="flex items-center gap-3 text-sm font-medium">
+                    <label className="flex items-center gap-3 text-sm font-medium text-[var(--cream)]">
                       <input
                         type="checkbox"
                         checked={smsConfirmationEnabled}
@@ -1091,7 +1093,7 @@ export function BarberAdminPanel({
                       />
                       {t(locale, "smsConfirmToggle")}
                     </label>
-                    <label className="flex items-center gap-3 text-sm font-medium">
+                    <label className="flex items-center gap-3 text-sm font-medium text-[var(--cream)]">
                       <input
                         type="checkbox"
                         checked={smsReminderEnabled}
@@ -1101,7 +1103,7 @@ export function BarberAdminPanel({
                       />
                       {t(locale, "smsReminderToggle")}
                     </label>
-                    <label className="block text-sm font-medium">
+                    <label className="block text-sm font-medium text-[var(--cream)]">
                       {t(locale, "reminderMinutes")}
                       <input
                         type="number"
@@ -1115,19 +1117,19 @@ export function BarberAdminPanel({
                             Number(e.target.value) || 30,
                           )
                         }
-                        className="mt-1.5 w-full max-w-[12rem] rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 disabled:opacity-40"
+                        className="shop-field mt-1.5 w-full max-w-[12rem] rounded-xl px-3 py-2.5 disabled:opacity-40"
                       />
-                      <span className="mt-1 block text-xs text-[var(--muted)]">
+                      <span className="mt-1 block text-xs text-[rgba(248,243,236,0.55)]">
                         {t(locale, "reminderHint")}
                       </span>
                     </label>
                   </>
                 ) : (
-                  <div className="space-y-3 rounded-xl border border-[var(--line)] bg-white/80 p-4">
-                    <h3 className="text-base font-semibold text-[var(--ink)]">
+                  <div className="space-y-3 rounded-xl border border-white/12 bg-black/30 p-4">
+                    <h3 className="text-base font-semibold text-[var(--cream)]">
                       {t(locale, "smsServiceTitle")}
                     </h3>
-                    <p className="text-sm leading-relaxed text-[var(--muted)]">
+                    <p className="text-sm leading-relaxed text-[rgba(248,243,236,0.62)]">
                       {t(locale, "smsUpgrade", {
                         name: SITE_ADMIN_NAME,
                         phone: SITE_ADMIN_PHONE,

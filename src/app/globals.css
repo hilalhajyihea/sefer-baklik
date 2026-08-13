@@ -157,6 +157,7 @@ body {
   border: 1px solid rgba(248, 243, 236, 0.16);
   background: rgba(10, 8, 6, 0.55);
   color: var(--cream);
+  color-scheme: dark;
 }
 
 .shop-field:focus {
