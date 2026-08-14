@@ -27,16 +27,11 @@ async function main() {
   const demoPassword = process.env.DEMO_BARBER_PASSWORD || "barber123";
   const passwordHash = await hash(demoPassword, 12);
 
+  // Only create the demo barber if missing — never overwrite live edits
+  // (displayName, password, SMS settings, etc.) on every Render deploy.
   const dani = await prisma.barber.upsert({
     where: { slug: "dani" },
-    update: {
-      displayName: "דני הספר",
-      username: "dani",
-      passwordHash,
-      isActive: true,
-      slotMinutes: 30,
-      smsPlanEnabled: true,
-    },
+    update: {},
     create: {
       slug: "dani",
       displayName: "דני הספר",
