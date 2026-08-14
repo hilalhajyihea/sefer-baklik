@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   SITE_ADMIN_EMAIL,
-  SITE_ADMIN_NAME,
   SITE_ADMIN_PHONE,
   SITE_ADMIN_WHATSAPP,
   SITE_INSTAGRAM,
@@ -385,13 +384,9 @@ export default function HomePage() {
         <div className="barber-stripes-soft pointer-events-none absolute inset-0 opacity-20" />
         <div className="relative mx-auto flex max-w-6xl flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--copper)]">
+            <h2 className="font-display text-3xl text-[var(--cream)] sm:text-4xl">
               تواصل معنا
-            </p>
-            <h2 className="font-display mt-3 text-3xl text-[var(--cream)] sm:text-4xl">
-              {SITE_ADMIN_NAME}
             </h2>
-            <p className="mt-2 text-[rgba(248,243,236,0.72)]">مدير الموقع</p>
             <p className="mt-5 max-w-md text-sm leading-relaxed text-[rgba(248,243,236,0.7)]">
               بدك موقع مثل هذا لصالونك؟ تواصل معنا عبر واتساب أو البريد
               الإلكتروني وسنساعدك على البدء.
