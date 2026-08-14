@@ -107,7 +107,7 @@ const he = {
   appointmentAt: "התור אצל",
   atTime: "בשעה",
 
-  smsCancelLabel: "ביטול:",
+  smsCancelLabel: "לביטול התור:",
   smsConfirmLine1: "שלום {name},",
   smsConfirmLine2:
     "התור אצל {barber} נקבע ל-{date} בשעה {time}.",
@@ -280,7 +280,7 @@ const ar: { [K in keyof typeof he]: string } = {
   appointmentAt: "الموعد لدى",
   atTime: "الساعة",
 
-  smsCancelLabel: "إلغاء:",
+  smsCancelLabel: "لإلغاء الموعد:",
   smsConfirmLine1: "مرحباً {name}،",
   smsConfirmLine2:
     "تم حجز موعدك لدى {barber} لـ {date} الساعة {time}.",
