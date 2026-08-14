@@ -231,7 +231,7 @@ export default function HomePage() {
                 href="/dani"
                 className="btn-primary inline-flex items-center justify-center rounded-xl px-7 py-3.5 text-base font-semibold"
               >
-                مثال: جدول داني
+                مثال صالون الأناقة
               </Link>
               <a
                 href="#pricing"
