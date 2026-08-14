@@ -12,26 +12,26 @@ import {
 import { BrandMark } from "@/components/BrandGraphics";
 
 const baseFeatures = [
-  "כתובת ייחודית לקביעת תור מהטלפון",
-  "יומן ציבורי — הלקוח בוחר תאריך ושעה פנויה",
-  "מסך ניהול: תורים, שעות פעילות וימי חופש",
-  "קביעת תור מהניהול, כולל תורים קבועים",
-  "צוות מספרה — כמה ספרים ביומן אחד",
-  "עברית וערבית לדף ההזמנה ולהודעות",
+  "رابط خاص لحجز المواعيد من الهاتف",
+  "جدول مواعيد عام — الزبون يختار التاريخ والساعة المتاحة",
+  "لوحة إدارة للمواعيد، ساعات العمل وأيام العطلة",
+  "إضافة مواعيد من لوحة الإدارة، بما فيها المواعيد الثابتة",
+  "فريق صالون — عدة حلاقين في جدول واحد",
+  "العربية والعبرية في صفحة الحجز والرسائل",
 ];
 
 const smsFeatures = [
-  "500 הודעות SMS בחודש (כל הודעה ללקוח נספרת כ־1)",
-  "SMS אישור אחרי קביעת תור",
-  "SMS תזכורת לפני התור",
-  "התראה לספר כשלקוח מבטל",
-  "המכסה מתאפסת בראשון לכל חודש",
+  "500 رسالة SMS شهريًا (كل رسالة للزبون تُحسب رسالة واحدة)",
+  "رسالة SMS لتأكيد حجز الموعد",
+  "رسالة SMS للتذكير قبل الموعد",
+  "تنبيه للحلاق عند إلغاء الزبون للموعد",
+  "تتجدد الباقة في اليوم الأول من كل شهر",
 ];
 
 const customFeatures = [
-  "מכסת SMS אחרת לפי הצורך",
-  "התאמות למספרה גדולה או לצוות רחב",
-  "ליווי בהקמה ובתפעול",
+  "عدد رسائل SMS حسب الحاجة",
+  "تخصيصات لصالون كبير أو لفريق موسّع",
+  "مرافقة في الإعداد والتشغيل",
 ];
 
 function CheckIcon() {
@@ -166,11 +166,15 @@ function SocialButtons({ size = "md" }: { size?: "sm" | "md" }) {
 
 export default function HomePage() {
   return (
-    <main className="shop-shell relative flex flex-1 flex-col">
+    <main
+      lang="ar"
+      dir="rtl"
+      className="shop-shell relative flex flex-1 flex-col"
+    >
       <section className="relative isolate min-h-[88svh] overflow-hidden sm:min-h-[92svh]">
         <Image
           src="/images/barber-hero-default.jpg"
-          alt="מספרה מקצועית"
+          alt="صالون حلاقة احترافي"
           fill
           priority
           sizes="100vw"
@@ -187,54 +191,54 @@ export default function HomePage() {
 
         <div className="relative mx-auto flex min-h-[88svh] w-full max-w-6xl flex-col justify-between px-6 py-6 sm:min-h-[92svh] sm:px-10 sm:py-8">
           <div className="flex items-center justify-between gap-4">
-            <BrandMark tone="light" />
+            <BrandMark tone="light" label="حلاق بكبسة زر" />
             <nav className="flex flex-wrap items-center gap-2 text-sm font-semibold">
               <a
                 href="#pricing"
                 className="rounded-xl border border-white/25 bg-black/25 px-4 py-2 text-[var(--cream)] backdrop-blur-sm transition hover:bg-black/40"
               >
-                מחירון
+                الأسعار
               </a>
               <a
                 href="#contact"
                 className="rounded-xl border border-white/25 bg-black/25 px-4 py-2 text-[var(--cream)] backdrop-blur-sm transition hover:bg-black/40"
               >
-                יצירת קשר
+                تواصل معنا
               </a>
               <Link
                 href="/platform/login"
                 className="rounded-xl border border-white/25 bg-black/25 px-4 py-2 text-[var(--cream)] backdrop-blur-sm transition hover:bg-black/40"
               >
-                ניהול
+                الإدارة
               </Link>
             </nav>
           </div>
 
           <header className="animate-fade-up max-w-2xl pb-16 pt-20 sm:pb-20 sm:pt-24">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[rgba(248,243,236,0.78)] sm:text-sm">
-              יומן תורים דיגיטלי למספרות
+              جدول مواعيد رقمي لصالونات الحلاقة
             </p>
             <h1 className="font-display mt-4 text-5xl leading-[1.08] text-[var(--cream)] sm:text-7xl">
-              ספר בקליק
+              حلاق بكبسة زر
             </h1>
             <div className="mt-5 h-1 w-24 rounded-full bg-[var(--copper)]" />
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-[rgba(248,243,236,0.86)] sm:text-xl">
-              כתובת ייחודית לכל ספר. הלקוח קובע תור מהטלפון — בלי שיחות ובלי
-              המתנה. ניהול יומן נוח לספר, הודעות SMS ותזכורות ללקוח, והכל במחיר
-              החל מ־₪99 לחודש.
+              رابط خاص لكل حلاق. الزبون يحجز موعده من الهاتف — بدون مكالمات
+              وبدون انتظار. جدول سهل لإدارة المواعيد، رسائل SMS وتذكيرات
+              للزبائن، وكل هذا ابتداءً من ₪99 شهريًا.
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
               <Link
                 href="/dani"
                 className="btn-primary inline-flex items-center justify-center rounded-xl px-7 py-3.5 text-base font-semibold"
               >
-                דוגמה: יומן של דני
+                مثال: جدول داني
               </Link>
               <a
                 href="#pricing"
                 className="inline-flex items-center justify-center rounded-xl border border-white/30 bg-white/10 px-7 py-3.5 text-base font-semibold text-[var(--cream)] backdrop-blur-sm transition hover:bg-white/20"
               >
-                למחירון החודשי
+                للأسعار الشهرية
               </a>
             </div>
           </header>
@@ -247,31 +251,31 @@ export default function HomePage() {
       >
         <div className="mx-auto max-w-6xl">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--copper)]">
-            מחירון
+            الأسعار
           </p>
           <h2 className="font-display mt-3 text-4xl text-[var(--cream)] sm:text-5xl">
-            חבילות חודשיות
+            باقات شهرية
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-[rgba(248,243,236,0.68)] sm:text-lg">
-            המחיר הוא לחודש. כל החבילות כוללות את כלי הניהול באפליקציה —
-            ההבדל הוא בשירות ה-SMS.
+            السعر شهري. جميع الباقات تشمل أدوات الإدارة في التطبيق — والفرق
+            بينها هو خدمة رسائل SMS.
           </p>
 
           <div className="mt-10 grid gap-5 lg:grid-cols-3">
             <article className="surface-dark flex flex-col rounded-2xl p-6 sm:p-7">
               <p className="text-sm font-semibold text-[rgba(248,243,236,0.62)]">
-                חבילת בסיס
+                الباقة الأساسية
               </p>
               <p className="mt-3 flex items-baseline gap-1">
                 <span className="font-display text-5xl text-[var(--cream)]">
                   ₪99
                 </span>
                 <span className="text-sm text-[rgba(248,243,236,0.55)]">
-                  / לחודש
+                  / شهريًا
                 </span>
               </p>
               <p className="mt-3 text-sm leading-relaxed text-[rgba(248,243,236,0.68)]">
-                כל הפיצ׳רים לניהול המספרה — בלי הודעות SMS ללקוחות.
+                كل الميزات اللازمة لإدارة الصالون — بدون رسائل SMS للزبائن.
               </p>
               <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm text-[var(--cream)]">
                 {baseFeatures.map((item) => (
@@ -284,7 +288,7 @@ export default function HomePage() {
                   <span className="mt-0.5 inline-block w-4 shrink-0 text-center font-bold">
                     —
                   </span>
-                  <span>ללא אישור, תזכורת או התראות ב-SMS</span>
+                  <span>بدون تأكيدات، تذكيرات أو تنبيهات عبر SMS</span>
                 </li>
               </ul>
               <a
@@ -293,32 +297,33 @@ export default function HomePage() {
                 rel="noopener noreferrer"
                 className="mt-8 inline-flex items-center justify-center rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-[var(--cream)] transition hover:bg-white/10"
               >
-                להתחיל ב-WhatsApp
+                ابدأ عبر WhatsApp
               </a>
             </article>
 
             <article className="relative flex flex-col rounded-2xl border-2 border-[var(--copper)] bg-[rgba(22,18,14,0.96)] p-6 shadow-[0_22px_60px_rgba(196,90,40,0.22)] sm:p-7">
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[var(--copper)] px-3 py-1 text-xs font-bold text-white">
-                מומלץ
+                الأكثر طلبًا
               </span>
               <p className="text-sm font-semibold text-[var(--copper)]">
-                חבילה מומלצת
+                الباقة الموصى بها
               </p>
               <p className="mt-3 flex items-baseline gap-1">
                 <span className="font-display text-5xl text-[var(--cream)]">
                   ₪149
                 </span>
                 <span className="text-sm text-[rgba(248,243,236,0.55)]">
-                  / לחודש
+                  / شهريًا
                 </span>
               </p>
               <p className="mt-3 text-sm leading-relaxed text-[rgba(248,243,236,0.68)]">
-                כל מה שיש בבסיס, ועוד 500 הודעות SMS בחודש ללקוחות.
+                كل ما في الباقة الأساسية، بالإضافة إلى 500 رسالة SMS شهريًا
+                للزبائن.
               </p>
               <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm text-[var(--cream)]">
                 <li className="flex items-start gap-2.5 font-medium">
                   <CheckIcon />
-                  <span>כל פיצ׳רי חבילת הבסיס</span>
+                  <span>جميع ميزات الباقة الأساسية</span>
                 </li>
                 {smsFeatures.map((item) => (
                   <li key={item} className="flex items-start gap-2.5">
@@ -333,24 +338,25 @@ export default function HomePage() {
                 rel="noopener noreferrer"
                 className="btn-primary mt-8 inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold"
               >
-                לשדרג ב-WhatsApp
+                اطلب الباقة عبر WhatsApp
               </a>
             </article>
 
             <article className="surface-dark flex flex-col rounded-2xl p-6 sm:p-7">
               <p className="text-sm font-semibold text-[rgba(248,243,236,0.62)]">
-                חבילה מותאמת אישית
+                باقة مخصّصة
               </p>
               <p className="mt-3 font-display text-4xl leading-tight text-[var(--cream)] sm:text-5xl">
-                צור קשר
+                تواصل معنا
               </p>
               <p className="mt-3 text-sm leading-relaxed text-[rgba(248,243,236,0.68)]">
-                מחיר לפי צורך — מכסת SMS אחרת, צוות גדול או התאמות נוספות.
+                السعر حسب الحاجة — عدد مختلف من رسائل SMS، فريق كبير أو
+                تخصيصات إضافية.
               </p>
               <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm text-[var(--cream)]">
                 <li className="flex items-start gap-2.5 font-medium">
                   <CheckIcon />
-                  <span>כל פיצ׳רי האפליקציה</span>
+                  <span>جميع ميزات التطبيق</span>
                 </li>
                 {customFeatures.map((item) => (
                   <li key={item} className="flex items-start gap-2.5">
@@ -365,7 +371,7 @@ export default function HomePage() {
                 rel="noopener noreferrer"
                 className="mt-8 inline-flex items-center justify-center rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-[var(--cream)] transition hover:bg-white/10"
               >
-                לקבל הצעת מחיר
+                احصل على عرض سعر
               </a>
             </article>
           </div>
@@ -380,14 +386,15 @@ export default function HomePage() {
         <div className="relative mx-auto flex max-w-6xl flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--copper)]">
-              יצירת קשר
+              تواصل معنا
             </p>
             <h2 className="font-display mt-3 text-3xl text-[var(--cream)] sm:text-4xl">
               {SITE_ADMIN_NAME}
             </h2>
-            <p className="mt-2 text-[rgba(248,243,236,0.72)]">מנהל האתר</p>
+            <p className="mt-2 text-[rgba(248,243,236,0.72)]">مدير الموقع</p>
             <p className="mt-5 max-w-md text-sm leading-relaxed text-[rgba(248,243,236,0.7)]">
-              רוצה את זה אצלך במספרה? כתבו בוואטסאפ או במייל ונחבר אתכם.
+              بدك موقع مثل هذا لصالونك؟ تواصل معنا عبر واتساب أو البريد
+              الإلكتروني وسنساعدك على البدء.
             </p>
             <a
               href={`mailto:${SITE_ADMIN_EMAIL}`}
@@ -414,7 +421,7 @@ export default function HomePage() {
           </div>
         </div>
         <p className="relative mx-auto mt-10 max-w-6xl text-center text-sm text-[rgba(248,243,236,0.45)] sm:text-start">
-          ספר בקליק · יומן תורים דיגיטלי
+          حلاق بكبسة زر · جدول مواعيد رقمي
         </p>
       </section>
     </main>
