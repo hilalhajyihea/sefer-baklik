@@ -46,6 +46,7 @@ const he = {
   tabAppointments: "תורים",
   tabHours: "שעות פעילות",
   tabDaysOff: "ימי חופש",
+  tabBlockedWindows: "סגירת חלון",
   tabSms: "הודעות SMS",
   loading: "טוען...",
   loadError: "שגיאה בטעינת הנתונים",
@@ -68,6 +69,13 @@ const he = {
   dayOffAdded: "יום חופש נוסף",
   dayOffRemoved: "יום החופש הוסר",
   noDaysOff: "אין ימי חופש קרובים",
+  blockedWindowHelp:
+    "חסימת תאריך וטווח שעות — הלקוחות לא יראו תורים בחלון הזה (למשל הפסקת צהריים).",
+  fromTime: "משעה",
+  untilTime: "עד שעה",
+  blockedWindowAdded: "חלון הסגירה נוסף",
+  blockedWindowRemoved: "חלון הסגירה הוסר",
+  noBlockedWindows: "אין חלונות סגירה קרובים",
   smsHelp:
     "הלקוח מקבל SMS באישור התור, ותזכורת לפני התור. ניתן לכבות או לשנות את זמן התזכורת.",
   smsConfirmToggle: "שליחת SMS באישור קביעת תור",
@@ -219,6 +227,7 @@ const ar: { [K in keyof typeof he]: string } = {
   tabAppointments: "المواعيد",
   tabHours: "ساعات العمل",
   tabDaysOff: "أيام العطل",
+  tabBlockedWindows: "إغلاق نافذة",
   tabSms: "رسائل SMS",
   loading: "جاري التحميل...",
   loadError: "خطأ في تحميل البيانات",
@@ -241,6 +250,13 @@ const ar: { [K in keyof typeof he]: string } = {
   dayOffAdded: "تمت إضافة يوم عطلة",
   dayOffRemoved: "تمت إزالة يوم العطلة",
   noDaysOff: "لا أيام عطل قريبة",
+  blockedWindowHelp:
+    "حظر تاريخ ونطاق ساعات — لن يرى الزبائن مواعيد في هذه النافذة (مثل استراحة الظهر).",
+  fromTime: "من الساعة",
+  untilTime: "حتى الساعة",
+  blockedWindowAdded: "تمت إضافة نافذة الإغلاق",
+  blockedWindowRemoved: "تمت إزالة نافذة الإغلاق",
+  noBlockedWindows: "لا نوافذ إغلاق قريبة",
   smsHelp:
     "يتلقى الزبون رسالة SMS عند تأكيد الموعد، وتذكيراً قبل الموعد. يمكن إيقاف ذلك أو تغيير وقت التذكير.",
   smsConfirmToggle: "إرسال SMS عند تأكيد الحجز",

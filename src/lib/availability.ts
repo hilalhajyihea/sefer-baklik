@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import {
+  filterSlotsByBlockedWindows,
+  getBlockedWindowsForDate,
+} from "@/lib/blockedWindows";
 import { generateCancelToken } from "@/lib/cancel";
 import { getActiveStaff, isTeamMode } from "@/lib/staff";
 import {
@@ -70,13 +74,22 @@ export async function getAvailableSlots(barberId: string, dateKey: string) {
     },
   });
 
-  return buildSlotsFromWindow({
+  const blockedWindows = await getBlockedWindowsForDate(barberId, dateKey);
+
+  const slots = buildSlotsFromWindow({
     dateKey,
     startTime: hours.startTime,
     endTime: hours.endTime,
     slotMinutes: barber.slotMinutes,
     appointments,
   });
+
+  return filterSlotsByBlockedWindows(
+    slots,
+    dateKey,
+    barber.slotMinutes,
+    blockedWindows,
+  );
 }
 
 export async function getStaffSlots(staffId: string, dateKey: string) {
@@ -111,13 +124,25 @@ export async function getStaffSlots(staffId: string, dateKey: string) {
     },
   });
 
-  return buildSlotsFromWindow({
+  const blockedWindows = await getBlockedWindowsForDate(
+    staff.barber.id,
+    dateKey,
+  );
+
+  const slots = buildSlotsFromWindow({
     dateKey,
     startTime: hours.startTime,
     endTime: hours.endTime,
     slotMinutes: staff.barber.slotMinutes,
     appointments,
   });
+
+  return filterSlotsByBlockedWindows(
+    slots,
+    dateKey,
+    staff.barber.slotMinutes,
+    blockedWindows,
+  );
 }
 
 /**

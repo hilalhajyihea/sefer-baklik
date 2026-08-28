@@ -46,6 +46,7 @@ model Barber {
 
   workingHours      WorkingHours[]
   dayOffs           DayOff[]
+  blockedWindows    BlockedWindow[]
   appointments      Appointment[]
   staff             Staff[]
   recurringSeries   RecurringSeries[]
@@ -75,6 +76,20 @@ model DayOff {
 
   @@unique([barberId, date])
   @@index([barberId])
+}
+
+/// Shop-wide closure for a specific date + clock range (e.g. lunch break).
+model BlockedWindow {
+  id        String   @id @default(cuid())
+  barberId  String
+  date      DateTime @db.Date
+  startTime String
+  endTime   String
+  note      String?
+
+  barber Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@index([barberId, date])
 }
 
 model Staff {

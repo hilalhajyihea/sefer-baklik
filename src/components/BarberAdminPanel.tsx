@@ -46,6 +46,14 @@ type DayOff = {
   note: string | null;
 };
 
+type BlockedWindow = {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  note: string | null;
+};
+
 type Props = {
   slug: string;
   displayName: string;
@@ -96,7 +104,7 @@ export function BarberAdminPanel({
   const locale = normalizeLocale(localeProp);
   const router = useRouter();
   const [tab, setTab] = useState<
-    "appointments" | "book" | "hours" | "daysOff" | "sms"
+    "appointments" | "book" | "hours" | "daysOff" | "blockedWindows" | "sms"
   >("appointments");
   const [teamMode, setTeamMode] = useState(false);
   const [staff, setStaff] = useState<StaffMember[]>([]);
@@ -107,6 +115,7 @@ export function BarberAdminPanel({
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [hours, setHours] = useState<HourRow[]>(defaultHours());
   const [dayOffs, setDayOffs] = useState<DayOff[]>([]);
+  const [blockedWindows, setBlockedWindows] = useState<BlockedWindow[]>([]);
   const [smsPlanEnabled, setSmsPlanEnabled] = useState(false);
   const [smsConfirmationEnabled, setSmsConfirmationEnabled] = useState(true);
   const [smsReminderEnabled, setSmsReminderEnabled] = useState(true);
@@ -117,6 +126,10 @@ export function BarberAdminPanel({
   const [notifyOnCustomerCancel, setNotifyOnCustomerCancel] = useState(true);
   const [offDate, setOffDate] = useState("");
   const [offNote, setOffNote] = useState("");
+  const [blockDate, setBlockDate] = useState("");
+  const [blockStart, setBlockStart] = useState("12:00");
+  const [blockEnd, setBlockEnd] = useState("13:00");
+  const [blockNote, setBlockNote] = useState("");
   const [bookMode, setBookMode] = useState<"once" | "recurring">("once");
   const [bookDate, setBookDate] = useState("");
   const [bookEndDate, setBookEndDate] = useState("");
@@ -139,6 +152,12 @@ export function BarberAdminPanel({
     () => staff.filter((s) => s.isActive),
     [staff],
   );
+
+  const loadBlockedWindows = useCallback(async () => {
+    const res = await fetch("/api/barber/blocked-windows");
+    const data = await res.json();
+    setBlockedWindows(data.blockedWindows || []);
+  }, []);
 
   const loadHoursAndDaysOff = useCallback(
     async (team: boolean, staffId: string) => {
@@ -226,6 +245,7 @@ export function BarberAdminPanel({
         }
 
         await loadHoursAndDaysOff(nextTeam, staffIdForHours);
+        await loadBlockedWindows();
 
         if (sData.settings) {
           setSmsPlanEnabled(!!sData.settings.smsPlanEnabled);
@@ -253,7 +273,7 @@ export function BarberAdminPanel({
         }
       }
     },
-    [router, slug, locale, loadHoursAndDaysOff],
+    [router, slug, locale, loadHoursAndDaysOff, loadBlockedWindows],
   );
 
   useEffect(() => {
@@ -508,6 +528,41 @@ export function BarberAdminPanel({
     await loadHoursAndDaysOff(teamMode, manageStaffId);
   }
 
+  async function addBlockedWindow(e: FormEvent) {
+    e.preventDefault();
+    setMessage("");
+    setError("");
+    const res = await fetch("/api/barber/blocked-windows", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date: blockDate,
+        startTime: blockStart,
+        endTime: blockEnd,
+        note: blockNote || undefined,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || t(locale, "addFailed"));
+      return;
+    }
+    setBlockDate("");
+    setBlockNote("");
+    setMessage(t(locale, "blockedWindowAdded"));
+    await loadBlockedWindows();
+  }
+
+  async function removeBlockedWindow(id: string) {
+    await fetch("/api/barber/blocked-windows", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    setMessage(t(locale, "blockedWindowRemoved"));
+    await loadBlockedWindows();
+  }
+
   return (
     <div className="shop-chrome mx-auto w-full max-w-4xl px-4 py-8" lang={locale}>
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -546,6 +601,7 @@ export function BarberAdminPanel({
             ["book", "tabBook"],
             ["hours", "tabHours"],
             ["daysOff", "tabDaysOff"],
+            ["blockedWindows", "tabBlockedWindows"],
             ["sms", "tabSms"],
           ] as const
         ).map(([key, labelKey]) => (
@@ -1021,6 +1077,103 @@ export function BarberAdminPanel({
                       <button
                         type="button"
                         onClick={() => removeDayOff(d.id)}
+                        className="text-sm font-medium text-red-300 hover:text-red-200"
+                      >
+                        {t(locale, "remove")}
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {tab === "blockedWindows" && (
+            <div className="space-y-5">
+              <p className="text-sm leading-relaxed text-[rgba(248,243,236,0.68)]">
+                {t(locale, "blockedWindowHelp")}
+              </p>
+              <form
+                onSubmit={addBlockedWindow}
+                className="flex flex-wrap items-end gap-3"
+              >
+                <label className="text-sm font-medium text-[var(--cream)]">
+                  {t(locale, "date")}
+                  <input
+                    type="date"
+                    required
+                    value={blockDate}
+                    min={toDateKey()}
+                    onChange={(e) => setBlockDate(e.target.value)}
+                    className="shop-field mt-1 block rounded-xl px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm font-medium text-[var(--cream)]">
+                  {t(locale, "fromTime")}
+                  <input
+                    type="time"
+                    required
+                    value={blockStart}
+                    onChange={(e) => setBlockStart(e.target.value)}
+                    className="shop-field mt-1 block rounded-xl px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm font-medium text-[var(--cream)]">
+                  {t(locale, "untilTime")}
+                  <input
+                    type="time"
+                    required
+                    value={blockEnd}
+                    onChange={(e) => setBlockEnd(e.target.value)}
+                    className="shop-field mt-1 block rounded-xl px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm font-medium text-[var(--cream)]">
+                  {t(locale, "noteOptional")}
+                  <input
+                    value={blockNote}
+                    onChange={(e) => setBlockNote(e.target.value)}
+                    className="shop-field mt-1 block rounded-xl px-3 py-2"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  className="btn-primary rounded-xl px-5 py-2.5 font-semibold"
+                >
+                  {t(locale, "add")}
+                </button>
+              </form>
+
+              <div className="space-y-2">
+                {blockedWindows.length === 0 ? (
+                  <p className="text-[rgba(248,243,236,0.62)]">
+                    {t(locale, "noBlockedWindows")}
+                  </p>
+                ) : (
+                  blockedWindows.map((w) => (
+                    <div
+                      key={w.id}
+                      className="flex items-center justify-between rounded-xl border border-white/12 bg-black/30 px-4 py-3"
+                    >
+                      <div>
+                        <p className="font-semibold text-[var(--cream)]">
+                          {formatDateLocalized(
+                            locale,
+                            new Date(
+                              `${dbDateToDateKey(new Date(w.date))}T12:00:00Z`,
+                            ),
+                          )}{" "}
+                          · {w.startTime}–{w.endTime}
+                        </p>
+                        {w.note ? (
+                          <p className="text-sm text-[rgba(248,243,236,0.62)]">
+                            {w.note}
+                          </p>
+                        ) : null}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeBlockedWindow(w.id)}
                         className="text-sm font-medium text-red-300 hover:text-red-200"
                       >
                         {t(locale, "remove")}
