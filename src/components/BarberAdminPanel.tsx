@@ -31,6 +31,7 @@ type Appointment = {
   customerName: string;
   customerPhone: string;
   staffId?: string | null;
+  seriesId?: string | null;
   staff?: { id: string; displayName: string } | null;
 };
 
@@ -397,6 +398,27 @@ export function BarberAdminPanel({
     load({ silent: true });
   }
 
+  async function cancelSeries(seriesId: string) {
+    if (!confirm(t(locale, "confirmCancelSeries"))) return;
+    setError("");
+    const res = await fetch("/api/barber/appointments/cancel-series", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ seriesId }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(data.error || t(locale, "cancelSeriesFailed"));
+      return;
+    }
+    setMessage(
+      t(locale, "seriesCancelled", {
+        count: data.cancelledCount ?? 0,
+      }),
+    );
+    load({ silent: true });
+  }
+
   async function saveHours(e: FormEvent) {
     e.preventDefault();
     setMessage("");
@@ -743,6 +765,11 @@ export function BarberAdminPanel({
                                       {t(locale, "nextUp")}
                                     </span>
                                   ) : null}
+                                  {a.seriesId ? (
+                                    <span className="rounded-full border border-white/25 bg-black/40 px-2 py-0.5 text-xs font-semibold text-[rgba(248,243,236,0.85)]">
+                                      {t(locale, "recurringBadge")}
+                                    </span>
+                                  ) : null}
                                 </div>
                                 <p className="text-sm text-[rgba(248,243,236,0.62)]">
                                   {a.customerName}
@@ -761,13 +788,24 @@ export function BarberAdminPanel({
                                   ) : null}
                                 </p>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => cancelAppointment(a.id)}
-                                className="rounded-lg border border-red-400/35 bg-red-950/40 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-950/70"
-                              >
-                                {t(locale, "cancelAppointment")}
-                              </button>
+                              <div className="flex flex-wrap gap-2">
+                                {a.seriesId ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => cancelSeries(a.seriesId!)}
+                                    className="rounded-lg border border-amber-400/35 bg-amber-950/40 px-3 py-1.5 text-sm font-medium text-amber-100 hover:bg-amber-950/70"
+                                  >
+                                    {t(locale, "cancelSeries")}
+                                  </button>
+                                ) : null}
+                                <button
+                                  type="button"
+                                  onClick={() => cancelAppointment(a.id)}
+                                  className="rounded-lg border border-red-400/35 bg-red-950/40 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-950/70"
+                                >
+                                  {t(locale, "cancelAppointment")}
+                                </button>
+                              </div>
                             </div>
                           );
                         })}
