@@ -51,6 +51,7 @@ export async function createAdminBooking(input: {
   customerName: string;
   customerPhone: string;
   staffId?: string | null;
+  slotMinutes?: number | null;
 }) {
   const team = await isTeamMode(input.barberId);
   if (team && !input.staffId) {
@@ -65,6 +66,7 @@ export async function createAdminBooking(input: {
     customerPhone: input.customerPhone,
     staffKey: input.staffId || undefined,
     source: "ADMIN",
+    slotMinutes: input.slotMinutes,
   });
 }
 
@@ -77,6 +79,7 @@ export async function createRecurringSeries(input: {
   time: string;
   startDateKey: string;
   endDateKey: string;
+  slotMinutes?: number | null;
 }) {
   if (input.endDateKey < input.startDateKey) {
     throw new Error("תאריך הסיום חייב להיות אחרי תאריך ההתחלה");
@@ -123,6 +126,7 @@ export async function createRecurringSeries(input: {
         staffKey: input.staffId || undefined,
         source: "RECURRING",
         seriesId: series.id,
+        slotMinutes: input.slotMinutes,
       });
       created.push(appt.id);
     } catch (error) {

@@ -15,6 +15,7 @@ import {
   normalizeLocale,
   t,
 } from "@/lib/i18n";
+import { ALLOWED_SLOT_MINUTES } from "@/lib/slotMinutes";
 
 type StaffMember = {
   id: string;
@@ -134,6 +135,7 @@ export function BarberAdminPanel({
   const [bookDate, setBookDate] = useState("");
   const [bookEndDate, setBookEndDate] = useState("");
   const [bookTime, setBookTime] = useState("10:00");
+  const [bookSlotMinutes, setBookSlotMinutes] = useState<number>(30);
   const [bookName, setBookName] = useState("");
   const [bookPhone, setBookPhone] = useState("");
   const [bookStaffId, setBookStaffId] = useState("");
@@ -316,7 +318,11 @@ export function BarberAdminPanel({
     async function loadSlots() {
       setBookLoadingSlots(true);
       try {
-        const params = new URLSearchParams({ slug, date: bookDate });
+        const params = new URLSearchParams({
+          slug,
+          date: bookDate,
+          slotMinutes: String(bookSlotMinutes),
+        });
         if (teamMode && bookStaffId) params.set("staff", bookStaffId);
         const res = await fetch(`/api/availability?${params.toString()}`);
         const data = await res.json();
@@ -337,7 +343,7 @@ export function BarberAdminPanel({
     return () => {
       cancelled = true;
     };
-  }, [slug, bookDate, bookStaffId, teamMode]);
+  }, [slug, bookDate, bookStaffId, teamMode, bookSlotMinutes]);
 
   const filteredAppointments = useMemo(() => {
     if (!teamMode || staffFilter === "all") return appointments;
@@ -482,6 +488,7 @@ export function BarberAdminPanel({
           mode: bookMode,
           date: bookDate,
           time: bookTime,
+          slotMinutes: bookSlotMinutes,
           customerName: bookName,
           customerPhone: bookPhone,
           ...(teamMode && bookStaffId ? { staffId: bookStaffId } : {}),
@@ -835,6 +842,21 @@ export function BarberAdminPanel({
                   />
                 </label>
                 <label className="text-sm font-medium text-[var(--cream)]">
+                  {t(locale, "appointmentLength")}
+                  <select
+                    required
+                    value={bookSlotMinutes}
+                    onChange={(e) => setBookSlotMinutes(Number(e.target.value))}
+                    className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
+                  >
+                    {ALLOWED_SLOT_MINUTES.map((m) => (
+                      <option key={m} value={m}>
+                        {t(locale, "appointmentLengthMinutes", { minutes: m })}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-sm font-medium text-[var(--cream)]">
                   {t(locale, "date")}
                   <input
                     type="date"
@@ -845,7 +867,7 @@ export function BarberAdminPanel({
                     className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
                   />
                 </label>
-                <label className="text-sm font-medium text-[var(--cream)]">
+                <label className="text-sm font-medium text-[var(--cream)] sm:col-span-2">
                   {t(locale, "time")}
                   {bookLoadingSlots ? (
                     <p className="mt-1.5 text-sm text-[rgba(248,243,236,0.62)]">

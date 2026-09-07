@@ -7,6 +7,7 @@ import {
   createRecurringSeries,
   type RecurringInterval,
 } from "@/lib/recurring";
+import { ALLOWED_SLOT_MINUTES } from "@/lib/slotMinutes";
 
 const schema = z.object({
   mode: z.enum(["once", "recurring"]),
@@ -24,6 +25,13 @@ const schema = z.object({
       "טלפון לא תקין",
     ),
   staffId: z.string().min(1).optional(),
+  slotMinutes: z
+    .number()
+    .int()
+    .refine((v) => (ALLOWED_SLOT_MINUTES as readonly number[]).includes(v), {
+      message: "אורך תור לא תקין",
+    })
+    .optional(),
   interval: z
     .enum(["WEEKLY", "BIWEEKLY", "TRIWEEKLY", "MONTHLY"])
     .optional(),
@@ -61,6 +69,7 @@ export async function POST(request: Request) {
         customerName: parsed.data.customerName,
         customerPhone: parsed.data.customerPhone,
         staffId: parsed.data.staffId,
+        slotMinutes: parsed.data.slotMinutes,
       });
       return NextResponse.json({
         ok: true,
@@ -68,6 +77,7 @@ export async function POST(request: Request) {
         appointment: {
           id: appointment.id,
           startsAt: appointment.startsAt.toISOString(),
+          endsAt: appointment.endsAt.toISOString(),
         },
       });
     }
@@ -88,6 +98,7 @@ export async function POST(request: Request) {
       time: parsed.data.time,
       startDateKey: parsed.data.date,
       endDateKey: parsed.data.endDate,
+      slotMinutes: parsed.data.slotMinutes,
     });
 
     return NextResponse.json({

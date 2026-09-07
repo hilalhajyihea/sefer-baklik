@@ -4,6 +4,7 @@ import {
   getBlockedWindowsForDate,
 } from "@/lib/blockedWindows";
 import { generateCancelToken } from "@/lib/cancel";
+import { resolveSlotMinutes } from "@/lib/slotMinutes";
 import { getActiveStaff, isTeamMode } from "@/lib/staff";
 import {
   combineDateAndTime,
@@ -28,6 +29,7 @@ function buildSlotsFromWindow(input: {
   const now = new Date();
   const slots: string[] = [];
 
+  // Only offer starts that fully fit inside working hours (no spillover).
   for (let t = startMin; t + input.slotMinutes <= endMin; t += input.slotMinutes) {
     const time = minutesToTime(t);
     const startsAt = combineDateAndTime(input.dateKey, time);
@@ -45,12 +47,21 @@ function buildSlotsFromWindow(input: {
 }
 
 /** Solo shop slots (existing behavior). */
-export async function getAvailableSlots(barberId: string, dateKey: string) {
+export async function getAvailableSlots(
+  barberId: string,
+  dateKey: string,
+  slotMinutesOverride?: number | null,
+) {
   const barber = await prisma.barber.findUnique({
     where: { id: barberId },
     include: { workingHours: true },
   });
   if (!barber || !barber.isActive) return [];
+
+  const slotMinutes = resolveSlotMinutes(
+    slotMinutesOverride,
+    barber.slotMinutes,
+  );
 
   const dayOfWeek = getJerusalemDayOfWeek(combineDateAndTime(dateKey, "12:00"));
   const hours = barber.workingHours.find((h) => h.dayOfWeek === dayOfWeek);
@@ -80,19 +91,23 @@ export async function getAvailableSlots(barberId: string, dateKey: string) {
     dateKey,
     startTime: hours.startTime,
     endTime: hours.endTime,
-    slotMinutes: barber.slotMinutes,
+    slotMinutes,
     appointments,
   });
 
   return filterSlotsByBlockedWindows(
     slots,
     dateKey,
-    barber.slotMinutes,
+    slotMinutes,
     blockedWindows,
   );
 }
 
-export async function getStaffSlots(staffId: string, dateKey: string) {
+export async function getStaffSlots(
+  staffId: string,
+  dateKey: string,
+  slotMinutesOverride?: number | null,
+) {
   const staff = await prisma.staff.findUnique({
     where: { id: staffId },
     include: {
@@ -101,6 +116,11 @@ export async function getStaffSlots(staffId: string, dateKey: string) {
     },
   });
   if (!staff || !staff.isActive || !staff.barber.isActive) return [];
+
+  const slotMinutes = resolveSlotMinutes(
+    slotMinutesOverride,
+    staff.barber.slotMinutes,
+  );
 
   const dayOfWeek = getJerusalemDayOfWeek(combineDateAndTime(dateKey, "12:00"));
   const hours = staff.workingHours.find((h) => h.dayOfWeek === dayOfWeek);
@@ -133,14 +153,14 @@ export async function getStaffSlots(staffId: string, dateKey: string) {
     dateKey,
     startTime: hours.startTime,
     endTime: hours.endTime,
-    slotMinutes: staff.barber.slotMinutes,
+    slotMinutes,
     appointments,
   });
 
   return filterSlotsByBlockedWindows(
     slots,
     dateKey,
-    staff.barber.slotMinutes,
+    slotMinutes,
     blockedWindows,
   );
 }
@@ -153,24 +173,26 @@ export async function getTeamOrSoloSlots(
   barberId: string,
   dateKey: string,
   staffKey?: string | null,
+  slotMinutesOverride?: number | null,
 ) {
   if (!(await isTeamMode(barberId))) {
-    return getAvailableSlots(barberId, dateKey);
+    return getAvailableSlots(barberId, dateKey, slotMinutesOverride);
   }
 
   const staff = await getActiveStaff(barberId);
   if (staff.length < 2) {
-    return getAvailableSlots(barberId, dateKey);
+    return getAvailableSlots(barberId, dateKey, slotMinutesOverride);
   }
 
   if (staffKey && staffKey !== "any") {
     const match = staff.find((s) => s.id === staffKey);
     if (!match) return [];
-    return getStaffSlots(match.id, dateKey);
+    return getStaffSlots(match.id, dateKey, slotMinutesOverride);
   }
 
-  // Union of times free with at least one staff member
-  const sets = await Promise.all(staff.map((s) => getStaffSlots(s.id, dateKey)));
+  const sets = await Promise.all(
+    staff.map((s) => getStaffSlots(s.id, dateKey, slotMinutesOverride)),
+  );
   const union = new Set<string>();
   for (const list of sets) {
     for (const t of list) union.add(t);
@@ -182,6 +204,7 @@ async function pickStaffForAnySlot(
   barberId: string,
   dateKey: string,
   time: string,
+  slotMinutesOverride?: number | null,
 ) {
   const staff = await getActiveStaff(barberId);
   const dayStart = startOfJerusalemDay(dateKey);
@@ -190,7 +213,7 @@ async function pickStaffForAnySlot(
   const candidates: { id: string; sortOrder: number; dayCount: number }[] = [];
 
   for (const s of staff) {
-    const slots = await getStaffSlots(s.id, dateKey);
+    const slots = await getStaffSlots(s.id, dateKey, slotMinutesOverride);
     if (!slots.includes(time)) continue;
 
     const dayCount = await prisma.appointment.count({
@@ -222,6 +245,8 @@ export async function bookAppointment(input: {
   staffKey?: string | null;
   source?: "PUBLIC" | "ADMIN" | "RECURRING";
   seriesId?: string | null;
+  /** Admin override; public booking ignores and uses barber.slotMinutes */
+  slotMinutes?: number | null;
 }) {
   const barber = await prisma.barber.findUnique({
     where: { id: input.barberId },
@@ -231,16 +256,24 @@ export async function bookAppointment(input: {
   }
 
   const source = input.source ?? "PUBLIC";
+  const slotMinutes =
+    source === "PUBLIC"
+      ? resolveSlotMinutes(barber.slotMinutes)
+      : resolveSlotMinutes(input.slotMinutes, barber.slotMinutes);
   const team = await isTeamMode(input.barberId);
 
   if (!team) {
-    const slots = await getAvailableSlots(input.barberId, input.dateKey);
+    const slots = await getAvailableSlots(
+      input.barberId,
+      input.dateKey,
+      slotMinutes,
+    );
     if (!slots.includes(input.time)) {
       throw new Error("השעה אינה פנויה");
     }
 
     const startsAt = combineDateAndTime(input.dateKey, input.time);
-    const endsAt = new Date(startsAt.getTime() + barber.slotMinutes * 60_000);
+    const endsAt = new Date(startsAt.getTime() + slotMinutes * 60_000);
 
     return prisma.$transaction(async (tx) => {
       const overlapping = await tx.appointment.findFirst({
@@ -271,7 +304,6 @@ export async function bookAppointment(input: {
     });
   }
 
-  // Team mode
   let staffId =
     input.staffKey && input.staffKey !== "any" ? input.staffKey : null;
 
@@ -280,6 +312,7 @@ export async function bookAppointment(input: {
       input.barberId,
       input.dateKey,
       input.time,
+      slotMinutes,
     );
   }
 
@@ -298,13 +331,13 @@ export async function bookAppointment(input: {
     throw new Error("השעה אינה פנויה");
   }
 
-  const slots = await getStaffSlots(staff.id, input.dateKey);
+  const slots = await getStaffSlots(staff.id, input.dateKey, slotMinutes);
   if (!slots.includes(input.time)) {
     throw new Error("השעה אינה פנויה");
   }
 
   const startsAt = combineDateAndTime(input.dateKey, input.time);
-  const endsAt = new Date(startsAt.getTime() + barber.slotMinutes * 60_000);
+  const endsAt = new Date(startsAt.getTime() + slotMinutes * 60_000);
 
   return prisma.$transaction(async (tx) => {
     const overlapping = await tx.appointment.findFirst({
