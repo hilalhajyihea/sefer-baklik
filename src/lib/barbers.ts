@@ -15,9 +15,18 @@ export function isValidSlug(slug: string) {
 }
 
 export async function authenticateBarber(username: string, password: string) {
-  const barber = await prisma.barber.findUnique({ where: { username } });
+  const normalizedUser = username.trim().toLowerCase();
+  const normalizedPass = password.trim();
+  if (!normalizedUser || !normalizedPass) return null;
+
+  // Case-insensitive match so iPhone auto-capitalization doesn't block login
+  const barber = await prisma.barber.findFirst({
+    where: {
+      username: { equals: normalizedUser, mode: "insensitive" },
+    },
+  });
   if (!barber || !barber.isActive) return null;
-  const ok = await compare(password, barber.passwordHash);
+  const ok = await compare(normalizedPass, barber.passwordHash);
   if (!ok) return null;
   return barber;
 }
@@ -39,7 +48,7 @@ export async function createBarber(input: {
     data: {
       slug: input.slug,
       displayName: input.displayName.trim(),
-      username: input.username.trim(),
+      username: input.username.trim().toLowerCase(),
       passwordHash,
       slotMinutes: input.slotMinutes ?? 30,
       workingHours: {

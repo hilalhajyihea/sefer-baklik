@@ -21,16 +21,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const existing = await prisma.barber.findUnique({
-      where: { username: parsed.data.username },
+    const username = parsed.data.username.trim();
+    const password = parsed.data.password.trim();
+
+    const existing = await prisma.barber.findFirst({
+      where: {
+        username: { equals: username.toLowerCase(), mode: "insensitive" },
+      },
       select: { locale: true },
     });
     const locale = normalizeLocale(existing?.locale);
 
-    const barber = await authenticateBarber(
-      parsed.data.username,
-      parsed.data.password,
-    );
+    const barber = await authenticateBarber(username, password);
     if (!barber) {
       return NextResponse.json(
         { error: t(locale, "errBadCredentials") },
