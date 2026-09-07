@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireBarberSession } from "@/lib/auth";
 import { getBarberLocale, t } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
+import { ALLOWED_SLOT_MINUTES } from "@/lib/slotMinutes";
 
 const hourSchema = z.object({
   dayOfWeek: z.number().int().min(0).max(6),
@@ -13,6 +14,13 @@ const hourSchema = z.object({
 
 const schema = z.object({
   hours: z.array(hourSchema).length(7),
+  slotMinutes: z
+    .number()
+    .int()
+    .refine((v) => (ALLOWED_SLOT_MINUTES as readonly number[]).includes(v), {
+      message: "אורך תור לא תקין",
+    })
+    .optional(),
 });
 
 export async function GET() {
@@ -21,12 +29,21 @@ export async function GET() {
     return NextResponse.json({ error: t("he", "errUnauthorized") }, { status: 401 });
   }
 
-  const hours = await prisma.workingHours.findMany({
-    where: { barberId: session.barberId },
-    orderBy: { dayOfWeek: "asc" },
-  });
+  const [hours, barber] = await Promise.all([
+    prisma.workingHours.findMany({
+      where: { barberId: session.barberId },
+      orderBy: { dayOfWeek: "asc" },
+    }),
+    prisma.barber.findUnique({
+      where: { id: session.barberId },
+      select: { slotMinutes: true },
+    }),
+  ]);
 
-  return NextResponse.json({ hours });
+  return NextResponse.json({
+    hours,
+    slotMinutes: barber?.slotMinutes ?? 30,
+  });
 }
 
 export async function PUT(request: Request) {
@@ -40,7 +57,10 @@ export async function PUT(request: Request) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: t(locale, "errInvalidData") },
+      {
+        error:
+          parsed.error.issues[0]?.message || t(locale, "errInvalidData"),
+      },
       { status: 400 },
     );
   }
@@ -65,6 +85,12 @@ export async function PUT(request: Request) {
           startTime: h.startTime,
           endTime: h.endTime,
         })),
+      });
+    }
+    if (parsed.data.slotMinutes != null) {
+      await tx.barber.update({
+        where: { id: session.barberId },
+        data: { slotMinutes: parsed.data.slotMinutes },
       });
     }
   });

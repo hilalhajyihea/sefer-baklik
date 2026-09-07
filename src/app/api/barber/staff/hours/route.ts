@@ -4,6 +4,7 @@ import { requireBarberSession } from "@/lib/auth";
 import { getBarberLocale, t } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
 import { isTeamMode } from "@/lib/staff";
+import { ALLOWED_SLOT_MINUTES } from "@/lib/slotMinutes";
 
 const hourSchema = z.object({
   dayOfWeek: z.number().int().min(0).max(6),
@@ -15,6 +16,11 @@ const hourSchema = z.object({
 const putSchema = z.object({
   staffId: z.string().min(1),
   hours: z.array(hourSchema).length(7),
+  slotMinutes: z
+    .number()
+    .int()
+    .refine((v) => (ALLOWED_SLOT_MINUTES as readonly number[]).includes(v))
+    .optional(),
 });
 
 async function assertStaffOwned(barberId: string, staffId: string) {
@@ -40,12 +46,21 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: t(locale, "errStaffNotFound") }, { status: 404 });
   }
 
-  const hours = await prisma.staffWorkingHours.findMany({
-    where: { staffId },
-    orderBy: { dayOfWeek: "asc" },
-  });
+  const [hours, barber] = await Promise.all([
+    prisma.staffWorkingHours.findMany({
+      where: { staffId },
+      orderBy: { dayOfWeek: "asc" },
+    }),
+    prisma.barber.findUnique({
+      where: { id: session.barberId },
+      select: { slotMinutes: true },
+    }),
+  ]);
 
-  return NextResponse.json({ hours });
+  return NextResponse.json({
+    hours,
+    slotMinutes: barber?.slotMinutes ?? 30,
+  });
 }
 
 export async function PUT(request: Request) {
@@ -92,6 +107,12 @@ export async function PUT(request: Request) {
           startTime: h.startTime,
           endTime: h.endTime,
         })),
+      });
+    }
+    if (parsed.data.slotMinutes != null) {
+      await tx.barber.update({
+        where: { id: session.barberId },
+        data: { slotMinutes: parsed.data.slotMinutes },
       });
     }
   });

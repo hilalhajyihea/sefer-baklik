@@ -135,7 +135,7 @@ export function BarberAdminPanel({
   const [bookDate, setBookDate] = useState("");
   const [bookEndDate, setBookEndDate] = useState("");
   const [bookTime, setBookTime] = useState("10:00");
-  const [bookSlotMinutes, setBookSlotMinutes] = useState<number>(30);
+  const [slotMinutes, setSlotMinutes] = useState<number>(30);
   const [bookName, setBookName] = useState("");
   const [bookPhone, setBookPhone] = useState("");
   const [bookStaffId, setBookStaffId] = useState("");
@@ -183,6 +183,9 @@ export function BarberAdminPanel({
         }
         setHours(next);
         setDayOffs(dData.dayOffs || []);
+        if (typeof hData.slotMinutes === "number") {
+          setSlotMinutes(hData.slotMinutes);
+        }
         return;
       }
 
@@ -203,6 +206,9 @@ export function BarberAdminPanel({
       }
       setHours(next);
       setDayOffs(dData.dayOffs || []);
+      if (typeof hData.slotMinutes === "number") {
+        setSlotMinutes(hData.slotMinutes);
+      }
     },
     [],
   );
@@ -318,11 +324,7 @@ export function BarberAdminPanel({
     async function loadSlots() {
       setBookLoadingSlots(true);
       try {
-        const params = new URLSearchParams({
-          slug,
-          date: bookDate,
-          slotMinutes: String(bookSlotMinutes),
-        });
+        const params = new URLSearchParams({ slug, date: bookDate });
         if (teamMode && bookStaffId) params.set("staff", bookStaffId);
         const res = await fetch(`/api/availability?${params.toString()}`);
         const data = await res.json();
@@ -343,7 +345,7 @@ export function BarberAdminPanel({
     return () => {
       cancelled = true;
     };
-  }, [slug, bookDate, bookStaffId, teamMode, bookSlotMinutes]);
+  }, [slug, bookDate, bookStaffId, teamMode]);
 
   const filteredAppointments = useMemo(() => {
     if (!teamMode || staffFilter === "all") return appointments;
@@ -405,7 +407,9 @@ export function BarberAdminPanel({
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
-          teamMode ? { staffId: manageStaffId, hours } : { hours },
+          teamMode
+            ? { staffId: manageStaffId, hours, slotMinutes }
+            : { hours, slotMinutes },
         ),
       },
     );
@@ -488,7 +492,6 @@ export function BarberAdminPanel({
           mode: bookMode,
           date: bookDate,
           time: bookTime,
-          slotMinutes: bookSlotMinutes,
           customerName: bookName,
           customerPhone: bookPhone,
           ...(teamMode && bookStaffId ? { staffId: bookStaffId } : {}),
@@ -842,21 +845,6 @@ export function BarberAdminPanel({
                   />
                 </label>
                 <label className="text-sm font-medium text-[var(--cream)]">
-                  {t(locale, "appointmentLength")}
-                  <select
-                    required
-                    value={bookSlotMinutes}
-                    onChange={(e) => setBookSlotMinutes(Number(e.target.value))}
-                    className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
-                  >
-                    {ALLOWED_SLOT_MINUTES.map((m) => (
-                      <option key={m} value={m}>
-                        {t(locale, "appointmentLengthMinutes", { minutes: m })}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="text-sm font-medium text-[var(--cream)]">
                   {t(locale, "date")}
                   <input
                     type="date"
@@ -867,7 +855,7 @@ export function BarberAdminPanel({
                     className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
                   />
                 </label>
-                <label className="text-sm font-medium text-[var(--cream)] sm:col-span-2">
+                <label className="text-sm font-medium text-[var(--cream)]">
                   {t(locale, "time")}
                   {bookLoadingSlots ? (
                     <p className="mt-1.5 text-sm text-[rgba(248,243,236,0.62)]">
@@ -981,6 +969,24 @@ export function BarberAdminPanel({
 
           {tab === "hours" && (
             <form onSubmit={saveHours} className="space-y-3">
+              <label className="mb-4 block text-sm font-medium text-[var(--cream)]">
+                {t(locale, "appointmentLength")}
+                <select
+                  required
+                  value={slotMinutes}
+                  onChange={(e) => setSlotMinutes(Number(e.target.value))}
+                  className="shop-field mt-1.5 w-full max-w-xs rounded-xl px-3 py-2.5"
+                >
+                  {ALLOWED_SLOT_MINUTES.map((m) => (
+                    <option key={m} value={m}>
+                      {t(locale, "appointmentLengthMinutes", { minutes: m })}
+                    </option>
+                  ))}
+                </select>
+                <span className="mt-1.5 block text-xs text-[rgba(248,243,236,0.55)]">
+                  {t(locale, "appointmentLengthHelp")}
+                </span>
+              </label>
               {hours.map((h) => (
                 <div
                   key={h.dayOfWeek}

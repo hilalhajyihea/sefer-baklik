@@ -165,6 +165,8 @@ const he = {
   bookRecurring: "תור קבוע",
   appointmentLength: "אורך התור",
   appointmentLengthMinutes: "{minutes} דקות",
+  appointmentLengthHelp:
+    "לפי האורך שנבחר יחולקו השעות הפנויות ביומן הציבורי ובקביעת תורים.",
   intervalWeekly: "כל שבוע",
   intervalBiweekly: "כל שבועיים",
   intervalTriweekly: "כל 3 שבועות",
@@ -350,6 +352,8 @@ const ar: { [K in keyof typeof he]: string } = {
   bookRecurring: "موعد ثابت",
   appointmentLength: "مدة الموعد",
   appointmentLengthMinutes: "{minutes} دقيقة",
+  appointmentLengthHelp:
+    "حسب المدة المختارة تُقسَّم الساعات المتاحة في الجدول العام وحجز المواعيد.",
   intervalWeekly: "كل أسبوع",
   intervalBiweekly: "كل أسبوعين",
   intervalTriweekly: "كل 3 أسابيع",
