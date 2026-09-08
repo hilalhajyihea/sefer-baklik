@@ -10,7 +10,7 @@ export type RecurringInterval =
   | "MONTHLY";
 
 /** How far ahead to materialize open-ended series (keeps calendars tidy). */
-export const RECURRING_HORIZON_DAYS = 84;
+export const RECURRING_HORIZON_DAYS = 35;
 const MAX_OCCURRENCES_PER_PASS = 40;
 
 export function addIntervalToDateKey(
