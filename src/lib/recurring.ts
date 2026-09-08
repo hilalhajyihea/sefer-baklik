@@ -18,16 +18,16 @@ export function addIntervalToDateKey(
   interval: RecurringInterval,
 ): string {
   const noon = combineDateAndTime(dateKey, "12:00");
-  if (interval === "MONTHLY") {
-    const [y, m, d] = dateKey.split("-").map(Number);
-    const nextMonth = m === 12 ? 1 : m + 1;
-    const nextYear = m === 12 ? y + 1 : y;
-    const lastDay = new Date(Date.UTC(nextYear, nextMonth, 0)).getUTCDate();
-    const day = Math.min(d, lastDay);
-    return `${nextYear}-${String(nextMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  }
+  // All intervals are whole weeks so the weekday never drifts
+  // (MONTHLY ≈ 4 weeks, not calendar day-of-month).
   const days =
-    interval === "WEEKLY" ? 7 : interval === "BIWEEKLY" ? 14 : 21;
+    interval === "WEEKLY"
+      ? 7
+      : interval === "BIWEEKLY"
+        ? 14
+        : interval === "TRIWEEKLY"
+          ? 21
+          : 28;
   return toDateKey(new Date(noon.getTime() + days * 24 * 60 * 60 * 1000));
 }
 

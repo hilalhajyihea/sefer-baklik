@@ -177,7 +177,7 @@ const he = {
   intervalWeekly: "כל שבוע",
   intervalBiweekly: "כל שבועיים",
   intervalTriweekly: "כל 3 שבועות",
-  intervalMonthly: "כל חודש",
+  intervalMonthly: "כל חודש (אותו יום בשבוע)",
   recurringOpenHelp:
     "הסדרה נמשכת ללא תאריך סיום — תורים נוצרים כ־5 שבועות קדימה, עד שתבטלו את כל הסדרה.",
   bookAdminCta: "קביעת התור",
@@ -372,7 +372,7 @@ const ar: { [K in keyof typeof he]: string } = {
   intervalWeekly: "كل أسبوع",
   intervalBiweekly: "كل أسبوعين",
   intervalTriweekly: "كل 3 أسابيع",
-  intervalMonthly: "كل شهر",
+  intervalMonthly: "كل شهر (نفس يوم الأسبوع)",
   recurringOpenHelp:
     "السلسلة مستمرة بلا تاريخ انتهاء — تُنشأ المواعيد لنحو 5 أسابيع مقدماً، حتى تلغي السلسلة بالكامل.",
   bookAdminCta: "تأكيد الحجز",
