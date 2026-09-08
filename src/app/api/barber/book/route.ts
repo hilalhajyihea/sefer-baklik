@@ -27,10 +27,6 @@ const schema = z.object({
   interval: z
     .enum(["WEEKLY", "BIWEEKLY", "TRIWEEKLY", "MONTHLY"])
     .optional(),
-  endDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .optional(),
 });
 
 export async function POST(request: Request) {
@@ -72,7 +68,7 @@ export async function POST(request: Request) {
       });
     }
 
-    if (!parsed.data.interval || !parsed.data.endDate) {
+    if (!parsed.data.interval) {
       return NextResponse.json(
         { error: t(locale, "errRecurringFields") },
         { status: 400 },
@@ -87,7 +83,6 @@ export async function POST(request: Request) {
       interval: parsed.data.interval as RecurringInterval,
       time: parsed.data.time,
       startDateKey: parsed.data.date,
-      endDateKey: parsed.data.endDate,
     });
 
     return NextResponse.json({

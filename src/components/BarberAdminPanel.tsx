@@ -134,7 +134,6 @@ export function BarberAdminPanel({
   const [blockNote, setBlockNote] = useState("");
   const [bookMode, setBookMode] = useState<"once" | "recurring">("once");
   const [bookDate, setBookDate] = useState("");
-  const [bookEndDate, setBookEndDate] = useState("");
   const [bookTime, setBookTime] = useState("10:00");
   const [slotMinutes, setSlotMinutes] = useState<number>(30);
   const [bookName, setBookName] = useState("");
@@ -517,9 +516,7 @@ export function BarberAdminPanel({
           customerName: bookName,
           customerPhone: bookPhone,
           ...(teamMode && bookStaffId ? { staffId: bookStaffId } : {}),
-          ...(bookMode === "recurring"
-            ? { interval: bookInterval, endDate: bookEndDate }
-            : {}),
+          ...(bookMode === "recurring" ? { interval: bookInterval } : {}),
         }),
       });
       const data = await res.json();
@@ -924,7 +921,7 @@ export function BarberAdminPanel({
               </div>
 
               {bookMode === "recurring" ? (
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-2">
                   <label className="text-sm font-medium text-[var(--cream)]">
                     {t(locale, "bookRecurring")}
                     <select
@@ -938,7 +935,7 @@ export function BarberAdminPanel({
                             | "MONTHLY",
                         )
                       }
-                      className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
+                      className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5 sm:max-w-xs"
                     >
                       <option value="WEEKLY">
                         {t(locale, "intervalWeekly")}
@@ -954,17 +951,9 @@ export function BarberAdminPanel({
                       </option>
                     </select>
                   </label>
-                  <label className="text-sm font-medium text-[var(--cream)]">
-                    {t(locale, "endDate")}
-                    <input
-                      type="date"
-                      required
-                      min={bookDate || toDateKey()}
-                      value={bookEndDate}
-                      onChange={(e) => setBookEndDate(e.target.value)}
-                      className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
-                    />
-                  </label>
+                  <p className="text-xs text-[var(--muted)]">
+                    {t(locale, "recurringOpenHelp")}
+                  </p>
                 </div>
               ) : null}
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { processDueReminders } from "@/lib/reminders";
+import { extendActiveRecurringSeries } from "@/lib/recurring";
 
 function authorize(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -16,8 +17,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await processDueReminders();
-    return NextResponse.json({ ok: true, ...result });
+    const [reminders, recurring] = await Promise.all([
+      processDueReminders(),
+      extendActiveRecurringSeries(),
+    ]);
+    return NextResponse.json({ ok: true, ...reminders, recurring });
   } catch (error) {
     console.error("cron reminders error", error);
     return NextResponse.json({ error: "שגיאת שרת" }, { status: 500 });

@@ -164,7 +164,7 @@ const he = {
   errStaffNotFound: "ספר לא נמצא בצוות",
   errCannotDisableStaff:
     "לא ניתן להשבית — נשארו פחות משני ספרים פעילים ויש תורים עתידיים משובצים",
-  errRecurringFields: "נא לבחור מחזור חוזר ותאריך סיום",
+  errRecurringFields: "נא לבחור מחזור חוזר",
   filterAllStaff: "כל הספרים",
   withStaff: "עם",
   tabBook: "קביעת תור",
@@ -178,7 +178,8 @@ const he = {
   intervalBiweekly: "כל שבועיים",
   intervalTriweekly: "כל 3 שבועות",
   intervalMonthly: "כל חודש",
-  endDate: "עד תאריך",
+  recurringOpenHelp:
+    "הסדרה נמשכת ללא תאריך סיום — תורים נוצרים כ־12 שבועות קדימה, עד שתבטלו את כל הסדרה.",
   bookAdminCta: "קביעת התור",
   bookAdminSaving: "שומר...",
   bookAdminSuccess: "התור נקבע והשעה ירדה מהיומן הציבורי",
@@ -358,7 +359,7 @@ const ar: { [K in keyof typeof he]: string } = {
   errStaffNotFound: "الحلاق غير موجود في الفريق",
   errCannotDisableStaff:
     "لا يمكن التعطيل — يتبقى أقل من حلاقين نشطين وهناك مواعيد مستقبلية معينة",
-  errRecurringFields: "يرجى اختيار التكرار وتاريخ الانتهاء",
+  errRecurringFields: "يرجى اختيار التكرار",
   filterAllStaff: "كل الحلاقين",
   withStaff: "مع",
   tabBook: "حجز موعد",
@@ -372,7 +373,8 @@ const ar: { [K in keyof typeof he]: string } = {
   intervalBiweekly: "كل أسبوعين",
   intervalTriweekly: "كل 3 أسابيع",
   intervalMonthly: "كل شهر",
-  endDate: "حتى تاريخ",
+  recurringOpenHelp:
+    "السلسلة مستمرة بلا تاريخ انتهاء — تُنشأ المواعيد لنحو 12 أسبوعاً مقدماً، حتى تلغي السلسلة بالكامل.",
   bookAdminCta: "تأكيد الحجز",
   bookAdminSaving: "جاري الحفظ...",
   bookAdminSuccess: "تم حجز الموعد وإزالته من الجدول العام",

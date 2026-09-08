@@ -182,8 +182,8 @@ model RecurringSeries {
   time          String
   /// First occurrence YYYY-MM-DD (Jerusalem)
   startDateKey  String
-  /// Last occurrence YYYY-MM-DD (inclusive)
-  endDateKey    String
+  /// Last occurrence YYYY-MM-DD (inclusive); null = open-ended until cancelled
+  endDateKey    String?
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
