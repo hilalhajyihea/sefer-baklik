@@ -14,9 +14,15 @@ export function isValidSlug(slug: string) {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) && !RESERVED_SLUGS.has(slug);
 }
 
+/** Passwords are stored and checked case-insensitively (like usernames). */
+function normalizePassword(password: string) {
+  return password.trim().toLowerCase();
+}
+
 export async function authenticateBarber(username: string, password: string) {
   const normalizedUser = username.trim().toLowerCase();
-  const normalizedPass = password.trim();
+  const trimmedPass = password.trim();
+  const normalizedPass = trimmedPass.toLowerCase();
   if (!normalizedUser || !normalizedPass) return null;
 
   // Case-insensitive match so iPhone auto-capitalization doesn't block login
@@ -26,7 +32,18 @@ export async function authenticateBarber(username: string, password: string) {
     },
   });
   if (!barber || !barber.isActive) return null;
-  const ok = await compare(normalizedPass, barber.passwordHash);
+
+  let ok = await compare(normalizedPass, barber.passwordHash);
+  // Legacy hashes may still be mixed-case — accept exact trim once, then migrate
+  if (!ok && trimmedPass !== normalizedPass) {
+    ok = await compare(trimmedPass, barber.passwordHash);
+    if (ok) {
+      await prisma.barber.update({
+        where: { id: barber.id },
+        data: { passwordHash: await hash(normalizedPass, 12) },
+      });
+    }
+  }
   if (!ok) return null;
   return barber;
 }
@@ -42,7 +59,7 @@ export async function createBarber(input: {
     throw new Error("כתובת לא תקינה (רק אותיות באנגלית קטנות, מספרים ומקף)");
   }
 
-  const passwordHash = await hash(input.password, 12);
+  const passwordHash = await hash(normalizePassword(input.password), 12);
 
   return prisma.barber.create({
     data: {
@@ -65,7 +82,7 @@ export async function createBarber(input: {
 }
 
 export async function resetBarberPassword(barberId: string, password: string) {
-  const passwordHash = await hash(password, 12);
+  const passwordHash = await hash(normalizePassword(password), 12);
   return prisma.barber.update({
     where: { id: barberId },
     data: { passwordHash },

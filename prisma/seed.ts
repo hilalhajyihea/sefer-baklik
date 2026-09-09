@@ -24,7 +24,9 @@ async function backfillCancelTokens() {
 async function main() {
   await backfillCancelTokens();
 
-  const demoPassword = process.env.DEMO_BARBER_PASSWORD || "barber123";
+  const demoPassword = (
+    process.env.DEMO_BARBER_PASSWORD || "barber123"
+  ).trim().toLowerCase();
   const passwordHash = await hash(demoPassword, 12);
 
   // Only create the demo barber if missing — never overwrite live edits
