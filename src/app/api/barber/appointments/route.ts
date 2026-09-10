@@ -22,6 +22,14 @@ export async function GET() {
     orderBy: { startsAt: "asc" },
     include: {
       staff: { select: { id: true, displayName: true } },
+      series: {
+        select: {
+          id: true,
+          interval: true,
+          time: true,
+          isActive: true,
+        },
+      },
     },
   });
 

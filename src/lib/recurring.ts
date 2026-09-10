@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { bookAppointment } from "@/lib/availability";
-import { combineDateAndTime, toDateKey } from "@/lib/time";
+import { combineDateAndTime, startOfJerusalemDay, toDateKey } from "@/lib/time";
 import { isTeamMode } from "@/lib/staff";
 
 export type RecurringInterval =
@@ -208,7 +208,82 @@ export async function createRecurringSeries(input: {
 }
 
 /**
- * Keep open-ended (and still-active capped) series filled ~12 weeks ahead.
+ * Change interval/time on an active series.
+ * Past appointments stay; upcoming BOOKED rows are cancelled and rebuilt
+ * on the new cadence so existing open series keep working via cron.
+ */
+export async function updateRecurringSeries(input: {
+  seriesId: string;
+  barberId: string;
+  interval: RecurringInterval;
+  time: string;
+}) {
+  const series = await prisma.recurringSeries.findFirst({
+    where: {
+      id: input.seriesId,
+      barberId: input.barberId,
+    },
+  });
+  if (!series) {
+    throw new Error("סדרת תורים לא נמצאה");
+  }
+  if (!series.isActive) {
+    throw new Error("לא ניתן לערוך סדרה שבוטלה");
+  }
+
+  const from = startOfJerusalemDay(toDateKey());
+
+  const cancelled = await prisma.$transaction(async (tx) => {
+    const updated = await tx.appointment.updateMany({
+      where: {
+        seriesId: series.id,
+        barberId: input.barberId,
+        status: "BOOKED",
+        startsAt: { gte: from },
+      },
+      data: { status: "CANCELLED" },
+    });
+
+    await tx.recurringSeries.update({
+      where: { id: series.id },
+      data: {
+        interval: input.interval,
+        time: input.time,
+        isActive: true,
+      },
+    });
+
+    return updated.count;
+  });
+
+  const { created, skipped } = await materializeSeriesOccurrences({
+    seriesId: series.id,
+    barberId: series.barberId,
+    staffId: series.staffId,
+    customerName: series.customerName,
+    customerPhone: series.customerPhone,
+    interval: input.interval,
+    time: input.time,
+    startDateKey: series.startDateKey,
+    endDateKey: series.endDateKey,
+  });
+
+  if (created.length === 0) {
+    throw new Error(
+      "הסדרה עודכנה אך לא נקבע אף מועד פנוי קדימה — בדקו שעות פעילות או נסו שעה אחרת",
+    );
+  }
+
+  return {
+    seriesId: series.id,
+    cancelledCount: cancelled,
+    createdCount: created.length,
+    skipped,
+  };
+}
+
+/**
+ * Keep open-ended (and still-active capped) series filled ~5 weeks ahead.
  * Safe to run from the existing reminders cron.
  */
 export async function extendActiveRecurringSeries() {

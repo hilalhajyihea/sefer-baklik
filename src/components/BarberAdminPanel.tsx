@@ -33,6 +33,12 @@ type Appointment = {
   staffId?: string | null;
   seriesId?: string | null;
   staff?: { id: string; displayName: string } | null;
+  series?: {
+    id: string;
+    interval: "WEEKLY" | "BIWEEKLY" | "TRIWEEKLY" | "MONTHLY";
+    time: string;
+    isActive: boolean;
+  } | null;
 };
 
 type HourRow = {
@@ -142,6 +148,12 @@ export function BarberAdminPanel({
   const [bookInterval, setBookInterval] = useState<
     "WEEKLY" | "BIWEEKLY" | "TRIWEEKLY" | "MONTHLY"
   >("WEEKLY");
+  const [editingSeriesId, setEditingSeriesId] = useState<string | null>(null);
+  const [editSeriesInterval, setEditSeriesInterval] = useState<
+    "WEEKLY" | "BIWEEKLY" | "TRIWEEKLY" | "MONTHLY"
+  >("WEEKLY");
+  const [editSeriesTime, setEditSeriesTime] = useState("10:00");
+  const [editSeriesSaving, setEditSeriesSaving] = useState(false);
   const [bookSlots, setBookSlots] = useState<string[]>([]);
   const [bookLoadingSlots, setBookLoadingSlots] = useState(false);
   const [bookSubmitting, setBookSubmitting] = useState(false);
@@ -415,7 +427,53 @@ export function BarberAdminPanel({
         count: data.cancelledCount ?? 0,
       }),
     );
+    if (editingSeriesId === seriesId) setEditingSeriesId(null);
     load({ silent: true });
+  }
+
+  function openEditSeries(a: Appointment) {
+    if (!a.seriesId) return;
+    setError("");
+    setMessage("");
+    setEditingSeriesId(a.seriesId);
+    setEditSeriesInterval(a.series?.interval ?? "WEEKLY");
+    setEditSeriesTime(a.series?.time ?? formatTime(new Date(a.startsAt)));
+  }
+
+  async function saveEditSeries() {
+    if (!editingSeriesId) return;
+    if (!confirm(t(locale, "confirmEditSeries"))) return;
+    setEditSeriesSaving(true);
+    setError("");
+    setMessage("");
+    try {
+      const res = await fetch("/api/barber/appointments/update-series", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          seriesId: editingSeriesId,
+          interval: editSeriesInterval,
+          time: editSeriesTime,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || t(locale, "editSeriesFailed"));
+        return;
+      }
+      setMessage(
+        t(locale, "seriesUpdated", {
+          cancelled: data.cancelledCount ?? 0,
+          created: data.createdCount ?? 0,
+        }),
+      );
+      setEditingSeriesId(null);
+      load({ silent: true });
+    } catch {
+      setError(t(locale, "networkError"));
+    } finally {
+      setEditSeriesSaving(false);
+    }
   }
 
   async function saveHours(e: FormEvent) {
@@ -696,6 +754,81 @@ export function BarberAdminPanel({
                 </div>
               ) : null}
 
+              {editingSeriesId ? (
+                <div className="rounded-xl border border-white/15 bg-black/25 p-4 space-y-3">
+                  <p className="text-sm font-semibold text-[var(--cream)]">
+                    {t(locale, "editSeries")}
+                    {(() => {
+                      const sample = appointments.find(
+                        (x) => x.seriesId === editingSeriesId,
+                      );
+                      return sample ? ` · ${sample.customerName}` : "";
+                    })()}
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="text-sm font-medium text-[var(--cream)]">
+                      {t(locale, "bookRecurring")}
+                      <select
+                        value={editSeriesInterval}
+                        onChange={(e) =>
+                          setEditSeriesInterval(
+                            e.target.value as
+                              | "WEEKLY"
+                              | "BIWEEKLY"
+                              | "TRIWEEKLY"
+                              | "MONTHLY",
+                          )
+                        }
+                        className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
+                      >
+                        <option value="WEEKLY">
+                          {t(locale, "intervalWeekly")}
+                        </option>
+                        <option value="BIWEEKLY">
+                          {t(locale, "intervalBiweekly")}
+                        </option>
+                        <option value="TRIWEEKLY">
+                          {t(locale, "intervalTriweekly")}
+                        </option>
+                        <option value="MONTHLY">
+                          {t(locale, "intervalMonthly")}
+                        </option>
+                      </select>
+                    </label>
+                    <label className="text-sm font-medium text-[var(--cream)]">
+                      {t(locale, "time")}
+                      <input
+                        type="time"
+                        value={editSeriesTime}
+                        onChange={(e) => setEditSeriesTime(e.target.value)}
+                        className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5"
+                        required
+                      />
+                    </label>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={editSeriesSaving}
+                      onClick={() => saveEditSeries()}
+                      className="rounded-lg border border-[var(--olive)]/40 bg-[rgba(47,74,52,0.45)] px-3 py-1.5 text-sm font-medium text-[var(--olive-soft)] hover:bg-[rgba(47,74,52,0.7)] disabled:opacity-60"
+                    >
+                      {editSeriesSaving
+                        ? t(locale, "bookAdminSaving")
+                        : t(locale, "saveSeriesEdit")}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={editSeriesSaving}
+                      onClick={() => setEditingSeriesId(null)}
+                      className="rounded-lg border border-white/20 bg-black/30 px-3 py-1.5 text-sm font-medium text-[rgba(248,243,236,0.85)] hover:bg-black/50"
+                    >
+                      {t(locale, "editSeriesCancel")}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
               {groupedByDay.length === 0 ? (
                 <p className="text-[rgba(248,243,236,0.62)]">
                   {t(locale, "noAppointments")}
@@ -787,13 +920,22 @@ export function BarberAdminPanel({
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 {a.seriesId ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => cancelSeries(a.seriesId!)}
-                                    className="rounded-lg border border-amber-400/35 bg-amber-950/40 px-3 py-1.5 text-sm font-medium text-amber-100 hover:bg-amber-950/70"
-                                  >
-                                    {t(locale, "cancelSeries")}
-                                  </button>
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => openEditSeries(a)}
+                                      className="rounded-lg border border-white/25 bg-black/35 px-3 py-1.5 text-sm font-medium text-[rgba(248,243,236,0.9)] hover:bg-black/55"
+                                    >
+                                      {t(locale, "editSeries")}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => cancelSeries(a.seriesId!)}
+                                      className="rounded-lg border border-amber-400/35 bg-amber-950/40 px-3 py-1.5 text-sm font-medium text-amber-100 hover:bg-amber-950/70"
+                                    >
+                                      {t(locale, "cancelSeries")}
+                                    </button>
+                                  </>
                                 ) : null}
                                 <button
                                   type="button"

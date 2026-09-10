@@ -66,7 +66,16 @@ const he = {
     "לבטל את כל התורים הקרובים בסדרה הקבועה הזו? תורים שעברו לא יושפעו.",
   cancelSeriesFailed: "ביטול הסדרה נכשל",
   seriesCancelled: "בוטלו {count} תורים מהסדרה",
+  editSeries: "עריכת סדרה",
+  saveSeriesEdit: "שמירת שינוי הסדרה",
+  editSeriesCancel: "סגור",
+  confirmEditSeries:
+    "לעדכן את הסדרה? התורים העתידיים יבוטלו ויקבעו מחדש לפי המחזור והשעה החדשים. תורים שעברו לא יושפעו.",
+  editSeriesFailed: "עריכת הסדרה נכשלה",
+  seriesUpdated:
+    "הסדרה עודכנה — בוטלו {cancelled} תורים ונקבעו {created} מחדש",
   errSeriesMissing: "סדרת תורים לא נמצאה",
+  errSeriesInactive: "לא ניתן לערוך סדרה שבוטלה",
   active: "פעיל",
   saveHours: "שמירת שעות",
   hoursSaved: "שעות הפעילות עודכנו",
@@ -261,7 +270,16 @@ const ar: { [K in keyof typeof he]: string } = {
     "إلغاء كل المواعيد القادمة في هذه السلسلة الثابتة؟ المواعيد السابقة لن تتأثر.",
   cancelSeriesFailed: "فشل إلغاء السلسلة",
   seriesCancelled: "تم إلغاء {count} مواعيد من السلسلة",
+  editSeries: "تعديل السلسلة",
+  saveSeriesEdit: "حفظ تعديل السلسلة",
+  editSeriesCancel: "إغلاق",
+  confirmEditSeries:
+    "تحديث السلسلة؟ سيتم إلغاء المواعيد القادمة وإعادة جدولتها حسب التكرار والساعة الجديدين. المواعيد السابقة لن تتأثر.",
+  editSeriesFailed: "فشل تعديل السلسلة",
+  seriesUpdated:
+    "تم تحديث السلسلة — أُلغي {cancelled} مواعيد وحُجز {created} من جديد",
   errSeriesMissing: "سلسلة المواعيد غير موجودة",
+  errSeriesInactive: "لا يمكن تعديل سلسلة ملغاة",
   active: "نشط",
   saveHours: "حفظ الساعات",
   hoursSaved: "تم تحديث ساعات العمل",
