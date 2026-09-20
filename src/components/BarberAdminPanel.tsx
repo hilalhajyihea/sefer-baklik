@@ -112,7 +112,13 @@ export function BarberAdminPanel({
   const locale = normalizeLocale(localeProp);
   const router = useRouter();
   const [tab, setTab] = useState<
-    "appointments" | "book" | "hours" | "daysOff" | "blockedWindows" | "sms"
+    | "appointments"
+    | "book"
+    | "hours"
+    | "daysOff"
+    | "blockedWindows"
+    | "sms"
+    | "whatsapp"
   >("appointments");
   const [teamMode, setTeamMode] = useState(false);
   const [staff, setStaff] = useState<StaffMember[]>([]);
@@ -127,9 +133,15 @@ export function BarberAdminPanel({
   const [smsPlanEnabled, setSmsPlanEnabled] = useState(false);
   const [smsConfirmationEnabled, setSmsConfirmationEnabled] = useState(true);
   const [smsReminderEnabled, setSmsReminderEnabled] = useState(true);
+  const [whatsappPlanEnabled, setWhatsappPlanEnabled] = useState(false);
+  const [whatsappConfirmationEnabled, setWhatsappConfirmationEnabled] =
+    useState(true);
+  const [whatsappReminderEnabled, setWhatsappReminderEnabled] = useState(true);
   const [reminderMinutesBefore, setReminderMinutesBefore] = useState(30);
   const [smsQuota, setSmsQuota] = useState(0);
   const [smsRemaining, setSmsRemaining] = useState(0);
+  const [whatsappQuota, setWhatsappQuota] = useState(0);
+  const [whatsappRemaining, setWhatsappRemaining] = useState(0);
   const [barberPhone, setBarberPhone] = useState("");
   const [notifyOnCustomerCancel, setNotifyOnCustomerCancel] = useState(true);
   const [offDate, setOffDate] = useState("");
@@ -232,9 +244,10 @@ export function BarberAdminPanel({
       }
       setError("");
       try {
-        const [aRes, sRes, staffRes] = await Promise.all([
+        const [aRes, sRes, waRes, staffRes] = await Promise.all([
           fetch("/api/barber/appointments"),
           fetch("/api/barber/sms-settings"),
+          fetch("/api/barber/whatsapp-settings"),
           fetch("/api/barber/staff"),
         ]);
         if (aRes.status === 401) {
@@ -243,6 +256,7 @@ export function BarberAdminPanel({
         }
         const aData = await aRes.json();
         const sData = await sRes.json();
+        const waData = await waRes.json().catch(() => ({}));
         const staffData = await staffRes.json();
         setAppointments(aData.appointments || []);
 
@@ -278,6 +292,20 @@ export function BarberAdminPanel({
           setNotifyOnCustomerCancel(
             sData.settings.notifyOnCustomerCancel !== false,
           );
+        }
+        if (waData.settings) {
+          setWhatsappPlanEnabled(!!waData.settings.whatsappPlanEnabled);
+          setWhatsappConfirmationEnabled(
+            waData.settings.whatsappConfirmationEnabled !== false,
+          );
+          setWhatsappReminderEnabled(
+            waData.settings.whatsappReminderEnabled !== false,
+          );
+          if (waData.settings.reminderMinutesBefore != null) {
+            setReminderMinutesBefore(waData.settings.reminderMinutesBefore);
+          }
+          setWhatsappQuota(waData.settings.whatsappQuota ?? 0);
+          setWhatsappRemaining(waData.settings.whatsappRemaining ?? 0);
         }
         if (nextTeam && active.length > 0) {
           setBookStaffId((prev) =>
@@ -558,6 +586,27 @@ export function BarberAdminPanel({
     setMessage(t(locale, "smsSaved"));
   }
 
+  async function saveWhatsappSettings(e: FormEvent) {
+    e.preventDefault();
+    setMessage("");
+    setError("");
+    const res = await fetch("/api/barber/whatsapp-settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        whatsappConfirmationEnabled,
+        whatsappReminderEnabled,
+        reminderMinutesBefore,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || t(locale, "whatsappSaveFailed"));
+      return;
+    }
+    setMessage(t(locale, "whatsappSaved"));
+  }
+
   async function submitAdminBook(e: FormEvent) {
     e.preventDefault();
     setMessage("");
@@ -690,6 +739,7 @@ export function BarberAdminPanel({
             ["daysOff", "tabDaysOff"],
             ["blockedWindows", "tabBlockedWindows"],
             ["sms", "tabSms"],
+            ["whatsapp", "tabWhatsapp"],
           ] as const
         ).map(([key, labelKey]) => (
           <button
@@ -1500,6 +1550,106 @@ export function BarberAdminPanel({
                 >
                   {t(locale, "saveSettings")}
                 </button>
+              </form>
+            </div>
+          )}
+
+          {tab === "whatsapp" && (
+            <div className="space-y-6">
+              <form onSubmit={saveWhatsappSettings} className="space-y-5">
+                {whatsappPlanEnabled ? (
+                  <>
+                    <div className="rounded-xl border border-white/12 bg-black/30 px-4 py-3">
+                      <p className="text-sm font-semibold text-[var(--cream)]">
+                        {t(locale, "whatsappQuotaTitle")}
+                      </p>
+                      <p className="mt-1 text-sm text-[rgba(248,243,236,0.62)]">
+                        {t(locale, "whatsappQuotaBalance", {
+                          remaining: whatsappRemaining,
+                          quota: whatsappQuota,
+                        })}
+                      </p>
+                      <p className="mt-1 text-xs text-[rgba(248,243,236,0.55)]">
+                        {t(locale, "whatsappQuotaResetHint")}
+                      </p>
+                      {whatsappRemaining <= 0 ? (
+                        <p className="mt-2 text-sm text-red-300">
+                          {t(locale, "whatsappQuotaEmpty")}
+                        </p>
+                      ) : null}
+                    </div>
+                    <p className="text-sm text-[rgba(248,243,236,0.62)]">
+                      {t(locale, "whatsappHelp")}
+                    </p>
+                    <label className="flex items-center gap-3 text-sm font-medium text-[var(--cream)]">
+                      <input
+                        type="checkbox"
+                        checked={whatsappConfirmationEnabled}
+                        onChange={(e) =>
+                          setWhatsappConfirmationEnabled(e.target.checked)
+                        }
+                      />
+                      {t(locale, "whatsappConfirmToggle")}
+                    </label>
+                    <label className="flex items-center gap-3 text-sm font-medium text-[var(--cream)]">
+                      <input
+                        type="checkbox"
+                        checked={whatsappReminderEnabled}
+                        onChange={(e) =>
+                          setWhatsappReminderEnabled(e.target.checked)
+                        }
+                      />
+                      {t(locale, "whatsappReminderToggle")}
+                    </label>
+                    <label className="block text-sm font-medium text-[var(--cream)]">
+                      {t(locale, "reminderMinutes")}
+                      <input
+                        type="number"
+                        min={5}
+                        max={1440}
+                        step={5}
+                        disabled={!whatsappReminderEnabled}
+                        value={reminderMinutesBefore}
+                        onChange={(e) =>
+                          setReminderMinutesBefore(
+                            Number(e.target.value) || 30,
+                          )
+                        }
+                        className="shop-field mt-1.5 w-full max-w-[12rem] rounded-xl px-3 py-2.5 disabled:opacity-40"
+                      />
+                      <span className="mt-1 block text-xs text-[rgba(248,243,236,0.55)]">
+                        {t(locale, "reminderHint")}
+                      </span>
+                    </label>
+                  </>
+                ) : (
+                  <div className="space-y-3 rounded-xl border border-white/12 bg-black/30 p-4">
+                    <h3 className="text-base font-semibold text-[var(--cream)]">
+                      {t(locale, "whatsappServiceTitle")}
+                    </h3>
+                    <p className="text-sm leading-relaxed text-[rgba(248,243,236,0.62)]">
+                      {t(locale, "whatsappUpgrade", {
+                        name: SITE_ADMIN_NAME,
+                        phone: SITE_ADMIN_PHONE,
+                      })}
+                    </p>
+                    <a
+                      href={`tel:${SITE_ADMIN_PHONE}`}
+                      className="btn-primary inline-flex rounded-xl px-5 py-2.5 text-sm font-semibold"
+                    >
+                      {t(locale, "contactAdmin", { name: SITE_ADMIN_NAME })}
+                    </a>
+                  </div>
+                )}
+
+                {whatsappPlanEnabled ? (
+                  <button
+                    type="submit"
+                    className="btn-primary rounded-xl px-6 py-2.5 font-semibold"
+                  >
+                    {t(locale, "saveSettings")}
+                  </button>
+                ) : null}
               </form>
             </div>
           )}

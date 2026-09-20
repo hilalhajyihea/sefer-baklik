@@ -19,9 +19,12 @@ type Barber = {
   isActive: boolean;
   locale: string;
   smsPlanEnabled: boolean;
+  whatsappPlanEnabled: boolean;
   customerCancelEnabled: boolean;
   smsQuota: number;
   smsRemaining: number;
+  whatsappQuota: number;
+  whatsappRemaining: number;
   logoUrl: string | null;
   logoMimeType: string | null;
   slotMinutes: number;
@@ -122,6 +125,27 @@ export function PlatformAdminPanel() {
     load();
   }
 
+  async function toggleWhatsappPlan(barber: Barber) {
+    const res = await fetch("/api/platform/barbers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: barber.id,
+        whatsappPlanEnabled: !barber.whatsappPlanEnabled,
+      }),
+    });
+    if (!res.ok) {
+      setError("עדכון WhatsApp נכשל");
+      return;
+    }
+    setMessage(
+      barber.whatsappPlanEnabled
+        ? "שירות WhatsApp הושבת לספר"
+        : "שירות WhatsApp הופעל לספר",
+    );
+    load();
+  }
+
   async function setSmsQuota(barber: Barber) {
     const quotaRaw = prompt(
       `מכסת SMS חודשית עבור ${barber.displayName} (כרגע ${barber.smsRemaining}/${barber.smsQuota})\nבראשון לחודש היתרה מתאפסת למכסה`,
@@ -192,6 +216,79 @@ export function PlatformAdminPanel() {
       return;
     }
     setMessage(`נוספו ${Math.floor(amount)} הודעות SMS`);
+    load();
+  }
+
+  async function setWhatsappQuota(barber: Barber) {
+    const quotaRaw = prompt(
+      `מכסת WhatsApp חודשית עבור ${barber.displayName} (כרגע ${barber.whatsappRemaining}/${barber.whatsappQuota})\nבראשון לחודש היתרה מתאפסת למכסה`,
+      String(barber.whatsappQuota || 100),
+    );
+    if (quotaRaw == null) return;
+    const quota = Number(quotaRaw);
+    if (!Number.isFinite(quota) || quota < 0) {
+      setError("מכסה לא תקינה");
+      return;
+    }
+    const remRaw = prompt(
+      "יתרה נוכחית (השאירו ריק = שווה למכסה)",
+      String(quota),
+    );
+    if (remRaw == null) return;
+    const remaining =
+      remRaw.trim() === "" ? undefined : Number(remRaw);
+    if (
+      remaining !== undefined &&
+      (!Number.isFinite(remaining) || remaining < 0)
+    ) {
+      setError("יתרה לא תקינה");
+      return;
+    }
+    setError("");
+    const res = await fetch("/api/platform/barbers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: barber.id,
+        whatsappQuota: Math.floor(quota),
+        ...(remaining !== undefined
+          ? { whatsappRemaining: Math.floor(remaining) }
+          : {}),
+      }),
+    });
+    if (!res.ok) {
+      setError("עדכון מכסת WhatsApp נכשל");
+      return;
+    }
+    setMessage(`מכסת WhatsApp עודכנה ל־${Math.floor(quota)}`);
+    load();
+  }
+
+  async function addWhatsappCredits(barber: Barber) {
+    const raw = prompt(
+      `כמה הודעות WhatsApp להוסיף לחודש הנוכחי ל־${barber.displayName}? (יתרה כרגע ${barber.whatsappRemaining}; המכסה החודשית נשארת ${barber.whatsappQuota})`,
+      "100",
+    );
+    if (raw == null) return;
+    const amount = Number(raw);
+    if (!Number.isFinite(amount) || amount < 1) {
+      setError("כמות לא תקינה");
+      return;
+    }
+    setError("");
+    const res = await fetch("/api/platform/barbers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: barber.id,
+        whatsappCreditsAdd: Math.floor(amount),
+      }),
+    });
+    if (!res.ok) {
+      setError("הוספת קרדיטי WhatsApp נכשלה");
+      return;
+    }
+    setMessage(`נוספו ${Math.floor(amount)} הודעות WhatsApp`);
     load();
   }
 
@@ -541,6 +638,11 @@ export function PlatformAdminPanel() {
                         {b.smsPlanEnabled
                           ? ` (${b.smsRemaining}/${b.smsQuota})`
                           : ""}{" "}
+                        · WhatsApp:{" "}
+                        {b.whatsappPlanEnabled ? "מופעל" : "לא במנוי"}
+                        {b.whatsappPlanEnabled
+                          ? ` (${b.whatsappRemaining}/${b.whatsappQuota})`
+                          : ""}{" "}
                         · ביטול לקוח:{" "}
                         {b.customerCancelEnabled ? "מופעל" : "כבוי"} · צוות:{" "}
                         {teamMode
@@ -621,7 +723,7 @@ export function PlatformAdminPanel() {
                         className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
                         title="מכסה חודשית — מתאפסת בראשון לחודש"
                       >
-                        מכסה חודשית
+                        מכסת SMS
                       </button>
                       <button
                         type="button"
@@ -633,12 +735,43 @@ export function PlatformAdminPanel() {
                       </button>
                       <button
                         type="button"
+                        onClick={() => toggleWhatsappPlan(b)}
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
+                      >
+                        {b.whatsappPlanEnabled
+                          ? "ביטול WhatsApp"
+                          : "הפעל WhatsApp"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWhatsappQuota(b)}
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
+                        title="מכסת WhatsApp חודשית — מתאפסת בראשון לחודש"
+                      >
+                        מכסת WhatsApp
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => addWhatsappCredits(b)}
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium"
+                        title="תוספת ליתרת WhatsApp בחודש הנוכחי בלבד"
+                      >
+                        הוסף WhatsApp
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => toggleCustomerCancel(b)}
                         className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-40"
-                        disabled={!b.smsPlanEnabled && !b.customerCancelEnabled}
+                        disabled={
+                          !b.smsPlanEnabled &&
+                          !b.whatsappPlanEnabled &&
+                          !b.customerCancelEnabled
+                        }
                         title={
-                          !b.smsPlanEnabled && !b.customerCancelEnabled
-                            ? "יש להפעיל SMS קודם"
+                          !b.smsPlanEnabled &&
+                          !b.whatsappPlanEnabled &&
+                          !b.customerCancelEnabled
+                            ? "יש להפעיל SMS או WhatsApp קודם"
                             : undefined
                         }
                       >

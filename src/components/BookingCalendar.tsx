@@ -107,7 +107,19 @@ export function BookingCalendar({
       });
       if (data.sms?.ok && !data.sms?.skipped) {
         successMsg += t(locale, "bookSuccessSms");
-      } else if (data.sms?.error) {
+      }
+      if (data.whatsapp?.ok && !data.whatsapp?.skipped) {
+        successMsg += t(locale, "bookSuccessWhatsapp");
+      } else if (
+        data.whatsapp?.error &&
+        !(data.sms?.ok && !data.sms?.skipped)
+      ) {
+        setError(
+          t(locale, "bookSuccessWhatsappFail", {
+            error: data.whatsapp.error,
+          }),
+        );
+      } else if (data.sms?.error && !(data.whatsapp?.ok && !data.whatsapp?.skipped)) {
         setError(
           t(locale, "bookSuccessSmsFail", { error: data.sms.error }),
         );

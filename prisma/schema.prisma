@@ -17,12 +17,16 @@ model Barber {
   slotMinutes             Int      @default(30)
   /// Platform admin: allows this barber to use SMS features
   smsPlanEnabled          Boolean  @default(false)
+  /// Platform admin: allows this barber to use WhatsApp features
+  whatsappPlanEnabled     Boolean  @default(false)
   /// Platform admin: include self-cancel link in customer SMS
   customerCancelEnabled   Boolean  @default(false)
   /// Public + barber UI + SMS language: he | ar
   locale                  String   @default("he")
   smsConfirmationEnabled  Boolean  @default(true)
   smsReminderEnabled      Boolean  @default(true)
+  whatsappConfirmationEnabled Boolean @default(true)
+  whatsappReminderEnabled Boolean  @default(true)
   reminderMinutesBefore   Int      @default(30)
   /// Barber mobile for SMS alerts (e.g. customer cancelled)
   phone                   String?
@@ -36,6 +40,11 @@ model Barber {
   smsLowNotified          Boolean  @default(false)
   /// YYYY-MM (Asia/Jerusalem) of the last monthly quota reset
   smsQuotaMonth           String?
+  /// Platform-set monthly WhatsApp allowance (separate from SMS)
+  whatsappQuota           Int      @default(0)
+  whatsappRemaining       Int      @default(0)
+  whatsappLowNotified     Boolean  @default(false)
+  whatsappQuotaMonth      String?
   /// Optional public logo URL path (API). When set, replaces name in hero.
   logoUrl                 String?
   /// Binary logo payload stored in DB (survives Render deploys)

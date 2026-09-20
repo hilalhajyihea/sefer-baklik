@@ -8,6 +8,11 @@ import {
   resetMonthlySmsQuotasIfNeeded,
   setBarberSmsQuota,
 } from "@/lib/smsQuota";
+import {
+  addBarberWhatsappCredits,
+  resetMonthlyWhatsappQuotasIfNeeded,
+  setBarberWhatsappQuota,
+} from "@/lib/whatsappQuota";
 
 export async function GET() {
   const session = await requirePlatformSession();
@@ -16,6 +21,7 @@ export async function GET() {
   }
 
   await resetMonthlySmsQuotasIfNeeded();
+  await resetMonthlyWhatsappQuotasIfNeeded();
 
   const barbers = await prisma.barber.findMany({
     orderBy: { createdAt: "desc" },
@@ -28,9 +34,12 @@ export async function GET() {
       locale: true,
       slotMinutes: true,
       smsPlanEnabled: true,
+      whatsappPlanEnabled: true,
       customerCancelEnabled: true,
       smsQuota: true,
       smsRemaining: true,
+      whatsappQuota: true,
+      whatsappRemaining: true,
       logoUrl: true,
       logoMimeType: true,
       createdAt: true,
@@ -106,6 +115,7 @@ const patchSchema = z.object({
   id: z.string().min(1),
   isActive: z.boolean().optional(),
   smsPlanEnabled: z.boolean().optional(),
+  whatsappPlanEnabled: z.boolean().optional(),
   customerCancelEnabled: z.boolean().optional(),
   password: z.string().min(6).max(100).optional(),
   displayName: z.string().min(2).max(80).optional(),
@@ -113,6 +123,9 @@ const patchSchema = z.object({
   smsQuota: z.number().int().min(0).optional(),
   smsRemaining: z.number().int().min(0).optional(),
   smsCreditsAdd: z.number().int().min(1).max(100_000).optional(),
+  whatsappQuota: z.number().int().min(0).optional(),
+  whatsappRemaining: z.number().int().min(0).optional(),
+  whatsappCreditsAdd: z.number().int().min(1).max(100_000).optional(),
 });
 
 export async function PATCH(request: Request) {
@@ -141,6 +154,19 @@ export async function PATCH(request: Request) {
     });
   }
 
+  if (parsed.data.whatsappCreditsAdd !== undefined) {
+    await addBarberWhatsappCredits(
+      parsed.data.id,
+      parsed.data.whatsappCreditsAdd,
+    );
+  } else if (parsed.data.whatsappQuota !== undefined) {
+    await setBarberWhatsappQuota({
+      barberId: parsed.data.id,
+      quota: parsed.data.whatsappQuota,
+      remaining: parsed.data.whatsappRemaining,
+    });
+  }
+
   const barber = await prisma.barber.update({
     where: { id: parsed.data.id },
     data: {
@@ -149,6 +175,9 @@ export async function PATCH(request: Request) {
         : {}),
       ...(parsed.data.smsPlanEnabled !== undefined
         ? { smsPlanEnabled: parsed.data.smsPlanEnabled }
+        : {}),
+      ...(parsed.data.whatsappPlanEnabled !== undefined
+        ? { whatsappPlanEnabled: parsed.data.whatsappPlanEnabled }
         : {}),
       ...(parsed.data.customerCancelEnabled !== undefined
         ? { customerCancelEnabled: parsed.data.customerCancelEnabled }
@@ -168,9 +197,12 @@ export async function PATCH(request: Request) {
       isActive: barber.isActive,
       locale: barber.locale,
       smsPlanEnabled: barber.smsPlanEnabled,
+      whatsappPlanEnabled: barber.whatsappPlanEnabled,
       customerCancelEnabled: barber.customerCancelEnabled,
       smsQuota: barber.smsQuota,
       smsRemaining: barber.smsRemaining,
+      whatsappQuota: barber.whatsappQuota,
+      whatsappRemaining: barber.whatsappRemaining,
     },
   });
 }

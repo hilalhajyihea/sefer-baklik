@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       staffKey: parsed.data.staff,
     });
 
-    const sms = await sendBookingConfirmation(appointment.id);
+    const notify = await sendBookingConfirmation(appointment.id);
 
     return NextResponse.json({
       appointment: {
@@ -81,9 +81,14 @@ export async function POST(request: Request) {
         staffId: appointment.staffId,
       },
       sms: {
-        ok: !!sms?.ok,
-        skipped: !!sms?.skipped,
-        error: sms?.error || null,
+        ok: !!notify?.sms?.ok,
+        skipped: !!notify?.sms?.skipped,
+        error: notify?.sms?.error || null,
+      },
+      whatsapp: {
+        ok: !!notify?.whatsapp?.ok,
+        skipped: !!notify?.whatsapp?.skipped,
+        error: notify?.whatsapp?.error || null,
       },
     });
   } catch (error) {

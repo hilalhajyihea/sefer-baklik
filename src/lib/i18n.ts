@@ -29,6 +29,8 @@ const he = {
   bookSuccess: "התור נקבע ל-{date} בשעה {time}. נתראה!",
   bookSuccessSms: " נשלח SMS לטלפון.",
   bookSuccessSmsFail: "התור נקבע, אבל SMS לא נשלח: {error}",
+  bookSuccessWhatsapp: " נשלחה הודעת WhatsApp.",
+  bookSuccessWhatsappFail: "התור נקבע, אבל WhatsApp לא נשלח: {error}",
   wantThisToo: "ספר? רוצה אתר כזה, לחץ כאן.",
 
   loginTitle: "כניסת מנהל",
@@ -50,6 +52,7 @@ const he = {
   tabDaysOff: "ימי חופש",
   tabBlockedWindows: "סגירת חלון",
   tabSms: "הודעות SMS",
+  tabWhatsapp: "הודעות WhatsApp",
   loading: "טוען...",
   loadError: "שגיאה בטעינת הנתונים",
   noAppointments: "אין תורים קרובים",
@@ -107,6 +110,22 @@ const he = {
   smsUpgrade:
     "כדי לקבל שירות הודעות SMS יש לשדרג את המנוי. נא לפנות למנהל האתר {name} {phone}.",
   contactAdmin: "צור קשר עם {name}",
+  whatsappHelp:
+    "הלקוח מקבל WhatsApp באישור התור ובתזכורת לפני התור (תבניות מאושרות בערבית). זמן התזכורת זהה להגדרת הדקות בטאב SMS או כאן.",
+  whatsappConfirmToggle: "שליחת WhatsApp באישור קביעת תור",
+  whatsappReminderToggle: "שליחת WhatsApp תזכורת לפני התור",
+  whatsappSaved: "הגדרות WhatsApp נשמרו",
+  whatsappSaveFailed: "שמירת הגדרות WhatsApp נכשלה",
+  whatsappServiceTitle: "שירות הודעות WhatsApp",
+  whatsappUpgrade:
+    "כדי לקבל שירות WhatsApp יש לשדרג את המנוי. נא לפנות למנהל האתר {name} {phone}.",
+  whatsappQuotaTitle: "מכסת WhatsApp חודשית",
+  whatsappQuotaBalance: "יתרה: {remaining} מתוך {quota}",
+  whatsappQuotaResetHint: "בראשון לכל חודש היתרה מתאפסת למכסה המלאה",
+  whatsappQuotaEmpty:
+    "נגמרה מכסת WhatsApp — תורים ייקבעו בלי WhatsApp עד חידוש המכסה",
+  whatsappQuotaLow:
+    "שים לב: נותרו רק {remaining} הודעות WhatsApp במנוי שלך. נא לפנות למנהל האפליקציה {admin} בטלפון {phone} לחידוש המכסה.",
 
   cancelMeta: "ביטול תור",
   cancelHeading: "ביטול תור",
@@ -166,6 +185,7 @@ const he = {
   errAppointmentMissing: "תור לא נמצא",
   errAppointmentIdMissing: "מזהה תור חסר",
   errSmsPlanInactive: "שירות SMS אינו פעיל במנוי שלך",
+  errWhatsappPlanInactive: "שירות WhatsApp אינו פעיל במנוי שלך",
   errDateInvalid: "תאריך לא תקין",
   errIdMissing: "מזהה חסר",
   errHoursOrder: "שעת התחלה חייבת להיות לפני שעת סיום",
@@ -233,6 +253,8 @@ const ar: { [K in keyof typeof he]: string } = {
   bookSuccess: "تم حجز الموعد لـ {date} الساعة {time}. إلى اللقاء!",
   bookSuccessSms: " تم إرسال رسالة SMS إلى الهاتف.",
   bookSuccessSmsFail: "تم الحجز، لكن لم تُرسل رسالة SMS: {error}",
+  bookSuccessWhatsapp: " تم إرسال رسالة واتساب.",
+  bookSuccessWhatsappFail: "تم الحجز، لكن لم تُرسل رسالة واتساب: {error}",
   wantThisToo: "حلاق؟ بدك موقع هيك؟ اضغط هنا.",
 
   loginTitle: "دخول المدير",
@@ -254,6 +276,7 @@ const ar: { [K in keyof typeof he]: string } = {
   tabDaysOff: "أيام العطل",
   tabBlockedWindows: "إغلاق نافذة",
   tabSms: "رسائل SMS",
+  tabWhatsapp: "رسائل واتساب",
   loading: "جاري التحميل...",
   loadError: "خطأ في تحميل البيانات",
   noAppointments: "لا مواعيد قريبة",
@@ -311,6 +334,22 @@ const ar: { [K in keyof typeof he]: string } = {
   smsUpgrade:
     "للحصول على خدمة رسائل SMS يجب ترقية الاشتراك. يرجى التواصل مع مدير الموقع {name} {phone}.",
   contactAdmin: "تواصل مع {name}",
+  whatsappHelp:
+    "يتلقى الزبون واتساب عند تأكيد الموعد وتذكيراً قبل الموعد (قوالب عربية معتمدة). وقت التذكير مطابق لإعداد الدقائق.",
+  whatsappConfirmToggle: "إرسال واتساب عند تأكيد الحجز",
+  whatsappReminderToggle: "إرسال واتساب تذكير قبل الموعد",
+  whatsappSaved: "تم حفظ إعدادات واتساب",
+  whatsappSaveFailed: "فشل حفظ إعدادات واتساب",
+  whatsappServiceTitle: "خدمة رسائل واتساب",
+  whatsappUpgrade:
+    "للحصول على خدمة واتساب يجب ترقية الاشتراك. يرجى التواصل مع مدير الموقع {name} {phone}.",
+  whatsappQuotaTitle: "حصة واتساب الشهرية",
+  whatsappQuotaBalance: "المتبقي: {remaining} من أصل {quota}",
+  whatsappQuotaResetHint: "في أول كل شهر تُعاد الحصة المتبقية إلى الحصة الكاملة",
+  whatsappQuotaEmpty:
+    "انتهت حصة واتساب — ستُحجز المواعيد دون واتساب حتى تجديد الحصة",
+  whatsappQuotaLow:
+    "تنبيه: تبقّى فقط {remaining} رسائل واتساب في اشتراكك. يرجى التواصل مع مدير التطبيق {admin} على الهاتف {phone} لتجديد الحصة.",
 
   cancelMeta: "إلغاء موعد",
   cancelHeading: "إلغاء موعد",
@@ -370,6 +409,7 @@ const ar: { [K in keyof typeof he]: string } = {
   errAppointmentMissing: "الموعد غير موجود",
   errAppointmentIdMissing: "معرف الموعد مفقود",
   errSmsPlanInactive: "خدمة الرسائل النصية غير مفعّلة في اشتراكك",
+  errWhatsappPlanInactive: "خدمة واتساب غير مفعّلة في اشتراكك",
   errDateInvalid: "تاريخ غير صالح",
   errIdMissing: "المعرّف مفقود",
   errHoursOrder: "ساعة البداية يجب أن تكون قبل ساعة النهاية",
