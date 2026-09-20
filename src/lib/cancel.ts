@@ -67,7 +67,9 @@ const appointmentInclude = {
       locale: true,
       phone: true,
       smsPlanEnabled: true,
+      whatsappPlanEnabled: true,
       notifyOnCustomerCancel: true,
+      notifyOnCustomerCancelWhatsapp: true,
     },
   },
   staff: {
@@ -139,7 +141,7 @@ export async function cancelAppointmentByToken(rawToken: string): Promise<{
     include: appointmentInclude,
   });
 
-  // Fire-and-forget SMS to barber (errors logged inside sendSms)
+  // Fire-and-forget alerts to barber (errors logged inside send helpers)
   void notifyBarberOfCustomerCancel(updated);
 
   return { state: "success", appointment: updated };
@@ -152,32 +154,50 @@ async function notifyBarberOfCustomerCancel(appointment: {
     displayName: string;
     phone: string | null;
     smsPlanEnabled: boolean;
+    whatsappPlanEnabled: boolean;
     notifyOnCustomerCancel: boolean;
+    notifyOnCustomerCancelWhatsapp: boolean;
     locale: string;
   };
   staff: { displayName: string } | null;
 }) {
   const { barber } = appointment;
-  if (
-    !barber.notifyOnCustomerCancel ||
-    !barber.smsPlanEnabled ||
-    !barber.phone?.trim()
-  ) {
-    return;
-  }
+  if (!barber.phone?.trim()) return;
 
-  const { buildBarberCancelNoticeSms, sendSms } = await import("@/lib/sms");
   const { formatTime } = await import("@/lib/time");
   const { formatDateLocalized, normalizeLocale } = await import("@/lib/i18n");
-
   const locale = normalizeLocale(barber.locale);
-  const body = buildBarberCancelNoticeSms({
-    customerName: appointment.customerName,
-    staffName: appointment.staff?.displayName,
-    dateLabel: formatDateLocalized(locale, appointment.startsAt),
-    timeLabel: formatTime(appointment.startsAt),
-    locale,
-  });
+  const dateLabel = formatDateLocalized(locale, appointment.startsAt);
+  const timeLabel = formatTime(appointment.startsAt);
+  const dateLabelAr = formatDateLocalized("ar", appointment.startsAt);
 
-  await sendSms(barber.phone, body);
+  if (barber.notifyOnCustomerCancel && barber.smsPlanEnabled) {
+    const { buildBarberCancelNoticeSms, sendSms } = await import("@/lib/sms");
+    const body = buildBarberCancelNoticeSms({
+      customerName: appointment.customerName,
+      staffName: appointment.staff?.displayName,
+      dateLabel,
+      timeLabel,
+      locale,
+    });
+    await sendSms(barber.phone, body);
+  }
+
+  if (barber.notifyOnCustomerCancelWhatsapp && barber.whatsappPlanEnabled) {
+    const {
+      sendWhatsAppTemplate,
+      WA_TEMPLATE_BARBER_CANCEL,
+      buildBarberCancelWhatsAppParams,
+    } = await import("@/lib/whatsapp");
+    await sendWhatsAppTemplate({
+      to: barber.phone,
+      templateName: WA_TEMPLATE_BARBER_CANCEL,
+      bodyParams: buildBarberCancelWhatsAppParams({
+        customerName: appointment.customerName,
+        staffName: appointment.staff?.displayName,
+        dateLabel: dateLabelAr,
+        timeLabel,
+      }),
+    });
+  }
 }

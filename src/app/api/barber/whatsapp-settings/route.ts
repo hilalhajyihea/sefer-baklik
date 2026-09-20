@@ -18,9 +18,11 @@ export async function GET() {
   const barber = await prisma.barber.findUnique({
     where: { id: session.barberId },
     select: {
+      phone: true,
       whatsappPlanEnabled: true,
       whatsappConfirmationEnabled: true,
       whatsappReminderEnabled: true,
+      notifyOnCustomerCancelWhatsapp: true,
       reminderMinutesBefore: true,
       whatsappQuota: true,
       whatsappRemaining: true,
@@ -41,6 +43,8 @@ export async function GET() {
 }
 
 const schema = z.object({
+  phone: z.string().max(20).optional(),
+  notifyOnCustomerCancelWhatsapp: z.boolean().optional(),
   whatsappConfirmationEnabled: z.boolean().optional(),
   whatsappReminderEnabled: z.boolean().optional(),
   reminderMinutesBefore: z.number().int().min(5).max(1440).optional(),
@@ -76,16 +80,33 @@ export async function PUT(request: Request) {
     );
   }
 
-  if (!barber.whatsappPlanEnabled) {
+  const wantsWaToggles =
+    parsed.data.whatsappConfirmationEnabled !== undefined ||
+    parsed.data.whatsappReminderEnabled !== undefined ||
+    parsed.data.reminderMinutesBefore !== undefined;
+
+  if (wantsWaToggles && !barber.whatsappPlanEnabled) {
     return NextResponse.json(
       { error: t(locale, "errWhatsappPlanInactive") },
       { status: 403 },
     );
   }
 
+  const phone =
+    parsed.data.phone !== undefined
+      ? parsed.data.phone.trim() || null
+      : undefined;
+
   const settings = await prisma.barber.update({
     where: { id: session.barberId },
     data: {
+      ...(phone !== undefined ? { phone } : {}),
+      ...(parsed.data.notifyOnCustomerCancelWhatsapp !== undefined
+        ? {
+            notifyOnCustomerCancelWhatsapp:
+              parsed.data.notifyOnCustomerCancelWhatsapp,
+          }
+        : {}),
       ...(parsed.data.whatsappConfirmationEnabled !== undefined
         ? {
             whatsappConfirmationEnabled:
@@ -100,9 +121,11 @@ export async function PUT(request: Request) {
         : {}),
     },
     select: {
+      phone: true,
       whatsappPlanEnabled: true,
       whatsappConfirmationEnabled: true,
       whatsappReminderEnabled: true,
+      notifyOnCustomerCancelWhatsapp: true,
       reminderMinutesBefore: true,
       whatsappQuota: true,
       whatsappRemaining: true,

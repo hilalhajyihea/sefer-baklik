@@ -217,6 +217,9 @@ const he = {
   barberPhone: "טלפון לקבלת התראות",
   barberPhoneHint: "יקבל SMS כשלקוח מבטל תור (דורש מנוי SMS)",
   notifyCancelToggle: "שלחו לי SMS כשלקוח מבטל תור",
+  barberPhoneWhatsappHint:
+    "יקבל WhatsApp כשלקוח מבטל תור (דורש מנוי WhatsApp)",
+  notifyCancelWhatsappToggle: "שלחו לי WhatsApp כשלקוח מבטל תור",
   smsQuotaTitle: "מכסת הודעות חודשית",
   smsQuotaBalance: "יתרה: {remaining} מתוך {quota}",
   smsQuotaResetHint: "בראשון לכל חודש היתרה מתאפסת למכסה המלאה",
@@ -441,6 +444,9 @@ const ar: { [K in keyof typeof he]: string } = {
   barberPhone: "هاتف لاستلام التنبيهات",
   barberPhoneHint: "سيصلك SMS عند إلغاء الزبون (يتطلب اشتراك SMS)",
   notifyCancelToggle: "أرسلوا لي SMS عند إلغاء الزبون",
+  barberPhoneWhatsappHint:
+    "سيصلك واتساب عند إلغاء الزبون (يتطلب اشتراك واتساب)",
+  notifyCancelWhatsappToggle: "أرسلوا لي واتساب عند إلغاء الزبون",
   smsQuotaTitle: "حصة الرسائل الشهرية",
   smsQuotaBalance: "المتبقي: {remaining} من أصل {quota}",
   smsQuotaResetHint: "في أول كل شهر تُعاد الحصة المتبقية إلى الحصة الكاملة",

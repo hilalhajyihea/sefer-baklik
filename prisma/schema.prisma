@@ -32,6 +32,8 @@ model Barber {
   phone                   String?
   /// Notify barber by SMS when a customer self-cancels
   notifyOnCustomerCancel  Boolean  @default(true)
+  /// Notify barber by WhatsApp when a customer self-cancels
+  notifyOnCustomerCancelWhatsapp Boolean @default(true)
   /// Platform-set monthly SMS allowance (resets remaining on the 1st, Israel time)
   smsQuota                Int      @default(0)
   /// Remaining customer SMS sends this month (1 per successful send)

@@ -144,6 +144,8 @@ export function BarberAdminPanel({
   const [whatsappRemaining, setWhatsappRemaining] = useState(0);
   const [barberPhone, setBarberPhone] = useState("");
   const [notifyOnCustomerCancel, setNotifyOnCustomerCancel] = useState(true);
+  const [notifyOnCustomerCancelWhatsapp, setNotifyOnCustomerCancelWhatsapp] =
+    useState(true);
   const [offDate, setOffDate] = useState("");
   const [offNote, setOffNote] = useState("");
   const [blockDate, setBlockDate] = useState("");
@@ -301,6 +303,12 @@ export function BarberAdminPanel({
           setWhatsappReminderEnabled(
             waData.settings.whatsappReminderEnabled !== false,
           );
+          setNotifyOnCustomerCancelWhatsapp(
+            waData.settings.notifyOnCustomerCancelWhatsapp !== false,
+          );
+          if (waData.settings.phone != null) {
+            setBarberPhone(waData.settings.phone || "");
+          }
           if (waData.settings.reminderMinutesBefore != null) {
             setReminderMinutesBefore(waData.settings.reminderMinutesBefore);
           }
@@ -594,9 +602,15 @@ export function BarberAdminPanel({
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        whatsappConfirmationEnabled,
-        whatsappReminderEnabled,
-        reminderMinutesBefore,
+        phone: barberPhone,
+        notifyOnCustomerCancelWhatsapp,
+        ...(whatsappPlanEnabled
+          ? {
+              whatsappConfirmationEnabled,
+              whatsappReminderEnabled,
+              reminderMinutesBefore,
+            }
+          : {}),
       }),
     });
     const data = await res.json();
@@ -1557,6 +1571,30 @@ export function BarberAdminPanel({
           {tab === "whatsapp" && (
             <div className="space-y-6">
               <form onSubmit={saveWhatsappSettings} className="space-y-5">
+                <label className="block text-sm font-medium text-[var(--cream)]">
+                  {t(locale, "barberPhone")}
+                  <input
+                    value={barberPhone}
+                    onChange={(e) => setBarberPhone(e.target.value)}
+                    inputMode="tel"
+                    placeholder="05..."
+                    className="shop-field mt-1.5 w-full max-w-sm rounded-xl px-3 py-2.5"
+                  />
+                  <span className="mt-1 block text-xs text-[rgba(248,243,236,0.55)]">
+                    {t(locale, "barberPhoneWhatsappHint")}
+                  </span>
+                </label>
+                <label className="flex items-center gap-3 text-sm font-medium text-[var(--cream)]">
+                  <input
+                    type="checkbox"
+                    checked={notifyOnCustomerCancelWhatsapp}
+                    onChange={(e) =>
+                      setNotifyOnCustomerCancelWhatsapp(e.target.checked)
+                    }
+                  />
+                  {t(locale, "notifyCancelWhatsappToggle")}
+                </label>
+
                 {whatsappPlanEnabled ? (
                   <>
                     <div className="rounded-xl border border-white/12 bg-black/30 px-4 py-3">
@@ -1642,14 +1680,12 @@ export function BarberAdminPanel({
                   </div>
                 )}
 
-                {whatsappPlanEnabled ? (
-                  <button
-                    type="submit"
-                    className="btn-primary rounded-xl px-6 py-2.5 font-semibold"
-                  >
-                    {t(locale, "saveSettings")}
-                  </button>
-                ) : null}
+                <button
+                  type="submit"
+                  className="btn-primary rounded-xl px-6 py-2.5 font-semibold"
+                >
+                  {t(locale, "saveSettings")}
+                </button>
               </form>
             </div>
           )}

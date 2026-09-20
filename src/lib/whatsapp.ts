@@ -1,14 +1,17 @@
 import { normalizePhoneE164 } from "@/lib/sms";
 
+function cleanEnv(value: string | undefined) {
+  return (value || "").trim();
+}
+
 const GRAPH_VERSION = process.env.WHATSAPP_GRAPH_VERSION || "v21.0";
 
 export const WA_TEMPLATE_CONFIRM = "barbe_reg";
 export const WA_TEMPLATE_REMINDER = "barber_notif_arabic";
+/** Barber alert when customer self-cancels — create/approve in Meta if missing */
+export const WA_TEMPLATE_BARBER_CANCEL =
+  cleanEnv(process.env.WHATSAPP_TEMPLATE_BARBER_CANCEL) || "barber_cancel_ar";
 export const WA_TEMPLATE_LANG = "ar";
-
-function cleanEnv(value: string | undefined) {
-  return (value || "").trim();
-}
 
 export function getWhatsAppConfig() {
   return {
@@ -32,6 +35,7 @@ export function whatsappConfigStatus() {
     templates: {
       confirm: WA_TEMPLATE_CONFIRM,
       reminder: WA_TEMPLATE_REMINDER,
+      barberCancel: WA_TEMPLATE_BARBER_CANCEL,
       language: WA_TEMPLATE_LANG,
     },
   };
@@ -164,4 +168,17 @@ export function buildReminderWhatsAppParams(input: {
     input.timeLabel,
     input.cancelUrl,
   ];
+}
+
+/** Params for barber_cancel_ar: {{1}} name, {{2}} date, {{3}} time */
+export function buildBarberCancelWhatsAppParams(input: {
+  customerName: string;
+  staffName?: string | null;
+  dateLabel: string;
+  timeLabel: string;
+}) {
+  const name = input.staffName
+    ? `${input.customerName} (لدى ${input.staffName})`
+    : input.customerName;
+  return [name, input.dateLabel, input.timeLabel];
 }
