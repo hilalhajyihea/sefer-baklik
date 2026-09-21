@@ -73,6 +73,14 @@ export async function POST(request: Request) {
 
     const notify = await sendBookingConfirmation(appointment.id);
 
+    if (notify?.whatsapp && !notify.whatsapp.ok) {
+      console.warn("[bookings] WhatsApp confirmation", {
+        appointmentId: appointment.id,
+        skipped: notify.whatsapp.skipped,
+        error: notify.whatsapp.error,
+      });
+    }
+
     return NextResponse.json({
       appointment: {
         id: appointment.id,
@@ -80,16 +88,20 @@ export async function POST(request: Request) {
         customerName: appointment.customerName,
         staffId: appointment.staffId,
       },
-      sms: {
-        ok: !!notify?.sms?.ok,
-        skipped: !!notify?.sms?.skipped,
-        error: notify?.sms?.error || null,
-      },
-      whatsapp: {
-        ok: !!notify?.whatsapp?.ok,
-        skipped: !!notify?.whatsapp?.skipped,
-        error: notify?.whatsapp?.error || null,
-      },
+      sms: notify?.sms
+        ? {
+            ok: !!notify.sms.ok,
+            skipped: !!notify.sms.skipped,
+            error: notify.sms.error || null,
+          }
+        : null,
+      whatsapp: notify?.whatsapp
+        ? {
+            ok: !!notify.whatsapp.ok,
+            skipped: !!notify.whatsapp.skipped,
+            error: notify.whatsapp.error || null,
+          }
+        : null,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";

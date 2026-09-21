@@ -11,7 +11,9 @@ export const WA_TEMPLATE_REMINDER = "barber_notif_arabic";
 /** Barber alert when customer self-cancels (approved Meta template) */
 export const WA_TEMPLATE_BARBER_CANCEL =
   cleanEnv(process.env.WHATSAPP_TEMPLATE_BARBER_CANCEL) || "barber_cancel_ar";
-export const WA_TEMPLATE_LANG = "ar";
+/** Must match the approved template language in Meta (often "ar") */
+export const WA_TEMPLATE_LANG =
+  cleanEnv(process.env.WHATSAPP_TEMPLATE_LANG) || "ar";
 
 export function getWhatsAppConfig() {
   return {
@@ -117,7 +119,13 @@ export async function sendWhatsAppTemplate(input: {
         data.error?.error_user_msg ||
         data.error?.message ||
         `HTTP ${res.status}`;
-      console.error("[whatsapp] send error", { to, message, data });
+      console.error("[whatsapp] send error", {
+        to,
+        template: input.templateName,
+        language: input.languageCode || WA_TEMPLATE_LANG,
+        message,
+        data,
+      });
       return { ok: false, error: message, to };
     }
 

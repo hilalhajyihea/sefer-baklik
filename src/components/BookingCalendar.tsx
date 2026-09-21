@@ -110,21 +110,29 @@ export function BookingCalendar({
       }
       if (data.whatsapp?.ok && !data.whatsapp?.skipped) {
         successMsg += t(locale, "bookSuccessWhatsapp");
-      } else if (
-        data.whatsapp?.error &&
-        !(data.sms?.ok && !data.sms?.skipped)
-      ) {
+      }
+      setSuccess(successMsg);
+
+      // Surface channel failures even when the other channel succeeded
+      const waFailed =
+        data.whatsapp &&
+        !(data.whatsapp.ok && !data.whatsapp.skipped) &&
+        data.whatsapp.error;
+      const smsFailed =
+        data.sms &&
+        !(data.sms.ok && !data.sms.skipped) &&
+        data.sms.error;
+      if (waFailed) {
         setError(
           t(locale, "bookSuccessWhatsappFail", {
             error: data.whatsapp.error,
           }),
         );
-      } else if (data.sms?.error && !(data.whatsapp?.ok && !data.whatsapp?.skipped)) {
+      } else if (smsFailed) {
         setError(
           t(locale, "bookSuccessSmsFail", { error: data.sms.error }),
         );
       }
-      setSuccess(successMsg);
       setName("");
       setPhone("");
       setTime("");
