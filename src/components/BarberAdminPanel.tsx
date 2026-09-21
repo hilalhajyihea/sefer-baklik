@@ -337,12 +337,6 @@ export function BarberAdminPanel({
   }, [load]);
 
   useEffect(() => {
-    if (!loading && !whatsappPlanEnabled && tab === "whatsapp") {
-      setTab("appointments");
-    }
-  }, [loading, whatsappPlanEnabled, tab]);
-
-  useEffect(() => {
     const id = window.setInterval(() => {
       load({ silent: true });
     }, 60_000);
@@ -759,9 +753,7 @@ export function BarberAdminPanel({
             ["daysOff", "tabDaysOff"],
             ["blockedWindows", "tabBlockedWindows"],
             ["sms", "tabSms"],
-            ...(whatsappPlanEnabled
-              ? ([["whatsapp", "tabWhatsapp"]] as const)
-              : []),
+            ["whatsapp", "tabWhatsapp"],
           ] as const
         ).map(([key, labelKey]) => (
           <button
@@ -1576,100 +1568,124 @@ export function BarberAdminPanel({
             </div>
           )}
 
-          {tab === "whatsapp" && whatsappPlanEnabled && (
+          {tab === "whatsapp" && (
             <div className="space-y-6">
               <form onSubmit={saveWhatsappSettings} className="space-y-5">
-                <label className="block text-sm font-medium text-[var(--cream)]">
-                  {t(locale, "barberPhone")}
-                  <input
-                    value={barberPhone}
-                    onChange={(e) => setBarberPhone(e.target.value)}
-                    inputMode="tel"
-                    placeholder="05..."
-                    className="shop-field mt-1.5 w-full max-w-sm rounded-xl px-3 py-2.5"
-                  />
-                  <span className="mt-1 block text-xs text-[rgba(248,243,236,0.55)]">
-                    {t(locale, "barberPhoneWhatsappHint")}
-                  </span>
-                </label>
-                <label className="flex items-center gap-3 text-sm font-medium text-[var(--cream)]">
-                  <input
-                    type="checkbox"
-                    checked={notifyOnCustomerCancelWhatsapp}
-                    onChange={(e) =>
-                      setNotifyOnCustomerCancelWhatsapp(e.target.checked)
-                    }
-                  />
-                  {t(locale, "notifyCancelWhatsappToggle")}
-                </label>
+                {whatsappPlanEnabled ? (
+                  <>
+                    <label className="block text-sm font-medium text-[var(--cream)]">
+                      {t(locale, "barberPhone")}
+                      <input
+                        value={barberPhone}
+                        onChange={(e) => setBarberPhone(e.target.value)}
+                        inputMode="tel"
+                        placeholder="05..."
+                        className="shop-field mt-1.5 w-full max-w-sm rounded-xl px-3 py-2.5"
+                      />
+                      <span className="mt-1 block text-xs text-[rgba(248,243,236,0.55)]">
+                        {t(locale, "barberPhoneWhatsappHint")}
+                      </span>
+                    </label>
+                    <label className="flex items-center gap-3 text-sm font-medium text-[var(--cream)]">
+                      <input
+                        type="checkbox"
+                        checked={notifyOnCustomerCancelWhatsapp}
+                        onChange={(e) =>
+                          setNotifyOnCustomerCancelWhatsapp(e.target.checked)
+                        }
+                      />
+                      {t(locale, "notifyCancelWhatsappToggle")}
+                    </label>
 
-                <div className="rounded-xl border border-white/12 bg-black/30 px-4 py-3">
-                  <p className="text-sm font-semibold text-[var(--cream)]">
-                    {t(locale, "whatsappQuotaTitle")}
-                  </p>
-                  <p className="mt-1 text-sm text-[rgba(248,243,236,0.62)]">
-                    {t(locale, "whatsappQuotaBalance", {
-                      remaining: whatsappRemaining,
-                      quota: whatsappQuota,
-                    })}
-                  </p>
-                  <p className="mt-1 text-xs text-[rgba(248,243,236,0.55)]">
-                    {t(locale, "whatsappQuotaResetHint")}
-                  </p>
-                  {whatsappRemaining <= 0 ? (
-                    <p className="mt-2 text-sm text-red-300">
-                      {t(locale, "whatsappQuotaEmpty")}
+                    <div className="rounded-xl border border-white/12 bg-black/30 px-4 py-3">
+                      <p className="text-sm font-semibold text-[var(--cream)]">
+                        {t(locale, "whatsappQuotaTitle")}
+                      </p>
+                      <p className="mt-1 text-sm text-[rgba(248,243,236,0.62)]">
+                        {t(locale, "whatsappQuotaBalance", {
+                          remaining: whatsappRemaining,
+                          quota: whatsappQuota,
+                        })}
+                      </p>
+                      <p className="mt-1 text-xs text-[rgba(248,243,236,0.55)]">
+                        {t(locale, "whatsappQuotaResetHint")}
+                      </p>
+                      {whatsappRemaining <= 0 ? (
+                        <p className="mt-2 text-sm text-red-300">
+                          {t(locale, "whatsappQuotaEmpty")}
+                        </p>
+                      ) : null}
+                    </div>
+                    <p className="text-sm text-[rgba(248,243,236,0.62)]">
+                      {t(locale, "whatsappHelp")}
                     </p>
-                  ) : null}
-                </div>
-                <p className="text-sm text-[rgba(248,243,236,0.62)]">
-                  {t(locale, "whatsappHelp")}
-                </p>
-                <label className="flex items-center gap-3 text-sm font-medium text-[var(--cream)]">
-                  <input
-                    type="checkbox"
-                    checked={whatsappConfirmationEnabled}
-                    onChange={(e) =>
-                      setWhatsappConfirmationEnabled(e.target.checked)
-                    }
-                  />
-                  {t(locale, "whatsappConfirmToggle")}
-                </label>
-                <label className="flex items-center gap-3 text-sm font-medium text-[var(--cream)]">
-                  <input
-                    type="checkbox"
-                    checked={whatsappReminderEnabled}
-                    onChange={(e) =>
-                      setWhatsappReminderEnabled(e.target.checked)
-                    }
-                  />
-                  {t(locale, "whatsappReminderToggle")}
-                </label>
-                <label className="block text-sm font-medium text-[var(--cream)]">
-                  {t(locale, "reminderMinutes")}
-                  <input
-                    type="number"
-                    min={5}
-                    max={1440}
-                    step={5}
-                    disabled={!whatsappReminderEnabled}
-                    value={reminderMinutesBefore}
-                    onChange={(e) =>
-                      setReminderMinutesBefore(Number(e.target.value) || 30)
-                    }
-                    className="shop-field mt-1.5 w-full max-w-[12rem] rounded-xl px-3 py-2.5 disabled:opacity-40"
-                  />
-                  <span className="mt-1 block text-xs text-[rgba(248,243,236,0.55)]">
-                    {t(locale, "reminderHint")}
-                  </span>
-                </label>
+                    <label className="flex items-center gap-3 text-sm font-medium text-[var(--cream)]">
+                      <input
+                        type="checkbox"
+                        checked={whatsappConfirmationEnabled}
+                        onChange={(e) =>
+                          setWhatsappConfirmationEnabled(e.target.checked)
+                        }
+                      />
+                      {t(locale, "whatsappConfirmToggle")}
+                    </label>
+                    <label className="flex items-center gap-3 text-sm font-medium text-[var(--cream)]">
+                      <input
+                        type="checkbox"
+                        checked={whatsappReminderEnabled}
+                        onChange={(e) =>
+                          setWhatsappReminderEnabled(e.target.checked)
+                        }
+                      />
+                      {t(locale, "whatsappReminderToggle")}
+                    </label>
+                    <label className="block text-sm font-medium text-[var(--cream)]">
+                      {t(locale, "reminderMinutes")}
+                      <input
+                        type="number"
+                        min={5}
+                        max={1440}
+                        step={5}
+                        disabled={!whatsappReminderEnabled}
+                        value={reminderMinutesBefore}
+                        onChange={(e) =>
+                          setReminderMinutesBefore(
+                            Number(e.target.value) || 30,
+                          )
+                        }
+                        className="shop-field mt-1.5 w-full max-w-[12rem] rounded-xl px-3 py-2.5 disabled:opacity-40"
+                      />
+                      <span className="mt-1 block text-xs text-[rgba(248,243,236,0.55)]">
+                        {t(locale, "reminderHint")}
+                      </span>
+                    </label>
 
-                <button
-                  type="submit"
-                  className="btn-primary rounded-xl px-6 py-2.5 font-semibold"
-                >
-                  {t(locale, "saveSettings")}
-                </button>
+                    <button
+                      type="submit"
+                      className="btn-primary rounded-xl px-6 py-2.5 font-semibold"
+                    >
+                      {t(locale, "saveSettings")}
+                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-3 rounded-xl border border-white/12 bg-black/30 p-4">
+                    <h3 className="text-base font-semibold text-[var(--cream)]">
+                      {t(locale, "whatsappServiceTitle")}
+                    </h3>
+                    <p className="text-sm leading-relaxed text-[rgba(248,243,236,0.62)]">
+                      {t(locale, "whatsappUpgrade", {
+                        name: SITE_ADMIN_NAME,
+                        phone: SITE_ADMIN_PHONE,
+                      })}
+                    </p>
+                    <a
+                      href={`tel:${SITE_ADMIN_PHONE}`}
+                      className="btn-primary inline-flex rounded-xl px-5 py-2.5 text-sm font-semibold"
+                    >
+                      {t(locale, "contactAdmin", { name: SITE_ADMIN_NAME })}
+                    </a>
+                  </div>
+                )}
               </form>
             </div>
           )}
