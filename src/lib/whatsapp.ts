@@ -8,7 +8,7 @@ const GRAPH_VERSION = process.env.WHATSAPP_GRAPH_VERSION || "v21.0";
 
 export const WA_TEMPLATE_CONFIRM = "barbe_reg";
 export const WA_TEMPLATE_REMINDER = "barber_notif_arabic";
-/** Barber alert when customer self-cancels — create/approve in Meta if missing */
+/** Barber alert when customer self-cancels (approved Meta template) */
 export const WA_TEMPLATE_BARBER_CANCEL =
   cleanEnv(process.env.WHATSAPP_TEMPLATE_BARBER_CANCEL) || "barber_cancel_ar";
 export const WA_TEMPLATE_LANG = "ar";
