@@ -16,7 +16,7 @@ export async function GET() {
   const appointments = await prisma.appointment.findMany({
     where: {
       barberId: session.barberId,
-      status: "BOOKED",
+      status: { in: ["BOOKED", "PENDING_CONFIRM"] },
       startsAt: { gte: from },
     },
     orderBy: { startsAt: "asc" },

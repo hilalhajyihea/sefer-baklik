@@ -21,6 +21,8 @@ model Barber {
   whatsappPlanEnabled     Boolean  @default(false)
   /// Platform admin: include self-cancel link in customer SMS
   customerCancelEnabled   Boolean  @default(false)
+  /// Platform admin: public booking requires customer to confirm via SMS/WhatsApp link within 15 minutes
+  bookingRequiresConfirm  Boolean  @default(false)
   /// Public + barber UI + SMS language: he | ar
   locale                  String   @default("he")
   smsConfirmationEnabled  Boolean  @default(true)
@@ -157,12 +159,16 @@ model Appointment {
   endsAt             DateTime
   customerName       String
   customerPhone      String
-  /// BOOKED | CANCELLED
+  /// BOOKED | PENDING_CONFIRM | CANCELLED
   status             String    @default("BOOKED")
   /// PUBLIC | ADMIN | RECURRING
   source             String    @default("PUBLIC")
   /// Opaque token for customer self-cancel link in SMS (nullable so existing rows can migrate)
   cancelToken        String?
+  /// Opaque token for customer confirm-hold link (when bookingRequiresConfirm)
+  confirmToken       String?
+  /// When PENDING_CONFIRM expires and auto-cancels
+  confirmExpiresAt   DateTime?
   confirmationSentAt DateTime?
   reminderSentAt     DateTime?
   createdAt          DateTime  @default(now())
@@ -178,6 +184,8 @@ model Appointment {
   @@index([seriesId])
   @@index([status, reminderSentAt, startsAt])
   @@index([cancelToken])
+  @@index([confirmToken])
+  @@index([status, confirmExpiresAt])
 }
 
 /// Admin-created repeating bookings for a specific customer

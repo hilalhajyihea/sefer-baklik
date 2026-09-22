@@ -21,6 +21,7 @@ type Barber = {
   smsPlanEnabled: boolean;
   whatsappPlanEnabled: boolean;
   customerCancelEnabled: boolean;
+  bookingRequiresConfirm: boolean;
   smsQuota: number;
   smsRemaining: number;
   whatsappQuota: number;
@@ -352,6 +353,36 @@ export function PlatformAdminPanel() {
     load();
   }
 
+  async function toggleBookingRequiresConfirm(barber: Barber) {
+    const next = !barber.bookingRequiresConfirm;
+    if (
+      next &&
+      !barber.smsPlanEnabled &&
+      !barber.whatsappPlanEnabled
+    ) {
+      setError("יש להפעיל SMS או WhatsApp לפני הפעלת אישור תור בקישור");
+      return;
+    }
+    const res = await fetch("/api/platform/barbers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: barber.id,
+        bookingRequiresConfirm: next,
+      }),
+    });
+    if (!res.ok) {
+      setError("עדכון אישור תור נכשל");
+      return;
+    }
+    setMessage(
+      next
+        ? "אישור תור בקישור הופעל — לקוחות יקבלו קישור לאישור (15 דק׳)"
+        : "אישור תור בקישור כובה — תורים נקבעים מיד כמו קודם",
+    );
+    load();
+  }
+
   async function toggleLocale(barber: Barber) {
     const nextLocale = barber.locale === "ar" ? "he" : "ar";
     const res = await fetch("/api/platform/barbers", {
@@ -644,7 +675,9 @@ export function PlatformAdminPanel() {
                           ? ` (${b.whatsappRemaining}/${b.whatsappQuota})`
                           : ""}{" "}
                         · ביטול לקוח:{" "}
-                        {b.customerCancelEnabled ? "מופעל" : "כבוי"} · צוות:{" "}
+                        {b.customerCancelEnabled ? "מופעל" : "כבוי"} · אישור
+                        קישור:{" "}
+                        {b.bookingRequiresConfirm ? "מופעל" : "כבוי"} · צוות:{" "}
                         {teamMode
                           ? `${activeStaff.length} ספרים פעילים`
                           : "ספר יחיד"}
@@ -778,6 +811,27 @@ export function PlatformAdminPanel() {
                         {b.customerCancelEnabled
                           ? "כבה ביטול תור"
                           : "הפעל ביטול תור"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleBookingRequiresConfirm(b)}
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-40"
+                        disabled={
+                          !b.smsPlanEnabled &&
+                          !b.whatsappPlanEnabled &&
+                          !b.bookingRequiresConfirm
+                        }
+                        title={
+                          b.bookingRequiresConfirm
+                            ? "כיבוי מחזיר לקביעת תור מיידית (ברירת מחדל)"
+                            : !b.smsPlanEnabled && !b.whatsappPlanEnabled
+                              ? "יש להפעיל SMS או WhatsApp קודם"
+                              : "הלקוח מקבל קישור לאישור תוך 15 דקות"
+                        }
+                      >
+                        {b.bookingRequiresConfirm
+                          ? "כבה אישור קישור"
+                          : "הפעל אישור קישור"}
                       </button>
                       <button
                         type="button"

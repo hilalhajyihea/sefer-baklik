@@ -31,6 +31,12 @@ const he = {
   bookSuccessSmsFail: "התור נקבע, אבל SMS לא נשלח: {error}",
   bookSuccessWhatsapp: " נשלחה הודעת WhatsApp.",
   bookSuccessWhatsappFail: "התור נקבע, אבל WhatsApp לא נשלח: {error}",
+  bookNeedsConfirm:
+    "נשלח קישור לאישור התור ל-{date} בשעה {time}. יש לאשר תוך {minutes} דקות — אחרת התור יבוטל.",
+  bookNeedsConfirmSms: " בדקו את ה-SMS.",
+  bookNeedsConfirmWhatsapp: " בדקו את ה-WhatsApp.",
+  bookConfirmNotifyFailed:
+    "לא הצלחנו לשלוח קישור לאישור. נסו שוב בעוד רגע.",
   wantThisToo: "ספר? רוצה אתר כזה, לחץ כאן.",
 
   loginTitle: "כניסת מנהל",
@@ -152,6 +158,35 @@ const he = {
   appointmentAt: "התור אצל",
   atTime: "בשעה",
 
+  confirmSuccessTitle: "התור אושר",
+  confirmSuccessBody:
+    "התור אצל {name} ב-{date} בשעה {time} אושר בהצלחה. נתראה!",
+  confirmAlreadyTitle: "התור כבר אושר",
+  confirmAlreadyBody:
+    "התור אצל {name} ב-{date} בשעה {time} כבר אושר. אין צורך לעשות דבר נוסף.",
+  confirmExpiredTitle: "פג תוקף הקישור",
+  confirmExpiredBody:
+    "לא אושרתם בזמן והתור שוחרר. אפשר לקבוע תור חדש.",
+  confirmCancelledTitle: "התור בוטל",
+  confirmCancelledBody: "התור הזה כבר בוטל. אפשר לקבוע תור חדש.",
+  confirmInvalidTitle: "הקישור לא תקין",
+  confirmInvalidBody:
+    "לא מצאנו תור לקישור הזה. אם עדיין צריך תור — קבעו מחדש באתר.",
+  confirmState_confirm: "ממתינים לאישור",
+  confirmState_success: "התור אושר",
+  confirmState_already_confirmed: "התור כבר אושר",
+  confirmState_expired: "פג תוקף הקישור",
+  confirmState_cancelled: "התור בוטל",
+  confirmState_invalid: "קישור לא תקין",
+  confirmRequestLine1: "שלום {name},",
+  confirmRequestLine2:
+    "לאישור התור אצל {barber} ב-{date} בשעה {time}:",
+  confirmRequestLine2Staff:
+    "לאישור התור אצל {barber} עם {staff} ב-{date} בשעה {time}:",
+  confirmRequestLine3: "יש לאשר תוך {minutes} דקות, אחרת התור יבוטל.",
+  confirmRequestLinkLabel: "לאישור לחצו:",
+  pendingConfirmBadge: "ממתין לאישור",
+
   smsCancelLabel: "לביטול התור:",
   smsConfirmLine1: "שלום {name},",
   smsConfirmLine2:
@@ -190,6 +225,8 @@ const he = {
   errIdMissing: "מזהה חסר",
   errHoursOrder: "שעת התחלה חייבת להיות לפני שעת סיום",
   errStaffRequired: "נא לבחור ספר או כל מי שפנוי",
+  errConfirmChannelRequired:
+    "לא ניתן לקבוע תור כרגע — נדרש ערוץ SMS או WhatsApp לאישור. פנו למספרה.",
   errStaffNotFound: "ספר לא נמצא בצוות",
   errCannotDisableStaff:
     "לא ניתן להשבית — נשארו פחות משני ספרים פעילים ויש תורים עתידיים משובצים",
@@ -258,6 +295,12 @@ const ar: { [K in keyof typeof he]: string } = {
   bookSuccessSmsFail: "تم الحجز، لكن لم تُرسل رسالة SMS: {error}",
   bookSuccessWhatsapp: " تم إرسال رسالة واتساب.",
   bookSuccessWhatsappFail: "تم الحجز، لكن لم تُرسل رسالة واتساب: {error}",
+  bookNeedsConfirm:
+    "أُرسل رابط لتأكيد الموعد لـ {date} الساعة {time}. يجب التأكيد خلال {minutes} دقيقة — وإلا يُلغى الموعد.",
+  bookNeedsConfirmSms: " تحققوا من رسالة SMS.",
+  bookNeedsConfirmWhatsapp: " تحققوا من واتساب.",
+  bookConfirmNotifyFailed:
+    "تعذر إرسال رابط التأكيد. حاولوا مرة أخرى بعد لحظات.",
   wantThisToo: "حلاق؟ بدك موقع هيك؟ اضغط هنا.",
 
   loginTitle: "دخول المدير",
@@ -379,6 +422,35 @@ const ar: { [K in keyof typeof he]: string } = {
   appointmentAt: "الموعد لدى",
   atTime: "الساعة",
 
+  confirmSuccessTitle: "تم تأكيد الموعد",
+  confirmSuccessBody:
+    "تم تأكيد موعدك لدى {name} في {date} الساعة {time} بنجاح. إلى اللقاء!",
+  confirmAlreadyTitle: "الموعد مؤكد مسبقاً",
+  confirmAlreadyBody:
+    "موعدك لدى {name} في {date} الساعة {time} مؤكد مسبقاً. لا حاجة لفعل أي شيء إضافي.",
+  confirmExpiredTitle: "انتهت صلاحية الرابط",
+  confirmExpiredBody:
+    "لم يتم التأكيد في الوقت المحدد وأُفرج عن الموعد. يمكنكم حجز موعد جديد.",
+  confirmCancelledTitle: "الموعد ملغى",
+  confirmCancelledBody: "هذا الموعد ملغى. يمكنكم حجز موعد جديد.",
+  confirmInvalidTitle: "الرابط غير صالح",
+  confirmInvalidBody:
+    "لم نجد موعداً لهذا الرابط. إذا ما زلتم بحاجة لموعد — احجزوا من جديد في الموقع.",
+  confirmState_confirm: "بانتظار التأكيد",
+  confirmState_success: "تم تأكيد الموعد",
+  confirmState_already_confirmed: "الموعد مؤكد مسبقاً",
+  confirmState_expired: "انتهت صلاحية الرابط",
+  confirmState_cancelled: "الموعد ملغى",
+  confirmState_invalid: "رابط غير صالح",
+  confirmRequestLine1: "مرحباً {name}،",
+  confirmRequestLine2:
+    "لتأكيد الموعد لدى {barber} في {date} الساعة {time}:",
+  confirmRequestLine2Staff:
+    "لتأكيد الموعد لدى {barber} مع {staff} في {date} الساعة {time}:",
+  confirmRequestLine3: "يجب التأكيد خلال {minutes} دقيقة، وإلا يُلغى الموعد.",
+  confirmRequestLinkLabel: "للتأكيد اضغطوا:",
+  pendingConfirmBadge: "بانتظار التأكيد",
+
   smsCancelLabel: "لإلغاء الموعد:",
   smsConfirmLine1: "مرحباً {name}،",
   smsConfirmLine2:
@@ -417,6 +489,8 @@ const ar: { [K in keyof typeof he]: string } = {
   errIdMissing: "المعرّف مفقود",
   errHoursOrder: "ساعة البداية يجب أن تكون قبل ساعة النهاية",
   errStaffRequired: "يرجى اختيار حلاق أو أي شخص متاح",
+  errConfirmChannelRequired:
+    "تعذر الحجز حالياً — يلزم قناة SMS أو واتساب للتأكيد. تواصلوا مع الصالون.",
   errStaffNotFound: "الحلاق غير موجود في الفريق",
   errCannotDisableStaff:
     "لا يمكن التعطيل — يتبقى أقل من حلاقين نشطين وهناك مواعيد مستقبلية معينة",

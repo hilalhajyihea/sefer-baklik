@@ -96,7 +96,7 @@ export async function PATCH(request: Request) {
         where: {
           barberId: existing.barberId,
           staffId: { not: null },
-          status: "BOOKED",
+          status: { in: ["BOOKED", "PENDING_CONFIRM"] },
           startsAt: { gt: new Date() },
         },
       });
@@ -180,7 +180,7 @@ export async function DELETE(request: Request) {
         where: {
           barberId: existing.barberId,
           staffId: { not: null },
-          status: "BOOKED",
+          status: { in: ["BOOKED", "PENDING_CONFIRM"] },
           startsAt: { gt: new Date() },
         },
       });

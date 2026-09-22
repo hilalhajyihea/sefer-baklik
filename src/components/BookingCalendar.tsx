@@ -101,37 +101,53 @@ export function BookingCalendar({
         setError(data.error || t(locale, "bookFailed"));
         return;
       }
-      let successMsg = t(locale, "bookSuccess", {
-        date: formatDateLocalized(locale, combineDateAndTime(date, "12:00")),
-        time,
-      });
-      if (data.sms?.ok && !data.sms?.skipped) {
-        successMsg += t(locale, "bookSuccessSms");
-      }
-      if (data.whatsapp?.ok && !data.whatsapp?.skipped) {
-        successMsg += t(locale, "bookSuccessWhatsapp");
-      }
-      setSuccess(successMsg);
+      if (data.needsConfirm) {
+        let successMsg = t(locale, "bookNeedsConfirm", {
+          date: formatDateLocalized(locale, combineDateAndTime(date, "12:00")),
+          time,
+          minutes: data.confirmMinutes || 15,
+        });
+        if (data.sms?.ok && !data.sms?.skipped) {
+          successMsg += t(locale, "bookNeedsConfirmSms");
+        }
+        if (data.whatsapp?.ok && !data.whatsapp?.skipped) {
+          successMsg += t(locale, "bookNeedsConfirmWhatsapp");
+        }
+        setSuccess(successMsg);
+        setError("");
+      } else {
+        let successMsg = t(locale, "bookSuccess", {
+          date: formatDateLocalized(locale, combineDateAndTime(date, "12:00")),
+          time,
+        });
+        if (data.sms?.ok && !data.sms?.skipped) {
+          successMsg += t(locale, "bookSuccessSms");
+        }
+        if (data.whatsapp?.ok && !data.whatsapp?.skipped) {
+          successMsg += t(locale, "bookSuccessWhatsapp");
+        }
+        setSuccess(successMsg);
 
-      // Surface channel failures even when the other channel succeeded
-      const waFailed =
-        data.whatsapp &&
-        !(data.whatsapp.ok && !data.whatsapp.skipped) &&
-        data.whatsapp.error;
-      const smsFailed =
-        data.sms &&
-        !(data.sms.ok && !data.sms.skipped) &&
-        data.sms.error;
-      if (waFailed) {
-        setError(
-          t(locale, "bookSuccessWhatsappFail", {
-            error: data.whatsapp.error,
-          }),
-        );
-      } else if (smsFailed) {
-        setError(
-          t(locale, "bookSuccessSmsFail", { error: data.sms.error }),
-        );
+        // Surface channel failures even when the other channel succeeded
+        const waFailed =
+          data.whatsapp &&
+          !(data.whatsapp.ok && !data.whatsapp.skipped) &&
+          data.whatsapp.error;
+        const smsFailed =
+          data.sms &&
+          !(data.sms.ok && !data.sms.skipped) &&
+          data.sms.error;
+        if (waFailed) {
+          setError(
+            t(locale, "bookSuccessWhatsappFail", {
+              error: data.whatsapp.error,
+            }),
+          );
+        } else if (smsFailed) {
+          setError(
+            t(locale, "bookSuccessSmsFail", { error: data.sms.error }),
+          );
+        }
       }
       setName("");
       setPhone("");

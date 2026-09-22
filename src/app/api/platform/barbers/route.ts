@@ -36,6 +36,7 @@ export async function GET() {
       smsPlanEnabled: true,
       whatsappPlanEnabled: true,
       customerCancelEnabled: true,
+      bookingRequiresConfirm: true,
       smsQuota: true,
       smsRemaining: true,
       whatsappQuota: true,
@@ -117,6 +118,7 @@ const patchSchema = z.object({
   smsPlanEnabled: z.boolean().optional(),
   whatsappPlanEnabled: z.boolean().optional(),
   customerCancelEnabled: z.boolean().optional(),
+  bookingRequiresConfirm: z.boolean().optional(),
   password: z.string().min(6).max(100).optional(),
   displayName: z.string().min(2).max(80).optional(),
   locale: z.enum(["he", "ar"]).optional(),
@@ -182,6 +184,9 @@ export async function PATCH(request: Request) {
       ...(parsed.data.customerCancelEnabled !== undefined
         ? { customerCancelEnabled: parsed.data.customerCancelEnabled }
         : {}),
+      ...(parsed.data.bookingRequiresConfirm !== undefined
+        ? { bookingRequiresConfirm: parsed.data.bookingRequiresConfirm }
+        : {}),
       ...(parsed.data.displayName
         ? { displayName: parsed.data.displayName.trim() }
         : {}),
@@ -199,6 +204,7 @@ export async function PATCH(request: Request) {
       smsPlanEnabled: barber.smsPlanEnabled,
       whatsappPlanEnabled: barber.whatsappPlanEnabled,
       customerCancelEnabled: barber.customerCancelEnabled,
+      bookingRequiresConfirm: barber.bookingRequiresConfirm,
       smsQuota: barber.smsQuota,
       smsRemaining: barber.smsRemaining,
       whatsappQuota: barber.whatsappQuota,

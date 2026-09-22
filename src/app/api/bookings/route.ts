@@ -4,6 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { bookAppointment } from "@/lib/availability";
 import { normalizeLocale, t, type Locale } from "@/lib/i18n";
 import { sendBookingConfirmation } from "@/lib/reminders";
+import {
+  confirmExpiresAt,
+  generateConfirmToken,
+  sendBookingConfirmRequest,
+} from "@/lib/confirm";
+import { CONFIRM_HOLD_MINUTES } from "@/lib/appointmentStatus";
 import { isTeamMode } from "@/lib/staff";
 
 export async function POST(request: Request) {
@@ -62,6 +68,23 @@ export async function POST(request: Request) {
       );
     }
 
+    const requiresConfirm = Boolean(barber.bookingRequiresConfirm);
+
+    if (requiresConfirm) {
+      const canSms =
+        barber.smsPlanEnabled && barber.smsConfirmationEnabled;
+      const canWa =
+        barber.whatsappPlanEnabled && barber.whatsappConfirmationEnabled;
+      if (!canSms && !canWa) {
+        return NextResponse.json(
+          { error: t(locale, "errConfirmChannelRequired") },
+          { status: 409 },
+        );
+      }
+    }
+
+    const confirmToken = requiresConfirm ? generateConfirmToken() : null;
+
     const appointment = await bookAppointment({
       barberId: barber.id,
       dateKey: parsed.data.date,
@@ -69,7 +92,59 @@ export async function POST(request: Request) {
       customerName: parsed.data.customerName,
       customerPhone: parsed.data.customerPhone,
       staffKey: parsed.data.staff,
+      ...(requiresConfirm
+        ? {
+            status: "PENDING_CONFIRM" as const,
+            confirmToken,
+            confirmExpiresAt: confirmExpiresAt(),
+          }
+        : {}),
     });
+
+    if (requiresConfirm) {
+      const notify = await sendBookingConfirmRequest(appointment.id);
+      if (!notify.ok) {
+        console.warn("[bookings] confirm-request notify failed", notify);
+        // No link delivered — release the hold so the slot isn't stuck
+        await prisma.appointment.update({
+          where: { id: appointment.id },
+          data: { status: "CANCELLED" },
+        });
+        return NextResponse.json(
+          {
+            error:
+              notify.error || t(locale, "bookConfirmNotifyFailed"),
+          },
+          { status: 502 },
+        );
+      }
+
+      return NextResponse.json({
+        appointment: {
+          id: appointment.id,
+          startsAt: appointment.startsAt.toISOString(),
+          customerName: appointment.customerName,
+          staffId: appointment.staffId,
+          status: appointment.status,
+        },
+        needsConfirm: true,
+        confirmMinutes: CONFIRM_HOLD_MINUTES,
+        sms: notify?.sms
+          ? {
+              ok: !!notify.sms.ok,
+              skipped: !!notify.sms.skipped,
+              error: notify.sms.error || null,
+            }
+          : null,
+        whatsapp: notify?.whatsapp
+          ? {
+              ok: !!notify.whatsapp.ok,
+              skipped: !!notify.whatsapp.skipped,
+              error: notify.whatsapp.error || null,
+            }
+          : null,
+      });
+    }
 
     const notify = await sendBookingConfirmation(appointment.id);
 
@@ -87,7 +162,9 @@ export async function POST(request: Request) {
         startsAt: appointment.startsAt.toISOString(),
         customerName: appointment.customerName,
         staffId: appointment.staffId,
+        status: appointment.status,
       },
+      needsConfirm: false,
       sms: notify?.sms
         ? {
             ok: !!notify.sms.ok,

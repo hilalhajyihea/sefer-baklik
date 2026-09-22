@@ -30,6 +30,7 @@ type Appointment = {
   endsAt: string;
   customerName: string;
   customerPhone: string;
+  status?: string;
   staffId?: string | null;
   seriesId?: string | null;
   staff?: { id: string; displayName: string } | null;
@@ -962,6 +963,11 @@ export function BarberAdminPanel({
                                   {a.seriesId ? (
                                     <span className="rounded-full border border-white/25 bg-black/40 px-2 py-0.5 text-xs font-semibold text-[rgba(248,243,236,0.85)]">
                                       {t(locale, "recurringBadge")}
+                                    </span>
+                                  ) : null}
+                                  {a.status === "PENDING_CONFIRM" ? (
+                                    <span className="rounded-full border border-[var(--copper)]/50 bg-[rgba(196,90,40,0.25)] px-2 py-0.5 text-xs font-semibold text-[var(--cream)]">
+                                      {t(locale, "pendingConfirmBadge")}
                                     </span>
                                   ) : null}
                                 </div>

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { SLOT_HOLD_STATUSES } from "@/lib/appointmentStatus";
 import {
   filterSlotsByBlockedWindows,
   getBlockedWindowsForDate,
@@ -80,7 +81,7 @@ export async function getAvailableSlots(
   const appointments = await prisma.appointment.findMany({
     where: {
       barberId,
-      status: "BOOKED",
+      status: { in: [...SLOT_HOLD_STATUSES] },
       startsAt: { gte: dayStart, lt: dayEnd },
     },
   });
@@ -139,7 +140,7 @@ export async function getStaffSlots(
   const appointments = await prisma.appointment.findMany({
     where: {
       staffId,
-      status: "BOOKED",
+      status: { in: [...SLOT_HOLD_STATUSES] },
       startsAt: { gte: dayStart, lt: dayEnd },
     },
   });
@@ -219,7 +220,7 @@ async function pickStaffForAnySlot(
     const dayCount = await prisma.appointment.count({
       where: {
         staffId: s.id,
-        status: "BOOKED",
+        status: { in: [...SLOT_HOLD_STATUSES] },
         startsAt: { gte: dayStart, lt: dayEnd },
       },
     });
@@ -247,6 +248,10 @@ export async function bookAppointment(input: {
   seriesId?: string | null;
   /** Admin override; public booking ignores and uses barber.slotMinutes */
   slotMinutes?: number | null;
+  /** Default BOOKED; use PENDING_CONFIRM when barber requires link confirmation */
+  status?: "BOOKED" | "PENDING_CONFIRM";
+  confirmToken?: string | null;
+  confirmExpiresAt?: Date | null;
 }) {
   const barber = await prisma.barber.findUnique({
     where: { id: input.barberId },
@@ -256,6 +261,7 @@ export async function bookAppointment(input: {
   }
 
   const source = input.source ?? "PUBLIC";
+  const status = input.status ?? "BOOKED";
   const slotMinutes =
     source === "PUBLIC"
       ? resolveSlotMinutes(barber.slotMinutes)
@@ -279,7 +285,7 @@ export async function bookAppointment(input: {
       const overlapping = await tx.appointment.findFirst({
         where: {
           barberId: input.barberId,
-          status: "BOOKED",
+          status: { in: [...SLOT_HOLD_STATUSES] },
           startsAt: { lt: endsAt },
           endsAt: { gt: startsAt },
         },
@@ -296,9 +302,11 @@ export async function bookAppointment(input: {
           endsAt,
           customerName: input.customerName.trim(),
           customerPhone: input.customerPhone.trim(),
-          status: "BOOKED",
+          status,
           source,
           cancelToken: generateCancelToken(),
+          confirmToken: input.confirmToken || null,
+          confirmExpiresAt: input.confirmExpiresAt || null,
         },
       });
     });
@@ -343,7 +351,7 @@ export async function bookAppointment(input: {
     const overlapping = await tx.appointment.findFirst({
       where: {
         staffId: staff.id,
-        status: "BOOKED",
+        status: { in: [...SLOT_HOLD_STATUSES] },
         startsAt: { lt: endsAt },
         endsAt: { gt: startsAt },
       },
@@ -361,9 +369,11 @@ export async function bookAppointment(input: {
         endsAt,
         customerName: input.customerName.trim(),
         customerPhone: input.customerPhone.trim(),
-        status: "BOOKED",
+        status,
         source,
         cancelToken: generateCancelToken(),
+        confirmToken: input.confirmToken || null,
+        confirmExpiresAt: input.confirmExpiresAt || null,
       },
     });
   });
