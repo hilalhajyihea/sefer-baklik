@@ -1,38 +1,18 @@
 import { ConfirmAppointmentPanel } from "@/components/ConfirmAppointmentPanel";
 import {
-  confirmPendingAppointment,
   findAppointmentByConfirmToken,
   resolveConfirmState,
-  type ConfirmPageState,
 } from "@/lib/confirm";
 import { formatDateLocalized, normalizeLocale, t } from "@/lib/i18n";
 import { formatTime } from "@/lib/time";
 
-type PanelState =
-  | "success"
-  | "already_confirmed"
-  | "expired"
-  | "cancelled"
-  | "invalid";
-
-function toPanelState(state: ConfirmPageState): PanelState {
-  return state === "confirm" ? "invalid" : state;
-}
-
 export async function ConfirmTokenPage({ rawToken }: { rawToken: string }) {
-  // Opening the link confirms (no extra button) — matches product: click = booked
-  const result = rawToken
-    ? await confirmPendingAppointment(rawToken)
-    : { state: "invalid" as const, appointment: null };
-
-  let appointment = result.appointment;
-  let state = toPanelState(result.state);
-
-  if (!appointment && rawToken) {
-    appointment = await findAppointmentByConfirmToken(rawToken);
-    state = toPanelState(resolveConfirmState(appointment));
-  }
-
+  // GET only shows status — confirmation happens via POST button (avoids SMS link prefetch)
+  const appointment = rawToken
+    ? await findAppointmentByConfirmToken(rawToken)
+    : null;
+  const state = resolveConfirmState(appointment);
+  const token = appointment?.confirmToken || rawToken;
   const locale = normalizeLocale(appointment?.barber.locale);
 
   return (
@@ -46,8 +26,9 @@ export async function ConfirmTokenPage({ rawToken }: { rawToken: string }) {
           {t(locale, "brand")}
         </p>
         <ConfirmAppointmentPanel
+          token={token}
+          initialState={state}
           locale={locale}
-          state={state}
           appointment={
             appointment
               ? {

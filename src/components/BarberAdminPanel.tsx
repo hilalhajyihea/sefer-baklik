@@ -31,6 +31,7 @@ type Appointment = {
   customerName: string;
   customerPhone: string;
   status?: string;
+  confirmToken?: string | null;
   staffId?: string | null;
   seriesId?: string | null;
   staff?: { id: string; displayName: string } | null;
@@ -968,6 +969,10 @@ export function BarberAdminPanel({
                                   {a.status === "PENDING_CONFIRM" ? (
                                     <span className="rounded-full border border-[var(--copper)]/50 bg-[rgba(196,90,40,0.25)] px-2 py-0.5 text-xs font-semibold text-[var(--cream)]">
                                       {t(locale, "pendingConfirmBadge")}
+                                    </span>
+                                  ) : a.status === "BOOKED" && a.confirmToken ? (
+                                    <span className="rounded-full border border-[var(--olive)]/50 bg-[rgba(47,74,52,0.35)] px-2 py-0.5 text-xs font-semibold text-[var(--cream)]">
+                                      {t(locale, "confirmedBadge")}
                                     </span>
                                   ) : null}
                                 </div>

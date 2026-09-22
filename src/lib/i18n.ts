@@ -172,6 +172,11 @@ const he = {
   confirmInvalidTitle: "הקישור לא תקין",
   confirmInvalidBody:
     "לא מצאנו תור לקישור הזה. אם עדיין צריך תור — קבעו מחדש באתר.",
+  confirmHeading: "אישור תור",
+  confirmQuestion: "לאשר את התור?",
+  confirmCta: "אישור התור",
+  confirming: "מאשר…",
+  confirmFailed: "אישור התור נכשל",
   confirmState_confirm: "ממתינים לאישור",
   confirmState_success: "התור אושר",
   confirmState_already_confirmed: "התור כבר אושר",
@@ -186,6 +191,7 @@ const he = {
   confirmRequestLine3: "יש לאשר תוך {minutes} דקות, אחרת התור יבוטל.",
   confirmRequestLinkLabel: "לאישור לחצו:",
   pendingConfirmBadge: "ממתין לאישור",
+  confirmedBadge: "מאושר",
 
   smsCancelLabel: "לביטול התור:",
   smsConfirmLine1: "שלום {name},",
@@ -436,6 +442,11 @@ const ar: { [K in keyof typeof he]: string } = {
   confirmInvalidTitle: "الرابط غير صالح",
   confirmInvalidBody:
     "لم نجد موعداً لهذا الرابط. إذا ما زلتم بحاجة لموعد — احجزوا من جديد في الموقع.",
+  confirmHeading: "تأكيد الموعد",
+  confirmQuestion: "تأكيد الموعد؟",
+  confirmCta: "تأكيد الموعد",
+  confirming: "جاري التأكيد…",
+  confirmFailed: "فشل تأكيد الموعد",
   confirmState_confirm: "بانتظار التأكيد",
   confirmState_success: "تم تأكيد الموعد",
   confirmState_already_confirmed: "الموعد مؤكد مسبقاً",
@@ -450,6 +461,7 @@ const ar: { [K in keyof typeof he]: string } = {
   confirmRequestLine3: "يجب التأكيد خلال {minutes} دقيقة، وإلا يُلغى الموعد.",
   confirmRequestLinkLabel: "للتأكيد اضغطوا:",
   pendingConfirmBadge: "بانتظار التأكيد",
+  confirmedBadge: "مؤكد",
 
   smsCancelLabel: "لإلغاء الموعد:",
   smsConfirmLine1: "مرحباً {name}،",
