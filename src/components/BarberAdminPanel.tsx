@@ -8,7 +8,7 @@ import {
   formatTime,
   toDateKey,
 } from "@/lib/time";
-import { SITE_ADMIN_NAME, SITE_ADMIN_PHONE } from "@/lib/site";
+import { SITE_ADMIN_NAME, SITE_ADMIN_NAME_AR, SITE_ADMIN_PHONE, SITE_ADMIN_WHATSAPP } from "@/lib/site";
 import {
   dayNameLocalized,
   formatDateLocalized,
@@ -1685,15 +1685,17 @@ export function BarberAdminPanel({
                     </h3>
                     <p className="text-sm leading-relaxed text-[rgba(248,243,236,0.62)]">
                       {t(locale, "whatsappUpgrade", {
-                        name: SITE_ADMIN_NAME,
+                        name: SITE_ADMIN_NAME_AR,
                         phone: SITE_ADMIN_PHONE,
                       })}
                     </p>
                     <a
-                      href={`tel:${SITE_ADMIN_PHONE}`}
+                      href={SITE_ADMIN_WHATSAPP}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="btn-primary inline-flex rounded-xl px-5 py-2.5 text-sm font-semibold"
                     >
-                      {t(locale, "contactAdmin", { name: SITE_ADMIN_NAME })}
+                      {t(locale, "contactAdmin", { name: SITE_ADMIN_NAME_AR })}
                     </a>
                   </div>
                 )}

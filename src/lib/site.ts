@@ -1,4 +1,6 @@
 export const SITE_ADMIN_NAME = "הלאל חאג יחיא";
+/** Arabic display name (e.g. WhatsApp upgrade CTA) */
+export const SITE_ADMIN_NAME_AR = "هلال حاج يحيى";
 export const SITE_ADMIN_PHONE = "0508477316";
 export const SITE_ADMIN_PHONE_E164 = "+972508477316";
 export const SITE_ADMIN_EMAIL = "barberbyclick@gmail.com";
