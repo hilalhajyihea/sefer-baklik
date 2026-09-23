@@ -14,9 +14,13 @@ import {
 } from "@/lib/whatsappQuota";
 import {
   WA_TEMPLATE_CONFIRM,
+  WA_TEMPLATE_CONFIRM_NO_CANCEL,
   WA_TEMPLATE_REMINDER,
+  WA_TEMPLATE_REMINDER_NO_CANCEL,
   buildConfirmWhatsAppParams,
+  buildConfirmWhatsAppParamsNoCancel,
   buildReminderWhatsAppParams,
+  buildReminderWhatsAppParamsNoCancel,
 } from "@/lib/whatsapp";
 import { formatDateLocalized } from "@/lib/i18n";
 import { formatTime } from "@/lib/time";
@@ -112,18 +116,29 @@ export async function sendBookingConfirmation(appointmentId: string) {
   }
 
   if (waOn) {
+    const cancelOn = appointment.barber.customerCancelEnabled;
     whatsapp = await sendCustomerWhatsApp({
       barberId: appointment.barberId,
       to: phone,
-      templateName: WA_TEMPLATE_CONFIRM,
-      bodyParams: buildConfirmWhatsAppParams({
-        customerName: appointment.customerName,
-        barberName: appointment.barber.displayName,
-        staffName: appointment.staff?.displayName,
-        dateLabel: formatDateLocalized("ar", appointment.startsAt),
-        timeLabel: formatTime(appointment.startsAt),
-        cancelUrl,
-      }),
+      templateName: cancelOn
+        ? WA_TEMPLATE_CONFIRM
+        : WA_TEMPLATE_CONFIRM_NO_CANCEL,
+      bodyParams: cancelOn
+        ? buildConfirmWhatsAppParams({
+            customerName: appointment.customerName,
+            barberName: appointment.barber.displayName,
+            staffName: appointment.staff?.displayName,
+            dateLabel: formatDateLocalized("ar", appointment.startsAt),
+            timeLabel: formatTime(appointment.startsAt),
+            cancelUrl,
+          })
+        : buildConfirmWhatsAppParamsNoCancel({
+            customerName: appointment.customerName,
+            barberName: appointment.barber.displayName,
+            staffName: appointment.staff?.displayName,
+            dateLabel: formatDateLocalized("ar", appointment.startsAt),
+            timeLabel: formatTime(appointment.startsAt),
+          }),
     });
   }
 
@@ -250,18 +265,29 @@ export async function processDueReminders() {
       }
 
       if (waOn) {
+        const cancelOn = barber.customerCancelEnabled;
         whatsapp = await sendCustomerWhatsApp({
           barberId: barber.id,
           to: phone,
-          templateName: WA_TEMPLATE_REMINDER,
-          bodyParams: buildReminderWhatsAppParams({
-            customerName: appointment.customerName,
-            barberName: barber.displayName,
-            staffName: appointment.staff?.displayName,
-            minutesBefore: minutes,
-            timeLabel: formatTime(appointment.startsAt),
-            cancelUrl,
-          }),
+          templateName: cancelOn
+            ? WA_TEMPLATE_REMINDER
+            : WA_TEMPLATE_REMINDER_NO_CANCEL,
+          bodyParams: cancelOn
+            ? buildReminderWhatsAppParams({
+                customerName: appointment.customerName,
+                barberName: barber.displayName,
+                staffName: appointment.staff?.displayName,
+                minutesBefore: minutes,
+                timeLabel: formatTime(appointment.startsAt),
+                cancelUrl,
+              })
+            : buildReminderWhatsAppParamsNoCancel({
+                customerName: appointment.customerName,
+                barberName: barber.displayName,
+                staffName: appointment.staff?.displayName,
+                minutesBefore: minutes,
+                timeLabel: formatTime(appointment.startsAt),
+              }),
         });
       }
 

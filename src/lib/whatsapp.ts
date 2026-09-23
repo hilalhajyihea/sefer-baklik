@@ -7,7 +7,9 @@ function cleanEnv(value: string | undefined) {
 const GRAPH_VERSION = process.env.WHATSAPP_GRAPH_VERSION || "v21.0";
 
 export const WA_TEMPLATE_CONFIRM = "barbe_reg";
+export const WA_TEMPLATE_CONFIRM_NO_CANCEL = "barbe_reg_no_cancel";
 export const WA_TEMPLATE_REMINDER = "barber_notif_arabic";
+export const WA_TEMPLATE_REMINDER_NO_CANCEL = "barber_notif_arabic_no_cancel";
 /** Barber alert when customer self-cancels (approved Meta template) */
 export const WA_TEMPLATE_BARBER_CANCEL =
   cleanEnv(process.env.WHATSAPP_TEMPLATE_BARBER_CANCEL) || "barber_cancel_ar";
@@ -36,7 +38,9 @@ export function whatsappConfigStatus() {
     graphVersion: GRAPH_VERSION,
     templates: {
       confirm: WA_TEMPLATE_CONFIRM,
+      confirmNoCancel: WA_TEMPLATE_CONFIRM_NO_CANCEL,
       reminder: WA_TEMPLATE_REMINDER,
+      reminderNoCancel: WA_TEMPLATE_REMINDER_NO_CANCEL,
       barberCancel: WA_TEMPLATE_BARBER_CANCEL,
       language: WA_TEMPLATE_LANG,
     },
@@ -158,6 +162,20 @@ export function buildConfirmWhatsAppParams(input: {
   ];
 }
 
+/** barbe_reg_no_cancel: {{1}} name, {{2}} salon, {{3}} date, {{4}} time */
+export function buildConfirmWhatsAppParamsNoCancel(input: {
+  customerName: string;
+  barberName: string;
+  staffName?: string | null;
+  dateLabel: string;
+  timeLabel: string;
+}) {
+  const salon = input.staffName
+    ? `${input.barberName} مع ${input.staffName}`
+    : input.barberName;
+  return [input.customerName, salon, input.dateLabel, input.timeLabel];
+}
+
 export function buildReminderWhatsAppParams(input: {
   customerName: string;
   barberName: string;
@@ -175,6 +193,25 @@ export function buildReminderWhatsAppParams(input: {
     String(input.minutesBefore),
     input.timeLabel,
     input.cancelUrl,
+  ];
+}
+
+/** barber_notif_arabic_no_cancel: {{1}} name, {{2}} salon, {{3}} minutes, {{4}} time */
+export function buildReminderWhatsAppParamsNoCancel(input: {
+  customerName: string;
+  barberName: string;
+  staffName?: string | null;
+  minutesBefore: number;
+  timeLabel: string;
+}) {
+  const salon = input.staffName
+    ? `${input.barberName} مع ${input.staffName}`
+    : input.barberName;
+  return [
+    input.customerName,
+    salon,
+    String(input.minutesBefore),
+    input.timeLabel,
   ];
 }
 
