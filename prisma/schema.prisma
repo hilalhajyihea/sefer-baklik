@@ -169,6 +169,10 @@ model Appointment {
   confirmToken       String?
   /// When PENDING_CONFIRM expires and auto-cancels
   confirmExpiresAt   DateTime?
+  /// Links consecutive multi-person public bookings; null = single appointment (legacy + default)
+  bookingGroupId     String?
+  /// 0 = lead (SMS/WA / cancel link); followers are 1..n-1. Null when not in a group.
+  bookingGroupIndex  Int?
   confirmationSentAt DateTime?
   reminderSentAt     DateTime?
   createdAt          DateTime  @default(now())
@@ -186,6 +190,7 @@ model Appointment {
   @@index([cancelToken])
   @@index([confirmToken])
   @@index([status, confirmExpiresAt])
+  @@index([bookingGroupId])
 }
 
 /// Admin-created repeating bookings for a specific customer

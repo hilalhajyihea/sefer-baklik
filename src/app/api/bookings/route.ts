@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { bookAppointment } from "@/lib/availability";
+import { bookConsecutiveAppointments } from "@/lib/availability";
 import { normalizeLocale, t, type Locale } from "@/lib/i18n";
 import { sendBookingConfirmation } from "@/lib/reminders";
 import {
@@ -10,6 +10,7 @@ import {
   sendBookingConfirmRequest,
 } from "@/lib/confirm";
 import { CONFIRM_HOLD_MINUTES } from "@/lib/appointmentStatus";
+import { clampPartySize, MAX_PARTY_SIZE } from "@/lib/partyBooking";
 import { isTeamMode } from "@/lib/staff";
 
 export async function POST(request: Request) {
@@ -36,6 +37,8 @@ export async function POST(request: Request) {
         .max(20)
         .regex(/^[\d+\-\s()]+$/, t(locale, "errPhoneInvalid")),
       staff: z.string().min(1).optional(),
+      /** Default 1 — same as classic single booking */
+      partySize: z.coerce.number().int().min(1).max(MAX_PARTY_SIZE).optional(),
     });
 
     const parsed = schema.safeParse(body);
@@ -68,6 +71,7 @@ export async function POST(request: Request) {
       );
     }
 
+    const partySize = clampPartySize(parsed.data.partySize ?? 1);
     const requiresConfirm = Boolean(barber.bookingRequiresConfirm);
 
     if (requiresConfirm) {
@@ -85,31 +89,43 @@ export async function POST(request: Request) {
 
     const confirmToken = requiresConfirm ? generateConfirmToken() : null;
 
-    const appointment = await bookAppointment({
-      barberId: barber.id,
-      dateKey: parsed.data.date,
-      time: parsed.data.time,
-      customerName: parsed.data.customerName,
-      customerPhone: parsed.data.customerPhone,
-      staffKey: parsed.data.staff,
-      ...(requiresConfirm
-        ? {
-            status: "PENDING_CONFIRM" as const,
-            confirmToken,
-            confirmExpiresAt: confirmExpiresAt(),
-          }
-        : {}),
-    });
+    const { lead: appointment, partySize: bookedPartySize } =
+      await bookConsecutiveAppointments({
+        barberId: barber.id,
+        dateKey: parsed.data.date,
+        time: parsed.data.time,
+        customerName: parsed.data.customerName,
+        customerPhone: parsed.data.customerPhone,
+        staffKey: parsed.data.staff,
+        partySize,
+        ...(requiresConfirm
+          ? {
+              status: "PENDING_CONFIRM" as const,
+              confirmToken,
+              confirmExpiresAt: confirmExpiresAt(),
+            }
+          : {}),
+      });
+
+    async function cancelHold() {
+      if (appointment.bookingGroupId) {
+        await prisma.appointment.updateMany({
+          where: { bookingGroupId: appointment.bookingGroupId },
+          data: { status: "CANCELLED" },
+        });
+      } else {
+        await prisma.appointment.update({
+          where: { id: appointment.id },
+          data: { status: "CANCELLED" },
+        });
+      }
+    }
 
     if (requiresConfirm) {
       const notify = await sendBookingConfirmRequest(appointment.id);
       if (!notify.ok) {
         console.warn("[bookings] confirm-request notify failed", notify);
-        // No link delivered — release the hold so the slot isn't stuck
-        await prisma.appointment.update({
-          where: { id: appointment.id },
-          data: { status: "CANCELLED" },
-        });
+        await cancelHold();
         return NextResponse.json(
           {
             error:
@@ -127,6 +143,7 @@ export async function POST(request: Request) {
           staffId: appointment.staffId,
           status: appointment.status,
         },
+        partySize: bookedPartySize,
         needsConfirm: true,
         confirmMinutes: CONFIRM_HOLD_MINUTES,
         sms: notify?.sms
@@ -164,6 +181,7 @@ export async function POST(request: Request) {
         staffId: appointment.staffId,
         status: appointment.status,
       },
+      partySize: bookedPartySize,
       needsConfirm: false,
       sms: notify?.sms
         ? {

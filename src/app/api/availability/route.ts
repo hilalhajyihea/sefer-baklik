@@ -10,6 +10,7 @@ const schema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   staff: z.string().min(1).optional(),
   slotMinutes: z.coerce.number().int().optional(),
+  partySize: z.coerce.number().int().min(1).max(6).optional(),
 });
 
 export async function GET(request: Request) {
@@ -17,11 +18,13 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const rawSlot = searchParams.get("slotMinutes");
+    const rawParty = searchParams.get("partySize");
     const parsed = schema.safeParse({
       slug: searchParams.get("slug"),
       date: searchParams.get("date"),
       staff: searchParams.get("staff") || undefined,
       slotMinutes: rawSlot ? Number(rawSlot) : undefined,
+      partySize: rawParty ? Number(rawParty) : undefined,
     });
     if (!parsed.success) {
       return NextResponse.json({ error: t(locale, "errParams") }, { status: 400 });
@@ -48,11 +51,13 @@ export async function GET(request: Request) {
       parsed.data.date,
       parsed.data.staff,
       slotMinutes,
+      parsed.data.partySize ?? 1,
     );
     return NextResponse.json({
       slots,
       slotMinutes,
       allowedSlotMinutes: ALLOWED_SLOT_MINUTES,
+      partySize: parsed.data.partySize ?? 1,
     });
   } catch (error) {
     console.error("availability error", error);

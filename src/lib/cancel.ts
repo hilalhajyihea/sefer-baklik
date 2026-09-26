@@ -135,14 +135,30 @@ export async function cancelAppointmentByToken(rawToken: string): Promise<{
     return { state: "cannot_cancel", appointment };
   }
 
-  const updated = await prisma.appointment.update({
+  if (appointment.bookingGroupId) {
+    await prisma.appointment.updateMany({
+      where: {
+        bookingGroupId: appointment.bookingGroupId,
+        status: "BOOKED",
+        startsAt: { gt: new Date() },
+      },
+      data: { status: "CANCELLED" },
+    });
+  } else {
+    await prisma.appointment.update({
+      where: { id: appointment.id },
+      data: { status: "CANCELLED" },
+    });
+  }
+
+  const updated = await prisma.appointment.findUnique({
     where: { id: appointment.id },
-    data: { status: "CANCELLED" },
     include: appointmentInclude,
   });
 
-  // Fire-and-forget alerts to barber (errors logged inside send helpers)
-  void notifyBarberOfCustomerCancel(updated);
+  if (updated) {
+    void notifyBarberOfCustomerCancel(updated);
+  }
 
   return { state: "success", appointment: updated };
 }

@@ -169,6 +169,21 @@ export async function confirmPendingAppointment(rawToken: string) {
     },
   });
 
+  if (appointment.bookingGroupId) {
+    await prisma.appointment.updateMany({
+      where: {
+        bookingGroupId: appointment.bookingGroupId,
+        status: "PENDING_CONFIRM",
+        id: { not: appointment.id },
+      },
+      data: {
+        status: "BOOKED",
+        confirmExpiresAt: null,
+        confirmationSentAt: new Date(),
+      },
+    });
+  }
+
   return { state: "success" as const, appointment: updated };
 }
 

@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { formatDateLocalized, normalizeLocale, t, type Locale } from "@/lib/i18n";
+import { MAX_PARTY_SIZE } from "@/lib/partyBooking";
 import { toDateKey, combineDateAndTime } from "@/lib/time";
 import { BrandMark } from "@/components/BrandGraphics";
 
@@ -43,6 +44,7 @@ export function BookingCalendar({
 
   const [staffKey, setStaffKey] = useState(teamMode ? "any" : "");
   const [date, setDate] = useState(dates[0]?.key || "");
+  const [partySize, setPartySize] = useState(1);
   const [slots, setSlots] = useState<string[]>([]);
   const [time, setTime] = useState("");
   const [name, setName] = useState("");
@@ -61,6 +63,7 @@ export function BookingCalendar({
       try {
         const params = new URLSearchParams({ slug, date });
         if (teamMode && staffKey) params.set("staff", staffKey);
+        if (partySize > 1) params.set("partySize", String(partySize));
         const res = await fetch(`/api/availability?${params.toString()}`);
         const data = await res.json();
         if (!cancelled) {
@@ -76,7 +79,7 @@ export function BookingCalendar({
     return () => {
       cancelled = true;
     };
-  }, [slug, date, staffKey, teamMode]);
+  }, [slug, date, staffKey, teamMode, partySize]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -93,6 +96,7 @@ export function BookingCalendar({
           time,
           customerName: name,
           customerPhone: phone,
+          ...(partySize > 1 ? { partySize } : {}),
           ...(teamMode ? { staff: staffKey || "any" } : {}),
         }),
       });
@@ -152,6 +156,7 @@ export function BookingCalendar({
       setName("");
       setPhone("");
       setTime("");
+      setPartySize(1);
       const params = new URLSearchParams({ slug, date });
       if (teamMode && staffKey) params.set("staff", staffKey);
       const refresh = await fetch(`/api/availability?${params.toString()}`);
@@ -284,6 +289,31 @@ export function BookingCalendar({
                   {d.label}
                 </button>
               ))}
+            </div>
+
+            <h2 className="mt-7 text-lg font-semibold text-[var(--cream)]">
+              {t(locale, "partySize")}
+            </h2>
+            <p className="mt-1 text-xs text-[rgba(248,243,236,0.55)]">
+              {t(locale, "partySizeHint")}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {Array.from({ length: MAX_PARTY_SIZE }, (_, i) => i + 1).map(
+                (n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setPartySize(n)}
+                    className={`min-w-[2.75rem] rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                      partySize === n
+                        ? "border border-[var(--copper)] bg-[var(--copper)] text-white shadow-md"
+                        : "shop-chip"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ),
+              )}
             </div>
 
             <h2 className="mt-7 text-lg font-semibold text-[var(--cream)]">

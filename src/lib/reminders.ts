@@ -223,6 +223,12 @@ export async function processDueReminders() {
         status: "BOOKED",
         reminderSentAt: null,
         startsAt: { gt: now, lte: windowEnd },
+        // Multi-person chain: only remind the lead (index 0). Singles have null index.
+        OR: [
+          { bookingGroupId: null },
+          { bookingGroupIndex: 0 },
+          { bookingGroupIndex: null },
+        ],
       },
       include: {
         staff: { select: { displayName: true } },
@@ -297,6 +303,17 @@ export async function processDueReminders() {
           where: { id: appointment.id },
           data: { reminderSentAt: new Date() },
         });
+        // Mark followers so they never get a separate reminder
+        if (appointment.bookingGroupId) {
+          await prisma.appointment.updateMany({
+            where: {
+              bookingGroupId: appointment.bookingGroupId,
+              id: { not: appointment.id },
+              reminderSentAt: null,
+            },
+            data: { reminderSentAt: new Date() },
+          });
+        }
         sent += 1;
       } else if (sms?.skipped || whatsapp?.skipped) {
         skipped += 1;
