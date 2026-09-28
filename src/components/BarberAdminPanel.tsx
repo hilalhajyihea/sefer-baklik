@@ -32,6 +32,8 @@ type Appointment = {
   customerPhone: string;
   status?: string;
   confirmToken?: string | null;
+  bookingGroupId?: string | null;
+  bookingGroupIndex?: number | null;
   staffId?: string | null;
   seriesId?: string | null;
   staff?: { id: string; displayName: string } | null;
@@ -401,6 +403,16 @@ export function BarberAdminPanel({
     if (!teamMode || staffFilter === "all") return appointments;
     return appointments.filter((a) => a.staffId === staffFilter);
   }, [appointments, teamMode, staffFilter]);
+
+  /** Size of each multi-person booking group (existing singles have no bookingGroupId). */
+  const bookingGroupSize = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const a of appointments) {
+      if (!a.bookingGroupId) continue;
+      counts.set(a.bookingGroupId, (counts.get(a.bookingGroupId) || 0) + 1);
+    }
+    return counts;
+  }, [appointments]);
 
   const groupedByDay = useMemo(() => {
     const groups = new Map<string, Appointment[]>();
@@ -964,6 +976,25 @@ export function BarberAdminPanel({
                                   {a.seriesId ? (
                                     <span className="rounded-full border border-white/25 bg-black/40 px-2 py-0.5 text-xs font-semibold text-[rgba(248,243,236,0.85)]">
                                       {t(locale, "recurringBadge")}
+                                    </span>
+                                  ) : null}
+                                  {a.bookingGroupId &&
+                                  (bookingGroupSize.get(a.bookingGroupId) || 0) >
+                                    1 ? (
+                                    <span className="rounded-full border border-sky-400/40 bg-sky-950/50 px-2 py-0.5 text-xs font-semibold text-sky-100">
+                                      {a.bookingGroupIndex === 0
+                                        ? t(locale, "partyGroupLeadBadge", {
+                                            count:
+                                              bookingGroupSize.get(
+                                                a.bookingGroupId,
+                                              ) || 0,
+                                          })
+                                        : t(locale, "partyGroupBadge", {
+                                            count:
+                                              bookingGroupSize.get(
+                                                a.bookingGroupId,
+                                              ) || 0,
+                                          })}
                                     </span>
                                   ) : null}
                                   {a.status === "PENDING_CONFIRM" ? (

@@ -194,6 +194,8 @@ const he = {
   confirmRequestLinkLabel: "לאישור לחצו:",
   pendingConfirmBadge: "ממתין לאישור",
   confirmedBadge: "מאושר",
+  partyGroupBadge: "קבוצה · {count}",
+  partyGroupLeadBadge: "ראשי בקבוצה · {count}",
 
   smsCancelLabel: "לביטול התור:",
   smsConfirmLine1: "שלום {name},",
@@ -466,6 +468,8 @@ const ar: { [K in keyof typeof he]: string } = {
   confirmRequestLinkLabel: "للتأكيد اضغطوا:",
   pendingConfirmBadge: "بانتظار التأكيد",
   confirmedBadge: "مؤكد",
+  partyGroupBadge: "مجموعة · {count}",
+  partyGroupLeadBadge: "رئيسي في المجموعة · {count}",
 
   smsCancelLabel: "لإلغاء الموعد:",
   smsConfirmLine1: "مرحباً {name}،",
