@@ -131,6 +131,10 @@ export function BarberAdminPanel({
   const manageStaffIdRef = useRef(manageStaffId);
   manageStaffIdRef.current = manageStaffId;
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  /** Other days the barber opened manually; today is always expanded. */
+  const [expandedOtherDays, setExpandedOtherDays] = useState<
+    Record<string, boolean>
+  >({});
   const [hours, setHours] = useState<HourRow[]>(defaultHours());
   const [dayOffs, setDayOffs] = useState<DayOff[]>([]);
   const [blockedWindows, setBlockedWindows] = useState<BlockedWindow[]>([]);
@@ -914,19 +918,56 @@ export function BarberAdminPanel({
               ) : (
                 groupedByDay.map(([dateKey, dayAppointments]) => {
                   const labelDate = new Date(dayAppointments[0].startsAt);
-                  const isToday = dateKey === toDateKey(new Date(nowMs));
+                  const todayKey = toDateKey(new Date(nowMs));
+                  const isToday = dateKey === todayKey;
+                  const isExpanded =
+                    isToday || Boolean(expandedOtherDays[dateKey]);
                   return (
-                    <section key={dateKey}>
-                      <div className="mb-3 flex items-baseline gap-2 border-b border-white/15 pb-2">
-                        <h2 className="font-display text-2xl text-[var(--cream)]">
-                          {formatDateLocalized(locale, labelDate)}
-                        </h2>
-                        {isToday ? (
+                    <section key={dateKey} className="mb-4">
+                      {isToday ? (
+                        <div className="mb-3 flex flex-wrap items-baseline gap-2 border-b border-white/15 pb-2">
+                          <h2 className="font-display text-2xl text-[var(--cream)]">
+                            {formatDateLocalized(locale, labelDate)}
+                          </h2>
                           <span className="rounded-full bg-[var(--copper)] px-2.5 py-0.5 text-xs font-semibold text-white">
                             {t(locale, "today")}
                           </span>
-                        ) : null}
-                      </div>
+                          <span className="text-xs text-[rgba(248,243,236,0.55)]">
+                            {t(locale, "dayAppointmentsCount", {
+                              count: dayAppointments.length,
+                            })}
+                          </span>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedOtherDays((prev) => ({
+                              ...prev,
+                              [dateKey]: !prev[dateKey],
+                            }))
+                          }
+                          aria-expanded={isExpanded}
+                          className="mb-3 flex w-full flex-wrap items-center justify-between gap-2 rounded-xl border border-white/12 bg-black/30 px-4 py-3 text-right transition hover:bg-black/45"
+                        >
+                          <div className="flex flex-wrap items-baseline gap-2">
+                            <h2 className="font-display text-xl text-[var(--cream)]">
+                              {formatDateLocalized(locale, labelDate)}
+                            </h2>
+                            <span className="text-xs text-[rgba(248,243,236,0.55)]">
+                              {t(locale, "dayAppointmentsCount", {
+                                count: dayAppointments.length,
+                              })}
+                            </span>
+                          </div>
+                          <span className="text-xs font-medium text-[var(--copper)]">
+                            {isExpanded
+                              ? t(locale, "collapseDay")
+                              : t(locale, "expandDay")}
+                          </span>
+                        </button>
+                      )}
+                      {isExpanded ? (
                       <div className="space-y-2">
                         {dayAppointments.map((a) => {
                           const status = appointmentStatus(
@@ -1055,6 +1096,7 @@ export function BarberAdminPanel({
                           );
                         })}
                       </div>
+                      ) : null}
                     </section>
                   );
                 })
