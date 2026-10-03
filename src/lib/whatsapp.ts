@@ -10,12 +10,17 @@ export const WA_TEMPLATE_CONFIRM = "barbe_reg";
 export const WA_TEMPLATE_CONFIRM_NO_CANCEL = "barbe_reg_no_cancel";
 export const WA_TEMPLATE_REMINDER = "barber_notif_arabic";
 export const WA_TEMPLATE_REMINDER_NO_CANCEL = "barber_notif_arabic_no_cancel";
+/** Customer: appointment was cancelled (await Meta approval before enabling send) */
+export const WA_TEMPLATE_CUSTOMER_CANCEL_DONE = "barbe_cancel_done";
 /** Barber alert when customer self-cancels (approved Meta template) */
 export const WA_TEMPLATE_BARBER_CANCEL =
   cleanEnv(process.env.WHATSAPP_TEMPLATE_BARBER_CANCEL) || "barber_cancel_ar";
 /** Must match the approved template language in Meta (often "ar") */
 export const WA_TEMPLATE_LANG =
   cleanEnv(process.env.WHATSAPP_TEMPLATE_LANG) || "ar";
+
+/** Flip to true only after barbe_cancel_done is Approved in Meta. */
+export const WA_CUSTOMER_CANCEL_DONE_ENABLED = false;
 
 export function getWhatsAppConfig() {
   return {
@@ -41,6 +46,7 @@ export function whatsappConfigStatus() {
       confirmNoCancel: WA_TEMPLATE_CONFIRM_NO_CANCEL,
       reminder: WA_TEMPLATE_REMINDER,
       reminderNoCancel: WA_TEMPLATE_REMINDER_NO_CANCEL,
+      customerCancelDone: WA_TEMPLATE_CUSTOMER_CANCEL_DONE,
       barberCancel: WA_TEMPLATE_BARBER_CANCEL,
       language: WA_TEMPLATE_LANG,
     },
@@ -213,6 +219,20 @@ export function buildReminderWhatsAppParamsNoCancel(input: {
     String(input.minutesBefore),
     input.timeLabel,
   ];
+}
+
+/** Params for barbe_cancel_done (Meta): {{1}} name, {{2}} salon, {{3}} date, {{4}} time */
+export function buildCustomerCancelDoneWhatsAppParams(input: {
+  customerName: string;
+  barberName: string;
+  staffName?: string | null;
+  dateLabel: string;
+  timeLabel: string;
+}) {
+  const salon = input.staffName
+    ? `${input.barberName} مع ${input.staffName}`
+    : input.barberName;
+  return [input.customerName, salon, input.dateLabel, input.timeLabel];
 }
 
 /** Params for barber_cancel_ar: {{1}} name, {{2}} date, {{3}} time */

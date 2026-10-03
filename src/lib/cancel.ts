@@ -158,9 +158,101 @@ export async function cancelAppointmentByToken(rawToken: string): Promise<{
 
   if (updated) {
     void notifyBarberOfCustomerCancel(updated);
+    void notifyCustomerOfCancellation({
+      id: updated.id,
+      barberId: updated.barberId,
+      customerName: updated.customerName,
+      customerPhone: updated.customerPhone,
+      startsAt: updated.startsAt,
+      bookingGroupIndex: updated.bookingGroupIndex,
+      barber: {
+        displayName: updated.barber.displayName,
+        locale: updated.barber.locale,
+        smsPlanEnabled: updated.barber.smsPlanEnabled,
+        whatsappPlanEnabled: updated.barber.whatsappPlanEnabled,
+      },
+      staff: updated.staff,
+    });
   }
 
   return { state: "success", appointment: updated };
+}
+
+/**
+ * SMS (and later WhatsApp) to the customer that their appointment was cancelled.
+ * No schema changes. Skips group followers (index > 0) to avoid duplicate SMS.
+ */
+export async function notifyCustomerOfCancellation(appointment: {
+  id: string;
+  barberId: string;
+  customerName: string;
+  customerPhone: string | null;
+  startsAt: Date;
+  bookingGroupIndex?: number | null;
+  barber: {
+    displayName: string;
+    locale: string;
+    smsPlanEnabled: boolean;
+    whatsappPlanEnabled: boolean;
+  };
+  staff?: { displayName: string } | null;
+}) {
+  if (
+    appointment.bookingGroupIndex != null &&
+    appointment.bookingGroupIndex > 0
+  ) {
+    return;
+  }
+
+  const phone = (appointment.customerPhone || "").trim();
+  if (!phone) return;
+
+  const { formatTime } = await import("@/lib/time");
+  const { formatDateLocalized, normalizeLocale } = await import("@/lib/i18n");
+  const locale = normalizeLocale(appointment.barber.locale);
+
+  if (appointment.barber.smsPlanEnabled) {
+    const { buildCustomerCancelDoneSms } = await import("@/lib/sms");
+    const { sendCustomerSms } = await import("@/lib/smsQuota");
+    await sendCustomerSms({
+      barberId: appointment.barberId,
+      to: phone,
+      body: buildCustomerCancelDoneSms({
+        customerName: appointment.customerName,
+        barberName: appointment.barber.displayName,
+        staffName: appointment.staff?.displayName,
+        startsAt: appointment.startsAt,
+        locale,
+      }),
+    });
+  }
+
+  // WhatsApp: gated until barbe_cancel_done is Approved in Meta
+  const {
+    WA_CUSTOMER_CANCEL_DONE_ENABLED,
+    WA_TEMPLATE_CUSTOMER_CANCEL_DONE,
+    WA_TEMPLATE_LANG,
+    buildCustomerCancelDoneWhatsAppParams,
+  } = await import("@/lib/whatsapp");
+  if (
+    WA_CUSTOMER_CANCEL_DONE_ENABLED &&
+    appointment.barber.whatsappPlanEnabled
+  ) {
+    const { sendCustomerWhatsApp } = await import("@/lib/whatsappQuota");
+    await sendCustomerWhatsApp({
+      barberId: appointment.barberId,
+      to: phone,
+      templateName: WA_TEMPLATE_CUSTOMER_CANCEL_DONE,
+      languageCode: WA_TEMPLATE_LANG,
+      bodyParams: buildCustomerCancelDoneWhatsAppParams({
+        customerName: appointment.customerName,
+        barberName: appointment.barber.displayName,
+        staffName: appointment.staff?.displayName,
+        dateLabel: formatDateLocalized("ar", appointment.startsAt),
+        timeLabel: formatTime(appointment.startsAt),
+      }),
+    });
+  }
 }
 
 async function notifyBarberOfCustomerCancel(appointment: {

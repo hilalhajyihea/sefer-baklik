@@ -273,3 +273,31 @@ export function buildBarberCancelNoticeSms(input: {
     time: input.timeLabel,
   });
 }
+
+/** SMS to customer after appointment was cancelled (by them or by barber). */
+export function buildCustomerCancelDoneSms(input: {
+  customerName: string;
+  barberName: string;
+  staffName?: string | null;
+  startsAt: Date;
+  locale?: Locale | string | null;
+}): string {
+  const locale = normalizeLocale(input.locale);
+  const line2 = input.staffName
+    ? t(locale, "smsCustomerCancelDoneLine2Staff", {
+        barber: input.barberName,
+        staff: input.staffName,
+        date: formatDateLocalized(locale, input.startsAt),
+        time: formatTime(input.startsAt),
+      })
+    : t(locale, "smsCustomerCancelDoneLine2", {
+        barber: input.barberName,
+        date: formatDateLocalized(locale, input.startsAt),
+        time: formatTime(input.startsAt),
+      });
+  return [
+    t(locale, "smsCustomerCancelDoneLine1", { name: input.customerName }),
+    line2,
+    t(locale, "brand"),
+  ].join("\n");
+}

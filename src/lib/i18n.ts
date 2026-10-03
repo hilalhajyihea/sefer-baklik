@@ -215,6 +215,11 @@ const he = {
     "ביטול תור: {name} ביטל/ה את התור ב-{date} בשעה {time}.",
   smsBarberCancelStaff:
     "ביטול תור: {name} ביטל/ה אצל {staff} ב-{date} בשעה {time}.",
+  smsCustomerCancelDoneLine1: "שלום {name},",
+  smsCustomerCancelDoneLine2:
+    "התור אצל {barber} ב-{date} בשעה {time} בוטל.",
+  smsCustomerCancelDoneLine2Staff:
+    "התור אצל {barber} עם {staff} ב-{date} בשעה {time} בוטל.",
 
   errBarberNotFound: "ספר לא נמצא",
   errInvalidData: "נתונים לא תקינים",
@@ -492,6 +497,11 @@ const ar: { [K in keyof typeof he]: string } = {
     "إلغاء موعد: ألغى/ت {name} الموعد في {date} الساعة {time}.",
   smsBarberCancelStaff:
     "إلغاء موعد: ألغى/ت {name} الموعد لدى {staff} في {date} الساعة {time}.",
+  smsCustomerCancelDoneLine1: "مرحباً {name}،",
+  smsCustomerCancelDoneLine2:
+    "تم إلغاء موعدك لدى {barber} في {date} الساعة {time}.",
+  smsCustomerCancelDoneLine2Staff:
+    "تم إلغاء موعدك لدى {barber} مع {staff} في {date} الساعة {time}.",
 
   errBarberNotFound: "الحلاق غير موجود",
   errInvalidData: "بيانات غير صالحة",
