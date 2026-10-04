@@ -15,11 +15,9 @@ import {
 import {
   WA_TEMPLATE_CONFIRM,
   WA_TEMPLATE_CONFIRM_NO_CANCEL,
-  WA_TEMPLATE_REMINDER,
   WA_TEMPLATE_REMINDER_NO_CANCEL,
   buildConfirmWhatsAppParams,
   buildConfirmWhatsAppParamsNoCancel,
-  buildReminderWhatsAppParams,
   buildReminderWhatsAppParamsNoCancel,
 } from "@/lib/whatsapp";
 import { formatDateLocalized } from "@/lib/i18n";
@@ -185,7 +183,6 @@ export async function processDueReminders() {
       id: true,
       displayName: true,
       reminderMinutesBefore: true,
-      customerCancelEnabled: true,
       locale: true,
       smsPlanEnabled: true,
       smsReminderEnabled: true,
@@ -243,14 +240,7 @@ export async function processDueReminders() {
         continue;
       }
 
-      const cancelUrl = await resolveCancelUrl(
-        appointment,
-        barber.customerCancelEnabled,
-      );
-      const cancelUrlForSms = barber.customerCancelEnabled
-        ? cancelUrl
-        : undefined;
-
+      // Reminders never include cancel link — only booking confirmation does.
       let sms: ChannelResult | undefined;
       let whatsapp: ChannelResult | undefined;
 
@@ -264,36 +254,23 @@ export async function processDueReminders() {
             staffName: appointment.staff?.displayName,
             startsAt: appointment.startsAt,
             minutesBefore: minutes,
-            cancelUrl: cancelUrlForSms,
             locale: barber.locale,
           }),
         });
       }
 
       if (waOn) {
-        const cancelOn = barber.customerCancelEnabled;
         whatsapp = await sendCustomerWhatsApp({
           barberId: barber.id,
           to: phone,
-          templateName: cancelOn
-            ? WA_TEMPLATE_REMINDER
-            : WA_TEMPLATE_REMINDER_NO_CANCEL,
-          bodyParams: cancelOn
-            ? buildReminderWhatsAppParams({
-                customerName: appointment.customerName,
-                barberName: barber.displayName,
-                staffName: appointment.staff?.displayName,
-                minutesBefore: minutes,
-                timeLabel: formatTime(appointment.startsAt),
-                cancelUrl,
-              })
-            : buildReminderWhatsAppParamsNoCancel({
-                customerName: appointment.customerName,
-                barberName: barber.displayName,
-                staffName: appointment.staff?.displayName,
-                minutesBefore: minutes,
-                timeLabel: formatTime(appointment.startsAt),
-              }),
+          templateName: WA_TEMPLATE_REMINDER_NO_CANCEL,
+          bodyParams: buildReminderWhatsAppParamsNoCancel({
+            customerName: appointment.customerName,
+            barberName: barber.displayName,
+            staffName: appointment.staff?.displayName,
+            minutesBefore: minutes,
+            timeLabel: formatTime(appointment.startsAt),
+          }),
         });
       }
 
