@@ -20,7 +20,7 @@ export const WA_TEMPLATE_LANG =
   cleanEnv(process.env.WHATSAPP_TEMPLATE_LANG) || "ar";
 
 /** Flip to true only after barbe_cancel_done is Approved in Meta. */
-export const WA_CUSTOMER_CANCEL_DONE_ENABLED = false;
+export const WA_CUSTOMER_CANCEL_DONE_ENABLED = true;
 
 export function getWhatsAppConfig() {
   return {
