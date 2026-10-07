@@ -228,6 +228,7 @@ const he = {
     "התור אצל {barber} בעוד כ-{minutes} דקות ({time}).",
   smsReminderLine2Staff:
     "התור אצל {barber} עם {staff} בעוד כ-{minutes} דקות ({time}).",
+  smsReminderBookLabel: "לקביעת תור בעתיד:",
   smsBarberCancel:
     "ביטול תור: {name} ביטל/ה את התור ב-{date} בשעה {time}.",
   smsBarberCancelStaff:
@@ -527,6 +528,7 @@ const ar: { [K in keyof typeof he]: string } = {
     "موعدك لدى {barber} خلال حوالي {minutes} دقيقة ({time}).",
   smsReminderLine2Staff:
     "موعدك لدى {barber} مع {staff} خلال حوالي {minutes} دقيقة ({time}).",
+  smsReminderBookLabel: "للحجز مرة أخرى مستقبلاً:",
   smsBarberCancel:
     "إلغاء موعد: ألغى/ت {name} الموعد في {date} الساعة {time}.",
   smsBarberCancelStaff:

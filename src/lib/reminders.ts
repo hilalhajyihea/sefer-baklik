@@ -15,13 +15,18 @@ import {
 import {
   WA_TEMPLATE_CONFIRM,
   WA_TEMPLATE_CONFIRM_NO_CANCEL,
-  WA_TEMPLATE_REMINDER_NO_CANCEL,
+  WA_TEMPLATE_REMINDER_BOOK,
   buildConfirmWhatsAppParams,
   buildConfirmWhatsAppParamsNoCancel,
-  buildReminderWhatsAppParamsNoCancel,
+  buildReminderWhatsAppParamsBook,
 } from "@/lib/whatsapp";
 import { formatDateLocalized } from "@/lib/i18n";
+import { getSiteUrl } from "@/lib/seo";
 import { formatTime } from "@/lib/time";
+
+function barberBookingUrl(slug: string) {
+  return `${getSiteUrl()}/${slug}`;
+}
 
 function fallbackCancelUrl() {
   return (
@@ -181,6 +186,7 @@ export async function processDueReminders() {
     },
     select: {
       id: true,
+      slug: true,
       displayName: true,
       reminderMinutesBefore: true,
       locale: true,
@@ -240,7 +246,8 @@ export async function processDueReminders() {
         continue;
       }
 
-      // Reminders never include cancel link — only booking confirmation does.
+      // Reminders: no cancel link; include barber booking page URL (book again later).
+      const bookingUrl = barberBookingUrl(barber.slug);
       let sms: ChannelResult | undefined;
       let whatsapp: ChannelResult | undefined;
 
@@ -254,6 +261,7 @@ export async function processDueReminders() {
             staffName: appointment.staff?.displayName,
             startsAt: appointment.startsAt,
             minutesBefore: minutes,
+            bookingUrl,
             locale: barber.locale,
           }),
         });
@@ -263,13 +271,14 @@ export async function processDueReminders() {
         whatsapp = await sendCustomerWhatsApp({
           barberId: barber.id,
           to: phone,
-          templateName: WA_TEMPLATE_REMINDER_NO_CANCEL,
-          bodyParams: buildReminderWhatsAppParamsNoCancel({
+          templateName: WA_TEMPLATE_REMINDER_BOOK,
+          bodyParams: buildReminderWhatsAppParamsBook({
             customerName: appointment.customerName,
             barberName: barber.displayName,
             staffName: appointment.staff?.displayName,
             minutesBefore: minutes,
             timeLabel: formatTime(appointment.startsAt),
+            bookingUrl,
           }),
         });
       }

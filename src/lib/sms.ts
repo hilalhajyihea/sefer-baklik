@@ -225,6 +225,8 @@ export function buildReminderSms(input: {
   startsAt: Date;
   minutesBefore: number;
   cancelUrl?: string | null;
+  /** Barber public booking page (same role as WA {{5}}) */
+  bookingUrl?: string | null;
   locale?: Locale | string | null;
 }): string {
   const locale = normalizeLocale(input.locale);
@@ -245,6 +247,11 @@ export function buildReminderSms(input: {
     line2,
     t(locale, "brand"),
   ];
+  if (input.bookingUrl) {
+    lines.push(
+      `${t(locale, "smsReminderBookLabel")}\n${input.bookingUrl}`,
+    );
+  }
   if (input.cancelUrl) {
     lines.push(formatCancelSmsLine(input.cancelUrl, locale));
   }
