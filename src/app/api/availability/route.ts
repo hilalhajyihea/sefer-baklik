@@ -53,11 +53,22 @@ export async function GET(request: Request) {
       slotMinutes,
       parsed.data.partySize ?? 1,
     );
+    const { isActiveWorkingDay, countWaitlistForDay, MAX_WAITLIST_PER_DAY } =
+      await import("@/lib/waitlist");
+    const workingDay = await isActiveWorkingDay(barber.id, parsed.data.date);
+    const waitlistCount = workingDay
+      ? await countWaitlistForDay(barber.id, parsed.data.date)
+      : 0;
     return NextResponse.json({
       slots,
       slotMinutes,
       allowedSlotMinutes: ALLOWED_SLOT_MINUTES,
       partySize: parsed.data.partySize ?? 1,
+      waitlistAvailable:
+        workingDay && slots.length === 0 && waitlistCount < MAX_WAITLIST_PER_DAY,
+      waitlistFull: workingDay && slots.length === 0 && waitlistCount >= MAX_WAITLIST_PER_DAY,
+      waitlistCount,
+      waitlistMax: MAX_WAITLIST_PER_DAY,
     });
   } catch (error) {
     console.error("availability error", error);

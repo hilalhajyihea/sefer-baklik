@@ -58,6 +58,15 @@ export async function POST(request: Request) {
         customerPhone: parsed.data.customerPhone,
         staffId: parsed.data.staffId,
       });
+      if (parsed.data.customerPhone) {
+        void import("@/lib/waitlist").then(({ removeFromWaitlistOnBooking }) =>
+          removeFromWaitlistOnBooking({
+            barberId: session.barberId,
+            dateKey: parsed.data.date,
+            customerPhone: parsed.data.customerPhone!,
+          }),
+        );
+      }
       return NextResponse.json({
         ok: true,
         mode: "once",

@@ -101,5 +101,15 @@ export async function POST(request: Request) {
     });
   }
 
+  // Waitlist: one notify per distinct date that was freed
+  const { notifyWaitlistSlotOpened } = await import("@/lib/waitlist");
+  const dates = new Set(toCancel.map((a) => toDateKey(a.startsAt)));
+  for (const dateKey of dates) {
+    void notifyWaitlistSlotOpened({
+      barberId: session.barberId,
+      dateKey,
+    });
+  }
+
   return NextResponse.json({ ok: true, cancelledCount: result });
 }

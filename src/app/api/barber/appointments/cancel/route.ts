@@ -65,6 +65,9 @@ export async function POST(request: Request) {
     barber: appointment.barber,
     staff: appointment.staff,
   });
+  void import("@/lib/waitlist").then(({ notifyWaitlistForAppointmentDate }) =>
+    notifyWaitlistForAppointmentDate(appointment.startsAt, appointment.barberId),
+  );
 
   return NextResponse.json({ ok: true });
 }

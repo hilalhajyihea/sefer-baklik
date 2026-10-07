@@ -46,6 +46,8 @@ export function BookingCalendar({
   const [date, setDate] = useState(dates[0]?.key || "");
   const [partySize, setPartySize] = useState(1);
   const [slots, setSlots] = useState<string[]>([]);
+  const [waitlistAvailable, setWaitlistAvailable] = useState(false);
+  const [waitlistFull, setWaitlistFull] = useState(false);
   const [time, setTime] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -68,9 +70,15 @@ export function BookingCalendar({
         const data = await res.json();
         if (!cancelled) {
           setSlots(data.slots || []);
+          setWaitlistAvailable(Boolean(data.waitlistAvailable));
+          setWaitlistFull(Boolean(data.waitlistFull));
         }
       } catch {
-        if (!cancelled) setSlots([]);
+        if (!cancelled) {
+          setSlots([]);
+          setWaitlistAvailable(false);
+          setWaitlistFull(false);
+        }
       } finally {
         if (!cancelled) setLoadingSlots(false);
       }
@@ -87,6 +95,32 @@ export function BookingCalendar({
     setSuccess("");
     setSubmitting(true);
     try {
+      if (waitlistAvailable && slots.length === 0) {
+        const res = await fetch("/api/waitlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug,
+            date,
+            customerName: name,
+            customerPhone: phone,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || t(locale, "bookFailed"));
+          return;
+        }
+        setSuccess(t(locale, "waitlistSuccess"));
+        setName("");
+        setPhone("");
+        const count = data.count || 0;
+        const max = data.max || 5;
+        setWaitlistAvailable(count < max);
+        setWaitlistFull(count >= max);
+        return;
+      }
+
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -132,7 +166,6 @@ export function BookingCalendar({
         }
         setSuccess(successMsg);
 
-        // Surface channel failures even when the other channel succeeded
         const waFailed =
           data.whatsapp &&
           !(data.whatsapp.ok && !data.whatsapp.skipped) &&
@@ -162,12 +195,16 @@ export function BookingCalendar({
       const refresh = await fetch(`/api/availability?${params.toString()}`);
       const refreshed = await refresh.json();
       setSlots(refreshed.slots || []);
+      setWaitlistAvailable(Boolean(refreshed.waitlistAvailable));
+      setWaitlistFull(Boolean(refreshed.waitlistFull));
     } catch {
       setError(t(locale, "networkError"));
     } finally {
       setSubmitting(false);
     }
   }
+
+  const waitlistMode = !loadingSlots && slots.length === 0 && waitlistAvailable;
 
   return (
     <div className="shop-shell relative min-h-[100svh]" lang={locale}>
@@ -324,9 +361,21 @@ export function BookingCalendar({
                 {t(locale, "loadingSlots")}
               </p>
             ) : slots.length === 0 ? (
-              <p className="mt-3 text-sm text-[rgba(248,243,236,0.62)]">
-                {t(locale, "noSlots")}
-              </p>
+              <div className="mt-3 space-y-2">
+                <p className="text-sm text-[rgba(248,243,236,0.62)]">
+                  {t(locale, "noSlots")}
+                </p>
+                {waitlistMode ? (
+                  <p className="text-sm text-[rgba(248,243,236,0.75)]">
+                    {t(locale, "waitlistHelp")}
+                  </p>
+                ) : null}
+                {waitlistFull ? (
+                  <p className="text-sm text-amber-200/90">
+                    {t(locale, "waitlistFull")}
+                  </p>
+                ) : null}
+              </div>
             ) : (
               <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
                 {slots.map((s) => (
@@ -346,6 +395,7 @@ export function BookingCalendar({
               </div>
             )}
 
+            {(waitlistMode || slots.length > 0) && !waitlistFull ? (
             <div className="mt-7 grid gap-4 sm:grid-cols-2">
               <label className="block text-sm font-medium text-[var(--cream)]">
                 {t(locale, "fullName")}
@@ -368,6 +418,7 @@ export function BookingCalendar({
                 />
               </label>
             </div>
+            ) : null}
 
             {error ? (
               <p className="mt-4 rounded-lg border border-red-400/30 bg-red-950/70 px-3 py-2 text-sm text-red-200">
@@ -380,13 +431,25 @@ export function BookingCalendar({
               </p>
             ) : null}
 
+            {(waitlistMode || slots.length > 0) && !waitlistFull ? (
             <button
               type="submit"
-              disabled={!time || submitting || (teamMode && !staffKey)}
+              disabled={
+                submitting ||
+                (teamMode && !staffKey) ||
+                (!waitlistMode && !time)
+              }
               className="btn-primary mt-6 w-full rounded-xl py-3.5 text-base font-semibold sm:w-auto sm:px-10"
             >
-              {submitting ? t(locale, "bookingSaving") : t(locale, "bookCta")}
+              {submitting
+                ? waitlistMode
+                  ? t(locale, "waitlistSaving")
+                  : t(locale, "bookingSaving")
+                : waitlistMode
+                  ? t(locale, "waitlistCta")
+                  : t(locale, "bookCta")}
             </button>
+            ) : null}
           </form>
 
           <p className="mt-8 pb-2 text-center text-sm text-[rgba(248,243,236,0.62)]">

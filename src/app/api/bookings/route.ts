@@ -107,6 +107,14 @@ export async function POST(request: Request) {
           : {}),
       });
 
+    void import("@/lib/waitlist").then(({ removeFromWaitlistOnBooking }) =>
+      removeFromWaitlistOnBooking({
+        barberId: barber.id,
+        dateKey: parsed.data.date,
+        customerPhone: parsed.data.customerPhone,
+      }),
+    );
+
     async function cancelHold() {
       if (appointment.bookingGroupId) {
         await prisma.appointment.updateMany({

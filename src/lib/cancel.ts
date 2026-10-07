@@ -173,6 +173,9 @@ export async function cancelAppointmentByToken(rawToken: string): Promise<{
       },
       staff: updated.staff,
     });
+    void import("@/lib/waitlist").then(({ notifyWaitlistForAppointmentDate }) =>
+      notifyWaitlistForAppointmentDate(updated.startsAt, updated.barberId),
+    );
   }
 
   return { state: "success", appointment: updated };

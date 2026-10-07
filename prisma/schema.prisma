@@ -63,6 +63,7 @@ model Barber {
   appointments      Appointment[]
   staff             Staff[]
   recurringSeries   RecurringSeries[]
+  waitlistEntries   WaitlistEntry[]
 }
 
 model WorkingHours {
@@ -216,4 +217,22 @@ model RecurringSeries {
   appointments Appointment[]
 
   @@index([barberId])
+}
+
+/// Public waitlist for a fully-booked working day (max 5 distinct phones per day).
+model WaitlistEntry {
+  id             String   @id @default(cuid())
+  barberId       String
+  /// YYYY-MM-DD as @db.Date (Jerusalem calendar day)
+  date           DateTime @db.Date
+  customerName   String
+  customerPhone  String
+  /// Normalized E.164 for uniqueness per day
+  phoneKey       String
+  createdAt      DateTime @default(now())
+
+  barber Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@unique([barberId, date, phoneKey])
+  @@index([barberId, date])
 }

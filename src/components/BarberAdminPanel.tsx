@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  combineDateAndTime,
   dbDateToDateKey,
   formatTime,
   toDateKey,
@@ -64,6 +65,14 @@ type BlockedWindow = {
   startTime: string;
   endTime: string;
   note: string | null;
+};
+
+type WaitlistEntry = {
+  id: string;
+  date: string;
+  customerName: string;
+  customerPhone: string;
+  createdAt: string;
 };
 
 type Props = {
@@ -131,6 +140,7 @@ export function BarberAdminPanel({
   const manageStaffIdRef = useRef(manageStaffId);
   manageStaffIdRef.current = manageStaffId;
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([]);
   /** Other days the barber opened manually; today is always expanded. */
   const [expandedOtherDays, setExpandedOtherDays] = useState<
     Record<string, boolean>
@@ -254,11 +264,12 @@ export function BarberAdminPanel({
       }
       setError("");
       try {
-        const [aRes, sRes, waRes, staffRes] = await Promise.all([
+        const [aRes, sRes, waRes, staffRes, wlRes] = await Promise.all([
           fetch("/api/barber/appointments"),
           fetch("/api/barber/sms-settings"),
           fetch("/api/barber/whatsapp-settings"),
           fetch("/api/barber/staff"),
+          fetch("/api/barber/waitlist"),
         ]);
         if (aRes.status === 401) {
           router.push(`/${slug}/login`);
@@ -268,7 +279,28 @@ export function BarberAdminPanel({
         const sData = await sRes.json();
         const waData = await waRes.json().catch(() => ({}));
         const staffData = await staffRes.json();
+        const wlData = await wlRes.json().catch(() => ({}));
         setAppointments(aData.appointments || []);
+        setWaitlistEntries(
+          (wlData.entries || []).map(
+            (e: {
+              id: string;
+              date: string | Date;
+              customerName: string;
+              customerPhone: string;
+              createdAt: string;
+            }) => ({
+              id: e.id,
+              date:
+                typeof e.date === "string" && /^\d{4}-\d{2}-\d{2}/.test(e.date)
+                  ? e.date.slice(0, 10)
+                  : dbDateToDateKey(new Date(e.date)),
+              customerName: e.customerName,
+              customerPhone: e.customerPhone,
+              createdAt: e.createdAt,
+            }),
+          ),
+        );
 
         const nextTeam = !!staffData.teamMode;
         const nextStaff: StaffMember[] = staffData.staff || [];
@@ -418,6 +450,16 @@ export function BarberAdminPanel({
     return counts;
   }, [appointments]);
 
+  const waitlistByDay = useMemo(() => {
+    const groups = new Map<string, WaitlistEntry[]>();
+    for (const e of waitlistEntries) {
+      const list = groups.get(e.date) || [];
+      list.push(e);
+      groups.set(e.date, list);
+    }
+    return groups;
+  }, [waitlistEntries]);
+
   const groupedByDay = useMemo(() => {
     const groups = new Map<string, Appointment[]>();
     for (const a of filteredAppointments) {
@@ -426,8 +468,11 @@ export function BarberAdminPanel({
       list.push(a);
       groups.set(key, list);
     }
+    for (const dateKey of waitlistByDay.keys()) {
+      if (!groups.has(dateKey)) groups.set(dateKey, []);
+    }
     return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [filteredAppointments]);
+  }, [filteredAppointments, waitlistByDay]);
 
   const nextUpcomingId = useMemo(() => {
     const upcoming = filteredAppointments.find(
@@ -461,6 +506,22 @@ export function BarberAdminPanel({
     }
     setMessage(t(locale, "cancelled"));
     load({ silent: true });
+  }
+
+  async function removeWaitlistEntry(id: string) {
+    if (!confirm(t(locale, "waitlistRemove") + "?")) return;
+    setError("");
+    const res = await fetch("/api/barber/waitlist", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (!res.ok) {
+      setError(t(locale, "errServer"));
+      return;
+    }
+    setMessage(t(locale, "waitlistRemoved"));
+    setWaitlistEntries((prev) => prev.filter((e) => e.id !== id));
   }
 
   async function cancelSeries(seriesId: string) {
@@ -917,7 +978,11 @@ export function BarberAdminPanel({
                 </p>
               ) : (
                 groupedByDay.map(([dateKey, dayAppointments]) => {
-                  const labelDate = new Date(dayAppointments[0].startsAt);
+                  const labelDate =
+                    dayAppointments[0]
+                      ? new Date(dayAppointments[0].startsAt)
+                      : combineDateAndTime(dateKey, "12:00");
+                  const dayWaitlist = waitlistByDay.get(dateKey) || [];
                   const todayKey = toDateKey(new Date(nowMs));
                   const isToday = dateKey === todayKey;
                   const isExpanded =
@@ -937,6 +1002,13 @@ export function BarberAdminPanel({
                               count: dayAppointments.length,
                             })}
                           </span>
+                          {dayWaitlist.length > 0 ? (
+                            <span className="text-xs text-amber-200/90">
+                              {t(locale, "waitlistAdminCount", {
+                                count: dayWaitlist.length,
+                              })}
+                            </span>
+                          ) : null}
                         </div>
                       ) : (
                         <button
@@ -959,6 +1031,13 @@ export function BarberAdminPanel({
                                 count: dayAppointments.length,
                               })}
                             </span>
+                            {dayWaitlist.length > 0 ? (
+                              <span className="text-xs text-amber-200/90">
+                                {t(locale, "waitlistAdminCount", {
+                                  count: dayWaitlist.length,
+                                })}
+                              </span>
+                            ) : null}
                           </div>
                           <span className="text-xs font-medium text-[var(--copper)]">
                             {isExpanded
@@ -1095,6 +1174,48 @@ export function BarberAdminPanel({
                             </div>
                           );
                         })}
+                        {dayWaitlist.length > 0 ? (
+                          <div className="mt-3 rounded-xl border border-amber-400/25 bg-amber-950/25 p-3">
+                            <p className="mb-2 text-sm font-semibold text-amber-100">
+                              {t(locale, "waitlistTitle")}{" "}
+                              <span className="font-normal text-amber-100/70">
+                                (
+                                {t(locale, "waitlistAdminCount", {
+                                  count: dayWaitlist.length,
+                                })}
+                                )
+                              </span>
+                            </p>
+                            <ul className="space-y-2">
+                              {dayWaitlist.map((e) => (
+                                <li
+                                  key={e.id}
+                                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/25 px-3 py-2"
+                                >
+                                  <div>
+                                    <p className="text-sm font-medium text-[var(--cream)]">
+                                      {e.customerName}
+                                    </p>
+                                    <a
+                                      href={`tel:${e.customerPhone.replace(/[^\d+]/g, "")}`}
+                                      dir="ltr"
+                                      className="text-sm text-[var(--copper)] underline-offset-2 hover:underline"
+                                    >
+                                      {e.customerPhone}
+                                    </a>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeWaitlistEntry(e.id)}
+                                    className="rounded-lg border border-red-400/35 bg-red-950/40 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-950/70"
+                                  >
+                                    {t(locale, "waitlistRemove")}
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
                       </div>
                       ) : null}
                     </section>
