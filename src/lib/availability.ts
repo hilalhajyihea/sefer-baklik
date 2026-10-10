@@ -316,9 +316,10 @@ export async function bookAppointment(input: {
   seriesId?: string | null;
   /** Admin override; public booking ignores and uses barber.slotMinutes */
   slotMinutes?: number | null;
-  /** Default BOOKED; use PENDING_CONFIRM when barber requires link confirmation */
+  /** Default BOOKED; use PENDING_CONFIRM when barber requires link/code confirmation */
   status?: "BOOKED" | "PENDING_CONFIRM";
   confirmToken?: string | null;
+  confirmCode?: string | null;
   confirmExpiresAt?: Date | null;
 }) {
   const barber = await prisma.barber.findUnique({
@@ -374,6 +375,7 @@ export async function bookAppointment(input: {
           source,
           cancelToken: generateCancelToken(),
           confirmToken: input.confirmToken || null,
+          confirmCode: input.confirmCode || null,
           confirmExpiresAt: input.confirmExpiresAt || null,
         },
       });
@@ -441,6 +443,7 @@ export async function bookAppointment(input: {
         source,
         cancelToken: generateCancelToken(),
         confirmToken: input.confirmToken || null,
+        confirmCode: input.confirmCode || null,
         confirmExpiresAt: input.confirmExpiresAt || null,
       },
     });
@@ -462,6 +465,7 @@ export async function bookConsecutiveAppointments(input: {
   partySize?: number;
   status?: "BOOKED" | "PENDING_CONFIRM";
   confirmToken?: string | null;
+  confirmCode?: string | null;
   confirmExpiresAt?: Date | null;
 }) {
   const partySize = clampPartySize(input.partySize ?? 1);
@@ -476,6 +480,7 @@ export async function bookConsecutiveAppointments(input: {
       source: "PUBLIC",
       status: input.status,
       confirmToken: input.confirmToken,
+      confirmCode: input.confirmCode,
       confirmExpiresAt: input.confirmExpiresAt,
     });
     return { lead, appointments: [lead], partySize: 1 };
@@ -565,6 +570,7 @@ export async function bookConsecutiveAppointments(input: {
           bookingGroupIndex: i,
           cancelToken: isLead ? generateCancelToken() : null,
           confirmToken: isLead ? input.confirmToken || null : null,
+          confirmCode: isLead ? input.confirmCode || null : null,
           confirmExpiresAt: input.confirmExpiresAt || null,
         },
       });

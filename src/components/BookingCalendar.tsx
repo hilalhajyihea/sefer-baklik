@@ -56,6 +56,11 @@ export function BookingCalendar({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [pendingConfirmToken, setPendingConfirmToken] = useState<string | null>(
+    null,
+  );
+  const [confirmCodeInput, setConfirmCodeInput] = useState("");
+  const [confirmCodeSubmitting, setConfirmCodeSubmitting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -144,7 +149,21 @@ export function BookingCalendar({
         setError(data.error || t(locale, "bookFailed"));
         return;
       }
-      if (data.needsConfirm) {
+      if (data.needsConfirmCode && data.confirmToken) {
+        let successMsg = t(locale, "bookNeedsConfirmCode", {
+          date: formatDateLocalized(locale, combineDateAndTime(date, "12:00")),
+          time,
+          minutes: data.confirmMinutes || 15,
+        });
+        if (data.sms?.ok && !data.sms?.skipped) {
+          successMsg += t(locale, "bookNeedsConfirmSms");
+        }
+        setSuccess(successMsg);
+        setPendingConfirmToken(data.confirmToken);
+        setConfirmCodeInput("");
+        setError("");
+      } else if (data.needsConfirm) {
+        setPendingConfirmToken(null);
         let successMsg = t(locale, "bookNeedsConfirm", {
           date: formatDateLocalized(locale, combineDateAndTime(date, "12:00")),
           time,
@@ -159,6 +178,7 @@ export function BookingCalendar({
         setSuccess(successMsg);
         setError("");
       } else {
+        setPendingConfirmToken(null);
         let successMsg = t(locale, "bookSuccess", {
           date: formatDateLocalized(locale, combineDateAndTime(date, "12:00")),
           time,
@@ -206,6 +226,36 @@ export function BookingCalendar({
       setError(t(locale, "networkError"));
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function submitConfirmCode(e: FormEvent) {
+    e.preventDefault();
+    if (!pendingConfirmToken) return;
+    setError("");
+    setConfirmCodeSubmitting(true);
+    try {
+      const res = await fetch("/api/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: pendingConfirmToken,
+          code: confirmCodeInput.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (data.state === "success" || data.state === "already_confirmed") {
+        setSuccess(t(locale, "bookConfirmCodeSuccess"));
+        setPendingConfirmToken(null);
+        setConfirmCodeInput("");
+        setError("");
+        return;
+      }
+      setError(data.error || data.message || t(locale, "bookConfirmCodeWrong"));
+    } catch {
+      setError(t(locale, "networkError"));
+    } finally {
+      setConfirmCodeSubmitting(false);
     }
   }
 
@@ -425,7 +475,7 @@ export function BookingCalendar({
             </div>
             ) : null}
 
-            {error ? (
+            {error && !pendingConfirmToken ? (
               <p className="mt-4 rounded-lg border border-red-400/30 bg-red-950/70 px-3 py-2 text-sm text-red-200">
                 {error}
               </p>
@@ -436,7 +486,9 @@ export function BookingCalendar({
               </p>
             ) : null}
 
-            {(waitlistMode || slots.length > 0) && !waitlistFull ? (
+            {(waitlistMode || slots.length > 0) &&
+            !waitlistFull &&
+            !pendingConfirmToken ? (
             <button
               type="submit"
               disabled={
@@ -456,6 +508,41 @@ export function BookingCalendar({
             </button>
             ) : null}
           </form>
+
+          {pendingConfirmToken ? (
+            <form onSubmit={submitConfirmCode} className="mt-5 space-y-3">
+              <label className="block text-sm font-medium text-[var(--cream)]">
+                {t(locale, "bookConfirmCodeLabel")}
+                <input
+                  className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5 tracking-[0.3em]"
+                  value={confirmCodeInput}
+                  onChange={(e) =>
+                    setConfirmCodeInput(e.target.value.replace(/\D/g, "").slice(0, 6))
+                  }
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  required
+                  minLength={4}
+                  maxLength={6}
+                  dir="ltr"
+                />
+              </label>
+              {error ? (
+                <p className="rounded-lg border border-red-400/30 bg-red-950/70 px-3 py-2 text-sm text-red-200">
+                  {error}
+                </p>
+              ) : null}
+              <button
+                type="submit"
+                disabled={confirmCodeSubmitting || confirmCodeInput.length < 4}
+                className="btn-primary w-full rounded-xl py-3.5 text-base font-semibold sm:w-auto sm:px-10"
+              >
+                {confirmCodeSubmitting
+                  ? t(locale, "bookConfirmCodeSubmitting")
+                  : t(locale, "bookConfirmCodeCta")}
+              </button>
+            </form>
+          ) : null}
 
           <p className="mt-8 pb-2 text-center text-sm text-[rgba(248,243,236,0.62)]">
             <Link

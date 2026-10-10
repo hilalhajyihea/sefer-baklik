@@ -6,7 +6,9 @@ import { normalizeLocale, t, type Locale } from "@/lib/i18n";
 import { sendBookingConfirmation } from "@/lib/reminders";
 import {
   confirmExpiresAt,
+  generateConfirmCode,
   generateConfirmToken,
+  sendBookingConfirmCodeRequest,
   sendBookingConfirmRequest,
 } from "@/lib/confirm";
 import { CONFIRM_HOLD_MINUTES } from "@/lib/appointmentStatus";
@@ -74,9 +76,22 @@ export async function POST(request: Request) {
     }
 
     const partySize = clampPartySize(parsed.data.partySize ?? 1);
-    const requiresConfirm = Boolean(barber.bookingRequiresConfirm);
+    // Code takes precedence if both somehow true (platform API prevents that)
+    const requiresCode = Boolean(barber.bookingRequiresConfirmCode);
+    const requiresLink =
+      !requiresCode && Boolean(barber.bookingRequiresConfirm);
+    const requiresConfirm = requiresCode || requiresLink;
 
-    if (requiresConfirm) {
+    if (requiresCode) {
+      const canSms =
+        barber.smsPlanEnabled && barber.smsConfirmationEnabled;
+      if (!canSms) {
+        return NextResponse.json(
+          { error: t(locale, "errConfirmCodeSmsRequired") },
+          { status: 409 },
+        );
+      }
+    } else if (requiresLink) {
       const canSms =
         barber.smsPlanEnabled && barber.smsConfirmationEnabled;
       const canWa =
@@ -90,6 +105,7 @@ export async function POST(request: Request) {
     }
 
     const confirmToken = requiresConfirm ? generateConfirmToken() : null;
+    const confirmCode = requiresCode ? generateConfirmCode() : null;
 
     const { lead: appointment, partySize: bookedPartySize } =
       await bookConsecutiveAppointments({
@@ -104,6 +120,7 @@ export async function POST(request: Request) {
           ? {
               status: "PENDING_CONFIRM" as const,
               confirmToken,
+              confirmCode,
               confirmExpiresAt: confirmExpiresAt(),
             }
           : {}),
@@ -131,7 +148,51 @@ export async function POST(request: Request) {
       }
     }
 
-    if (requiresConfirm) {
+    if (requiresCode) {
+      const notify = await sendBookingConfirmCodeRequest(appointment.id);
+      if (!notify.ok) {
+        console.warn("[bookings] confirm-code notify failed", notify);
+        await cancelHold();
+        return NextResponse.json(
+          {
+            error:
+              notify.error || t(locale, "bookConfirmCodeNotifyFailed"),
+          },
+          { status: 502 },
+        );
+      }
+
+      return NextResponse.json({
+        appointment: {
+          id: appointment.id,
+          startsAt: appointment.startsAt.toISOString(),
+          customerName: appointment.customerName,
+          staffId: appointment.staffId,
+          status: appointment.status,
+        },
+        partySize: bookedPartySize,
+        needsConfirm: true,
+        needsConfirmCode: true,
+        confirmToken,
+        confirmMinutes: CONFIRM_HOLD_MINUTES,
+        sms: notify?.sms
+          ? {
+              ok: !!notify.sms.ok,
+              skipped: !!notify.sms.skipped,
+              error: notify.sms.error || null,
+            }
+          : null,
+        whatsapp: notify?.whatsapp
+          ? {
+              ok: !!notify.whatsapp.ok,
+              skipped: !!notify.whatsapp.skipped,
+              error: notify.whatsapp.error || null,
+            }
+          : null,
+      });
+    }
+
+    if (requiresLink) {
       const notify = await sendBookingConfirmRequest(appointment.id);
       if (!notify.ok) {
         console.warn("[bookings] confirm-request notify failed", notify);
@@ -155,6 +216,7 @@ export async function POST(request: Request) {
         },
         partySize: bookedPartySize,
         needsConfirm: true,
+        needsConfirmCode: false,
         confirmMinutes: CONFIRM_HOLD_MINUTES,
         sms: notify?.sms
           ? {
@@ -193,6 +255,7 @@ export async function POST(request: Request) {
       },
       partySize: bookedPartySize,
       needsConfirm: false,
+      needsConfirmCode: false,
       sms: notify?.sms
         ? {
             ok: !!notify.sms.ok,

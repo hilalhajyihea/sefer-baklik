@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
   confirmPendingAppointment,
+  confirmPendingAppointmentByCode,
   findAppointmentByConfirmToken,
   resolveConfirmState,
   type ConfirmPageState,
@@ -14,13 +15,14 @@ import {
 } from "@/lib/i18n";
 import { formatTime } from "@/lib/time";
 
-const STATE_MSG: Record<ConfirmPageState, MsgKey> = {
+const STATE_MSG: Record<ConfirmPageState | "wrong_code", MsgKey> = {
   confirm: "confirmState_confirm",
   success: "confirmState_success",
   already_confirmed: "confirmState_already_confirmed",
   expired: "confirmState_expired",
   cancelled: "confirmState_cancelled",
   invalid: "confirmState_invalid",
+  wrong_code: "bookConfirmCodeWrong",
 };
 
 function appointmentPayload(
@@ -55,6 +57,8 @@ export async function GET(request: Request) {
 
 const postSchema = z.object({
   token: z.string().min(6),
+  /** When set — OTP path (bookingRequiresConfirmCode). Otherwise link confirm. */
+  code: z.string().min(4).max(8).optional(),
 });
 
 export async function POST(request: Request) {
@@ -67,15 +71,28 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await confirmPendingAppointment(parsed.data.token);
+  const result = parsed.data.code
+    ? await confirmPendingAppointmentByCode(
+        parsed.data.token,
+        parsed.data.code,
+      )
+    : await confirmPendingAppointment(parsed.data.token);
   const locale = normalizeLocale(result.appointment?.barber.locale);
+  const ok = result.state === "success" || result.state === "already_confirmed";
 
-  return NextResponse.json({
-    state: result.state,
-    locale,
-    appointment: result.appointment
-      ? appointmentPayload(result.appointment)
-      : null,
-    message: t(locale, STATE_MSG[result.state]),
-  });
+  return NextResponse.json(
+    {
+      state: result.state,
+      locale,
+      appointment: result.appointment
+        ? appointmentPayload(result.appointment)
+        : null,
+      message: t(locale, STATE_MSG[result.state]),
+      error:
+        result.state === "wrong_code"
+          ? t(locale, "bookConfirmCodeWrong")
+          : undefined,
+    },
+    { status: ok ? 200 : result.state === "wrong_code" ? 400 : 200 },
+  );
 }

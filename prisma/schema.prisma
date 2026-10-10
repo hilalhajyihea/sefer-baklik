@@ -23,6 +23,8 @@ model Barber {
   customerCancelEnabled   Boolean  @default(false)
   /// Platform admin: public booking requires customer to confirm via SMS/WhatsApp link within 15 minutes
   bookingRequiresConfirm  Boolean  @default(false)
+  /// Platform admin: confirm via OTP code (mutually exclusive with bookingRequiresConfirm; default off)
+  bookingRequiresConfirmCode Boolean @default(false)
   /// Public + barber UI + SMS language: he | ar
   locale                  String   @default("he")
   smsConfirmationEnabled  Boolean  @default(true)
@@ -166,8 +168,10 @@ model Appointment {
   source             String    @default("PUBLIC")
   /// Opaque token for customer self-cancel link in SMS (nullable so existing rows can migrate)
   cancelToken        String?
-  /// Opaque token for customer confirm-hold link (when bookingRequiresConfirm)
+  /// Opaque token for customer confirm-hold link / OTP session (when confirm required)
   confirmToken       String?
+  /// 6-digit OTP when bookingRequiresConfirmCode; null for link-confirm and normal bookings
+  confirmCode        String?
   /// When PENDING_CONFIRM expires and auto-cancels
   confirmExpiresAt   DateTime?
   /// Links consecutive multi-person public bookings; null = single appointment (legacy + default)

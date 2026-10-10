@@ -1,4 +1,4 @@
-import { randomBytes } from "crypto";
+import { randomBytes, randomInt } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/seo";
 import { CONFIRM_HOLD_MINUTES } from "@/lib/appointmentStatus";
@@ -11,8 +11,22 @@ import {
   WA_TEMPLATE_LANG,
 } from "@/lib/whatsapp";
 
+/** Flip to true only after Utility OTP template is Approved in Meta. */
+export const WA_CONFIRM_CODE_ENABLED = false;
+/** Meta Utility template: {{1}} name, {{2}} salon, {{3}} code */
+export const WA_TEMPLATE_CONFIRM_CODE = "barbe_confirm_code";
+
 export function generateConfirmToken() {
   return randomBytes(6).toString("base64url");
+}
+
+/** 6-digit numeric OTP for bookingRequiresConfirmCode. */
+export function generateConfirmCode() {
+  return String(randomInt(0, 1_000_000)).padStart(6, "0");
+}
+
+export function sanitizeConfirmCode(raw: string): string {
+  return (raw || "").replace(/\D/g, "").slice(0, 8);
 }
 
 export function buildConfirmUrl(token: string) {
@@ -90,6 +104,46 @@ export function buildConfirmRequestWhatsAppParams(input: {
   ];
 }
 
+export function buildConfirmCodeSms(input: {
+  customerName: string;
+  barberName: string;
+  staffName?: string | null;
+  code: string;
+  minutes: number;
+  locale?: Locale | string | null;
+}): string {
+  const locale = normalizeLocale(input.locale);
+  const where = input.staffName
+    ? t(locale, "confirmCodeSmsLine2Staff", {
+        barber: input.barberName,
+        staff: input.staffName,
+        code: input.code,
+      })
+    : t(locale, "confirmCodeSmsLine2", {
+        barber: input.barberName,
+        code: input.code,
+      });
+  return [
+    t(locale, "confirmCodeSmsLine1", { name: input.customerName }),
+    where,
+    t(locale, "confirmCodeSmsLine3", { minutes: input.minutes }),
+    t(locale, "brand"),
+  ].join("\n");
+}
+
+/** Matches Utility template: {{1}} name, {{2}} salon, {{3}} code */
+export function buildConfirmCodeWhatsAppParams(input: {
+  customerName: string;
+  barberName: string;
+  staffName?: string | null;
+  code: string;
+}) {
+  const salon = input.staffName
+    ? `${input.barberName} مع ${input.staffName}`
+    : input.barberName;
+  return [input.customerName, salon, input.code];
+}
+
 export async function findAppointmentByConfirmToken(rawToken: string) {
   const token = sanitizeConfirmToken(rawToken);
   if (!token || token.length < 6) return null;
@@ -137,23 +191,16 @@ export function resolveConfirmState(
   return "confirm";
 }
 
-/** Customer clicked confirm link — finalize booking. No extra SMS/WA. */
-export async function confirmPendingAppointment(rawToken: string) {
-  const appointment = await findAppointmentByConfirmToken(rawToken);
-  const state = resolveConfirmState(appointment);
-  if (!appointment) return { state: "invalid" as const, appointment: null };
-  if (state === "already_confirmed") {
-    return { state, appointment };
-  }
-  if (state !== "confirm") {
-    return { state, appointment };
-  }
-
+async function finalizeConfirmedAppointment(appointment: {
+  id: string;
+  bookingGroupId: string | null;
+}) {
   const updated = await prisma.appointment.update({
     where: { id: appointment.id },
     data: {
       status: "BOOKED",
       confirmExpiresAt: null,
+      confirmCode: null,
       confirmationSentAt: new Date(),
     },
     include: {
@@ -179,11 +226,59 @@ export async function confirmPendingAppointment(rawToken: string) {
       data: {
         status: "BOOKED",
         confirmExpiresAt: null,
+        confirmCode: null,
         confirmationSentAt: new Date(),
       },
     });
   }
 
+  return updated;
+}
+
+/** Customer clicked confirm link — finalize booking. No extra SMS/WA. */
+export async function confirmPendingAppointment(rawToken: string) {
+  const appointment = await findAppointmentByConfirmToken(rawToken);
+  const state = resolveConfirmState(appointment);
+  if (!appointment) return { state: "invalid" as const, appointment: null };
+  if (state === "already_confirmed") {
+    return { state, appointment };
+  }
+  if (state !== "confirm") {
+    return { state, appointment };
+  }
+  // OTP holds cannot be confirmed by link alone
+  if (appointment.confirmCode) {
+    return { state: "invalid" as const, appointment };
+  }
+
+  const updated = await finalizeConfirmedAppointment(appointment);
+  return { state: "success" as const, appointment: updated };
+}
+
+/** Customer entered OTP — finalize booking. */
+export async function confirmPendingAppointmentByCode(
+  rawToken: string,
+  rawCode: string,
+) {
+  const appointment = await findAppointmentByConfirmToken(rawToken);
+  const state = resolveConfirmState(appointment);
+  if (!appointment) return { state: "invalid" as const, appointment: null };
+  if (state === "already_confirmed") {
+    return { state, appointment };
+  }
+  if (state !== "confirm") {
+    return { state, appointment };
+  }
+  if (!appointment.confirmCode) {
+    return { state: "invalid" as const, appointment };
+  }
+
+  const code = sanitizeConfirmCode(rawCode);
+  if (!code || code !== appointment.confirmCode) {
+    return { state: "wrong_code" as const, appointment };
+  }
+
+  const updated = await finalizeConfirmedAppointment(appointment);
   return { state: "success" as const, appointment: updated };
 }
 
@@ -268,6 +363,90 @@ export async function sendBookingConfirmRequest(appointmentId: string) {
     error: anyOk
       ? undefined
       : sms?.error || whatsapp?.error || "שליחת קישור האישור נכשלה",
+    sms,
+    whatsapp,
+  };
+}
+
+/** Send OTP for bookingRequiresConfirmCode. SMS active; WhatsApp gated. */
+export async function sendBookingConfirmCodeRequest(appointmentId: string) {
+  const appointment = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+    include: {
+      barber: true,
+      staff: { select: { displayName: true } },
+    },
+  });
+  if (!appointment || appointment.status !== "PENDING_CONFIRM") {
+    return { ok: false, error: "תור לא ממתין לאישור" };
+  }
+  if (!appointment.confirmCode || !appointment.confirmToken) {
+    return { ok: false, error: "חסר קוד אישור" };
+  }
+
+  const phone = (appointment.customerPhone || "").trim();
+  if (!phone) {
+    return { ok: false, skipped: true, error: "אין טלפון ללקוח" };
+  }
+
+  const smsOn =
+    appointment.barber.smsPlanEnabled &&
+    appointment.barber.smsConfirmationEnabled;
+  const waOn =
+    WA_CONFIRM_CODE_ENABLED &&
+    appointment.barber.whatsappPlanEnabled &&
+    appointment.barber.whatsappConfirmationEnabled;
+
+  if (!smsOn && !waOn) {
+    return {
+      ok: false,
+      error: "נדרש SMS פעיל לשליחת קוד האישור",
+    };
+  }
+
+  let sms;
+  let whatsapp;
+
+  if (smsOn) {
+    sms = await sendCustomerSms({
+      barberId: appointment.barberId,
+      to: phone,
+      body: buildConfirmCodeSms({
+        customerName: appointment.customerName,
+        barberName: appointment.barber.displayName,
+        staffName: appointment.staff?.displayName,
+        code: appointment.confirmCode,
+        minutes: CONFIRM_HOLD_MINUTES,
+        locale: appointment.barber.locale,
+      }),
+    });
+  }
+
+  if (waOn) {
+    whatsapp = await sendCustomerWhatsApp({
+      barberId: appointment.barberId,
+      to: phone,
+      templateName: WA_TEMPLATE_CONFIRM_CODE,
+      languageCode: WA_TEMPLATE_LANG,
+      bodyParams: buildConfirmCodeWhatsAppParams({
+        customerName: appointment.customerName,
+        barberName: appointment.barber.displayName,
+        staffName: appointment.staff?.displayName,
+        code: appointment.confirmCode,
+      }),
+    });
+  }
+
+  const anyOk =
+    Boolean(sms && sms.ok && !sms.skipped) ||
+    Boolean(whatsapp && whatsapp.ok && !whatsapp.skipped);
+
+  return {
+    ok: anyOk,
+    skipped: !anyOk,
+    error: anyOk
+      ? undefined
+      : sms?.error || whatsapp?.error || "שליחת קוד האישור נכשלה",
     sms,
     whatsapp,
   };

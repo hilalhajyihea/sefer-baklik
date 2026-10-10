@@ -22,6 +22,7 @@ type Barber = {
   whatsappPlanEnabled: boolean;
   customerCancelEnabled: boolean;
   bookingRequiresConfirm: boolean;
+  bookingRequiresConfirmCode: boolean;
   smsQuota: number;
   smsRemaining: number;
   whatsappQuota: number;
@@ -369,6 +370,7 @@ export function PlatformAdminPanel() {
       body: JSON.stringify({
         id: barber.id,
         bookingRequiresConfirm: next,
+        ...(next ? { bookingRequiresConfirmCode: false } : {}),
       }),
     });
     if (!res.ok) {
@@ -377,8 +379,36 @@ export function PlatformAdminPanel() {
     }
     setMessage(
       next
-        ? "אישור תור בקישור הופעל — לקוחות יקבלו קישור לאישור (15 דק׳)"
+        ? "אישור תור בקישור הופעל — לקוחות יקבלו קישור לאישור (15 דק׳). אישור בקוד כובה אם היה פעיל."
         : "אישור תור בקישור כובה — תורים נקבעים מיד כמו קודם",
+    );
+    load();
+  }
+
+  async function toggleBookingRequiresConfirmCode(barber: Barber) {
+    const next = !barber.bookingRequiresConfirmCode;
+    if (next && !barber.smsPlanEnabled) {
+      setError("יש להפעיל SMS לפני הפעלת אישור תור בקוד");
+      return;
+    }
+    const res = await fetch("/api/platform/barbers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: barber.id,
+        bookingRequiresConfirmCode: next,
+        ...(next ? { bookingRequiresConfirm: false } : {}),
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(data.error || "עדכון אישור בקוד נכשל");
+      return;
+    }
+    setMessage(
+      next
+        ? "אישור תור בקוד הופעל — לקוחות יקבלו קוד ב-SMS (15 דק׳). אישור קישור כובה אם היה פעיל."
+        : "אישור תור בקוד כובה — תורים נקבעים מיד כמו קודם",
     );
     load();
   }
@@ -677,7 +707,9 @@ export function PlatformAdminPanel() {
                         · ביטול לקוח:{" "}
                         {b.customerCancelEnabled ? "מופעל" : "כבוי"} · אישור
                         קישור:{" "}
-                        {b.bookingRequiresConfirm ? "מופעל" : "כבוי"} · צוות:{" "}
+                        {b.bookingRequiresConfirm ? "מופעל" : "כבוי"} · אישור
+                        קוד:{" "}
+                        {b.bookingRequiresConfirmCode ? "מופעל" : "כבוי"} · צוות:{" "}
                         {teamMode
                           ? `${activeStaff.length} ספרים פעילים`
                           : "ספר יחיד"}
@@ -826,12 +858,29 @@ export function PlatformAdminPanel() {
                             ? "כיבוי מחזיר לקביעת תור מיידית (ברירת מחדל)"
                             : !b.smsPlanEnabled && !b.whatsappPlanEnabled
                               ? "יש להפעיל SMS או WhatsApp קודם"
-                              : "הלקוח מקבל קישור לאישור תוך 15 דקות"
+                              : "הלקוח מקבל קישור לאישור תוך 15 דקות (מכבה אישור קוד)"
                         }
                       >
                         {b.bookingRequiresConfirm
                           ? "כבה אישור קישור"
                           : "הפעל אישור קישור"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleBookingRequiresConfirmCode(b)}
+                        className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-40"
+                        disabled={!b.smsPlanEnabled && !b.bookingRequiresConfirmCode}
+                        title={
+                          b.bookingRequiresConfirmCode
+                            ? "כיבוי מחזיר לקביעת תור מיידית (ברירת מחדל)"
+                            : !b.smsPlanEnabled
+                              ? "יש להפעיל SMS קודם"
+                              : "הלקוח מקבל קוד ב-SMS לאישור תוך 15 דקות (מכבה אישור קישור)"
+                        }
+                      >
+                        {b.bookingRequiresConfirmCode
+                          ? "כבה אישור קוד"
+                          : "הפעל אישור קוד"}
                       </button>
                       <button
                         type="button"

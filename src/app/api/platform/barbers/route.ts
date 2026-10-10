@@ -37,6 +37,7 @@ export async function GET() {
       whatsappPlanEnabled: true,
       customerCancelEnabled: true,
       bookingRequiresConfirm: true,
+      bookingRequiresConfirmCode: true,
       smsQuota: true,
       smsRemaining: true,
       whatsappQuota: true,
@@ -119,6 +120,7 @@ const patchSchema = z.object({
   whatsappPlanEnabled: z.boolean().optional(),
   customerCancelEnabled: z.boolean().optional(),
   bookingRequiresConfirm: z.boolean().optional(),
+  bookingRequiresConfirmCode: z.boolean().optional(),
   password: z.string().min(6).max(100).optional(),
   displayName: z.string().min(2).max(80).optional(),
   locale: z.enum(["he", "ar"]).optional(),
@@ -169,6 +171,39 @@ export async function PATCH(request: Request) {
     });
   }
 
+  // Link vs code confirm: at most one can be on (both off is fine).
+  const confirmPatch: {
+    bookingRequiresConfirm?: boolean;
+    bookingRequiresConfirmCode?: boolean;
+  } = {};
+  if (parsed.data.bookingRequiresConfirmCode === true) {
+    confirmPatch.bookingRequiresConfirmCode = true;
+    confirmPatch.bookingRequiresConfirm = false;
+  } else if (parsed.data.bookingRequiresConfirm === true) {
+    confirmPatch.bookingRequiresConfirm = true;
+    confirmPatch.bookingRequiresConfirmCode = false;
+  } else {
+    if (parsed.data.bookingRequiresConfirm === false) {
+      confirmPatch.bookingRequiresConfirm = false;
+    }
+    if (parsed.data.bookingRequiresConfirmCode === false) {
+      confirmPatch.bookingRequiresConfirmCode = false;
+    }
+  }
+
+  if (confirmPatch.bookingRequiresConfirmCode === true) {
+    const current = await prisma.barber.findUnique({
+      where: { id: parsed.data.id },
+      select: { smsPlanEnabled: true },
+    });
+    if (!current?.smsPlanEnabled) {
+      return NextResponse.json(
+        { error: "יש להפעיל SMS לפני הפעלת אישור בקוד" },
+        { status: 400 },
+      );
+    }
+  }
+
   const barber = await prisma.barber.update({
     where: { id: parsed.data.id },
     data: {
@@ -184,9 +219,7 @@ export async function PATCH(request: Request) {
       ...(parsed.data.customerCancelEnabled !== undefined
         ? { customerCancelEnabled: parsed.data.customerCancelEnabled }
         : {}),
-      ...(parsed.data.bookingRequiresConfirm !== undefined
-        ? { bookingRequiresConfirm: parsed.data.bookingRequiresConfirm }
-        : {}),
+      ...confirmPatch,
       ...(parsed.data.displayName
         ? { displayName: parsed.data.displayName.trim() }
         : {}),
@@ -205,6 +238,7 @@ export async function PATCH(request: Request) {
       whatsappPlanEnabled: barber.whatsappPlanEnabled,
       customerCancelEnabled: barber.customerCancelEnabled,
       bookingRequiresConfirm: barber.bookingRequiresConfirm,
+      bookingRequiresConfirmCode: barber.bookingRequiresConfirmCode,
       smsQuota: barber.smsQuota,
       smsRemaining: barber.smsRemaining,
       whatsappQuota: barber.whatsappQuota,

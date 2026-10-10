@@ -54,8 +54,17 @@ const he = {
     "נשלח קישור לאישור התור ל-{date} בשעה {time}. יש לאשר תוך {minutes} דקות — אחרת התור יבוטל.",
   bookNeedsConfirmSms: " בדקו את ה-SMS.",
   bookNeedsConfirmWhatsapp: " בדקו את ה-WhatsApp.",
+  bookNeedsConfirmCode:
+    "נשלח קוד לאישור התור ל-{date} בשעה {time}. הזינו אותו כאן תוך {minutes} דקות — אחרת התור יבוטל.",
+  bookConfirmCodeLabel: "קוד אישור",
+  bookConfirmCodeCta: "אישור הקוד",
+  bookConfirmCodeSubmitting: "מאשר...",
+  bookConfirmCodeWrong: "הקוד שגוי. נסו שוב.",
+  bookConfirmCodeSuccess: "התור אושר בהצלחה!",
   bookConfirmNotifyFailed:
     "לא הצלחנו לשלוח קישור לאישור. נסו שוב בעוד רגע.",
+  bookConfirmCodeNotifyFailed:
+    "לא הצלחנו לשלוח קוד לאישור. נסו שוב בעוד רגע.",
   wantThisToo: "ספר? רוצה אתר כזה, לחץ כאן.",
 
   loginTitle: "כניסת מנהל",
@@ -212,6 +221,10 @@ const he = {
     "לאישור התור אצל {barber} עם {staff} ב-{date} בשעה {time}:",
   confirmRequestLine3: "יש לאשר תוך {minutes} דקות, אחרת התור יבוטל.",
   confirmRequestLinkLabel: "לאישור לחצו:",
+  confirmCodeSmsLine1: "שלום {name},",
+  confirmCodeSmsLine2: "קוד האישור לתור אצל {barber}: {code}",
+  confirmCodeSmsLine2Staff: "קוד האישור לתור אצל {barber} עם {staff}: {code}",
+  confirmCodeSmsLine3: "יש להזין תוך {minutes} דקות, אחרת התור יבוטל.",
   pendingConfirmBadge: "ממתין לאישור",
   confirmedBadge: "מאושר",
   partyGroupBadge: "קבוצה · {count}",
@@ -264,6 +277,8 @@ const he = {
   errStaffRequired: "נא לבחור ספר או כל מי שפנוי",
   errConfirmChannelRequired:
     "לא ניתן לקבוע תור כרגע — נדרש ערוץ SMS או WhatsApp לאישור. פנו למספרה.",
+  errConfirmCodeSmsRequired:
+    "לא ניתן לקבוע תור כרגע — נדרש SMS פעיל לאישור בקוד. פנו למספרה.",
   errStaffNotFound: "ספר לא נמצא בצוות",
   errCannotDisableStaff:
     "לא ניתן להשבית — נשארו פחות משני ספרים פעילים ויש תורים עתידיים משובצים",
@@ -355,8 +370,17 @@ const ar: { [K in keyof typeof he]: string } = {
     "أُرسل رابط لتأكيد الموعد لـ {date} الساعة {time}. يجب التأكيد خلال {minutes} دقيقة — وإلا يُلغى الموعد.",
   bookNeedsConfirmSms: " تحققوا من رسالة SMS.",
   bookNeedsConfirmWhatsapp: " تحققوا من واتساب.",
+  bookNeedsConfirmCode:
+    "أُرسل رمز لتأكيد الموعد لـ {date} الساعة {time}. أدخلوه هنا خلال {minutes} دقيقة — وإلا يُلغى الموعد.",
+  bookConfirmCodeLabel: "رمز التأكيد",
+  bookConfirmCodeCta: "تأكيد الرمز",
+  bookConfirmCodeSubmitting: "جاري التأكيد...",
+  bookConfirmCodeWrong: "الرمز غير صحيح. حاولوا مرة أخرى.",
+  bookConfirmCodeSuccess: "تم تأكيد الموعد بنجاح!",
   bookConfirmNotifyFailed:
     "تعذر إرسال رابط التأكيد. حاولوا مرة أخرى بعد لحظات.",
+  bookConfirmCodeNotifyFailed:
+    "تعذر إرسال رمز التأكيد. حاولوا مرة أخرى بعد لحظات.",
   wantThisToo: "حلاق؟ بدك موقع هيك؟ اضغط هنا.",
 
   loginTitle: "دخول المدير",
@@ -513,6 +537,10 @@ const ar: { [K in keyof typeof he]: string } = {
     "لتأكيد الموعد لدى {barber} مع {staff} في {date} الساعة {time}:",
   confirmRequestLine3: "يجب التأكيد خلال {minutes} دقيقة، وإلا يُلغى الموعد.",
   confirmRequestLinkLabel: "للتأكيد اضغطوا:",
+  confirmCodeSmsLine1: "مرحباً {name}،",
+  confirmCodeSmsLine2: "رمز تأكيد الموعد لدى {barber}: {code}",
+  confirmCodeSmsLine2Staff: "رمز تأكيد الموعد لدى {barber} مع {staff}: {code}",
+  confirmCodeSmsLine3: "يجب إدخاله خلال {minutes} دقيقة، وإلا يُلغى الموعد.",
   pendingConfirmBadge: "بانتظار التأكيد",
   confirmedBadge: "مؤكد",
   partyGroupBadge: "مجموعة · {count}",
@@ -565,6 +593,8 @@ const ar: { [K in keyof typeof he]: string } = {
   errStaffRequired: "يرجى اختيار حلاق أو أي شخص متاح",
   errConfirmChannelRequired:
     "تعذر الحجز حالياً — يلزم قناة SMS أو واتساب للتأكيد. تواصلوا مع الصالون.",
+  errConfirmCodeSmsRequired:
+    "تعذر الحجز حالياً — يلزم SMS فعّال لتأكيد الرمز. تواصلوا مع الصالون.",
   errStaffNotFound: "الحلاق غير موجود في الفريق",
   errCannotDisableStaff:
     "لا يمكن التعطيل — يتبقى أقل من حلاقين نشطين وهناك مواعيد مستقبلية معينة",
