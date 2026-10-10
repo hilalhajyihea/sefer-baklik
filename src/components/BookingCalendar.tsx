@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { formatDateLocalized, normalizeLocale, t, type Locale } from "@/lib/i18n";
@@ -59,8 +59,15 @@ export function BookingCalendar({
   const [pendingConfirmToken, setPendingConfirmToken] = useState<string | null>(
     null,
   );
+  const [pendingConfirmMeta, setPendingConfirmMeta] = useState<{
+    dateLabel: string;
+    time: string;
+    minutes: number;
+  } | null>(null);
   const [confirmCodeInput, setConfirmCodeInput] = useState("");
   const [confirmCodeSubmitting, setConfirmCodeSubmitting] = useState(false);
+  const [confirmCodeError, setConfirmCodeError] = useState("");
+  const confirmCodeInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -150,20 +157,23 @@ export function BookingCalendar({
         return;
       }
       if (data.needsConfirmCode && data.confirmToken) {
-        let successMsg = t(locale, "bookNeedsConfirmCode", {
-          date: formatDateLocalized(locale, combineDateAndTime(date, "12:00")),
+        // No green "success" yet — modal makes clear booking is pending OTP.
+        setSuccess("");
+        setPendingConfirmToken(data.confirmToken);
+        setPendingConfirmMeta({
+          dateLabel: formatDateLocalized(
+            locale,
+            combineDateAndTime(date, "12:00"),
+          ),
           time,
           minutes: data.confirmMinutes || 15,
         });
-        if (data.sms?.ok && !data.sms?.skipped) {
-          successMsg += t(locale, "bookNeedsConfirmSms");
-        }
-        setSuccess(successMsg);
-        setPendingConfirmToken(data.confirmToken);
         setConfirmCodeInput("");
+        setConfirmCodeError("");
         setError("");
       } else if (data.needsConfirm) {
         setPendingConfirmToken(null);
+        setPendingConfirmMeta(null);
         let successMsg = t(locale, "bookNeedsConfirm", {
           date: formatDateLocalized(locale, combineDateAndTime(date, "12:00")),
           time,
@@ -179,6 +189,7 @@ export function BookingCalendar({
         setError("");
       } else {
         setPendingConfirmToken(null);
+        setPendingConfirmMeta(null);
         let successMsg = t(locale, "bookSuccess", {
           date: formatDateLocalized(locale, combineDateAndTime(date, "12:00")),
           time,
@@ -229,10 +240,24 @@ export function BookingCalendar({
     }
   }
 
-  async function submitConfirmCode(e: FormEvent) {
-    e.preventDefault();
+  useEffect(() => {
     if (!pendingConfirmToken) return;
-    setError("");
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const id = window.setTimeout(() => {
+      confirmCodeInputRef.current?.focus();
+    }, 80);
+    return () => {
+      document.body.style.overflow = prev;
+      window.clearTimeout(id);
+    };
+  }, [pendingConfirmToken]);
+
+  async function verifyConfirmCode(code: string) {
+    if (!pendingConfirmToken || confirmCodeSubmitting) return;
+    const cleaned = code.replace(/\D/g, "").slice(0, 6);
+    if (cleaned.length < 4) return;
+    setConfirmCodeError("");
     setConfirmCodeSubmitting(true);
     try {
       const res = await fetch("/api/confirm", {
@@ -240,23 +265,44 @@ export function BookingCalendar({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           token: pendingConfirmToken,
-          code: confirmCodeInput.trim(),
+          code: cleaned,
         }),
       });
       const data = await res.json();
       if (data.state === "success" || data.state === "already_confirmed") {
-        setSuccess(t(locale, "bookConfirmCodeSuccess"));
+        const slot =
+          pendingConfirmMeta != null
+            ? t(locale, "bookConfirmCodeModalSlot", {
+                date: pendingConfirmMeta.dateLabel,
+                time: pendingConfirmMeta.time,
+              })
+            : "";
+        setSuccess(
+          slot
+            ? `${t(locale, "bookConfirmCodeSuccess")} ${slot}`
+            : t(locale, "bookConfirmCodeSuccess"),
+        );
         setPendingConfirmToken(null);
+        setPendingConfirmMeta(null);
         setConfirmCodeInput("");
-        setError("");
+        setConfirmCodeError("");
         return;
       }
-      setError(data.error || data.message || t(locale, "bookConfirmCodeWrong"));
+      setConfirmCodeError(
+        data.error || data.message || t(locale, "bookConfirmCodeWrong"),
+      );
+      setConfirmCodeInput("");
+      confirmCodeInputRef.current?.focus();
     } catch {
-      setError(t(locale, "networkError"));
+      setConfirmCodeError(t(locale, "networkError"));
     } finally {
       setConfirmCodeSubmitting(false);
     }
+  }
+
+  async function submitConfirmCode(e: FormEvent) {
+    e.preventDefault();
+    await verifyConfirmCode(confirmCodeInput);
   }
 
   const waitlistMode = !loadingSlots && slots.length === 0 && waitlistAvailable;
@@ -475,7 +521,7 @@ export function BookingCalendar({
             </div>
             ) : null}
 
-            {error && !pendingConfirmToken ? (
+            {error ? (
               <p className="mt-4 rounded-lg border border-red-400/30 bg-red-950/70 px-3 py-2 text-sm text-red-200">
                 {error}
               </p>
@@ -486,9 +532,7 @@ export function BookingCalendar({
               </p>
             ) : null}
 
-            {(waitlistMode || slots.length > 0) &&
-            !waitlistFull &&
-            !pendingConfirmToken ? (
+            {(waitlistMode || slots.length > 0) && !waitlistFull ? (
             <button
               type="submit"
               disabled={
@@ -509,41 +553,6 @@ export function BookingCalendar({
             ) : null}
           </form>
 
-          {pendingConfirmToken ? (
-            <form onSubmit={submitConfirmCode} className="mt-5 space-y-3">
-              <label className="block text-sm font-medium text-[var(--cream)]">
-                {t(locale, "bookConfirmCodeLabel")}
-                <input
-                  className="shop-field mt-1.5 w-full rounded-xl px-3 py-2.5 tracking-[0.3em]"
-                  value={confirmCodeInput}
-                  onChange={(e) =>
-                    setConfirmCodeInput(e.target.value.replace(/\D/g, "").slice(0, 6))
-                  }
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  required
-                  minLength={4}
-                  maxLength={6}
-                  dir="ltr"
-                />
-              </label>
-              {error ? (
-                <p className="rounded-lg border border-red-400/30 bg-red-950/70 px-3 py-2 text-sm text-red-200">
-                  {error}
-                </p>
-              ) : null}
-              <button
-                type="submit"
-                disabled={confirmCodeSubmitting || confirmCodeInput.length < 4}
-                className="btn-primary w-full rounded-xl py-3.5 text-base font-semibold sm:w-auto sm:px-10"
-              >
-                {confirmCodeSubmitting
-                  ? t(locale, "bookConfirmCodeSubmitting")
-                  : t(locale, "bookConfirmCodeCta")}
-              </button>
-            </form>
-          ) : null}
-
           <p className="mt-8 pb-2 text-center text-sm text-[rgba(248,243,236,0.62)]">
             <Link
               href="/"
@@ -554,6 +563,83 @@ export function BookingCalendar({
           </p>
         </div>
       </div>
+
+      {pendingConfirmToken && pendingConfirmMeta ? (
+        <div
+          className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-code-title"
+          lang={locale}
+        >
+          <form
+            onSubmit={submitConfirmCode}
+            className="flex max-h-[100svh] w-full max-w-md flex-col rounded-t-3xl border border-white/15 bg-[var(--ink)] px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 shadow-2xl sm:rounded-3xl sm:px-7 sm:py-8"
+          >
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/25 sm:hidden" />
+            <p className="text-center text-xs font-semibold uppercase tracking-wide text-amber-200/90">
+              {t(locale, "bookConfirmCodeModalTitle")}
+            </p>
+            <h2
+              id="confirm-code-title"
+              className="mt-2 text-center font-display text-2xl text-[var(--cream)]"
+            >
+              {t(locale, "bookConfirmCodeModalSlot", {
+                date: pendingConfirmMeta.dateLabel,
+                time: pendingConfirmMeta.time,
+              })}
+            </h2>
+            <p className="mt-3 text-center text-sm leading-relaxed text-[rgba(248,243,236,0.78)]">
+              {t(locale, "bookConfirmCodeModalHint", {
+                minutes: pendingConfirmMeta.minutes,
+              })}
+            </p>
+
+            <label className="mt-6 block text-center text-sm font-medium text-[var(--cream)]">
+              {t(locale, "bookConfirmCodeLabel")}
+              <input
+                ref={confirmCodeInputRef}
+                className="shop-field mt-3 w-full rounded-2xl px-3 py-4 text-center text-3xl font-semibold tracking-[0.45em] text-[var(--cream)]"
+                value={confirmCodeInput}
+                onChange={(e) => {
+                  const next = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  setConfirmCodeInput(next);
+                  if (next.length === 6) {
+                    void verifyConfirmCode(next);
+                  }
+                }}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="one-time-code"
+                enterKeyHint="done"
+                required
+                minLength={4}
+                maxLength={6}
+                dir="ltr"
+                aria-invalid={confirmCodeError ? true : undefined}
+              />
+            </label>
+
+            {confirmCodeError ? (
+              <p className="mt-3 rounded-xl border border-red-400/35 bg-red-950/70 px-3 py-2.5 text-center text-sm text-red-100">
+                {confirmCodeError}
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={
+                confirmCodeSubmitting || confirmCodeInput.length < 4
+              }
+              className="btn-primary mt-6 w-full rounded-2xl py-4 text-lg font-semibold disabled:opacity-50"
+            >
+              {confirmCodeSubmitting
+                ? t(locale, "bookConfirmCodeSubmitting")
+                : t(locale, "bookConfirmCodeCta")}
+            </button>
+          </form>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -56,8 +56,12 @@ const he = {
   bookNeedsConfirmWhatsapp: " בדקו את ה-WhatsApp.",
   bookNeedsConfirmCode:
     "נשלח קוד לאישור התור ל-{date} בשעה {time}. הזינו אותו כאן תוך {minutes} דקות — אחרת התור יבוטל.",
-  bookConfirmCodeLabel: "קוד אישור",
-  bookConfirmCodeCta: "אישור הקוד",
+  bookConfirmCodeModalTitle: "התור עדיין לא מאושר",
+  bookConfirmCodeModalHint:
+    "שלחנו קוד ב-SMS. הזינו אותו כאן תוך {minutes} דקות — אחרת התור יבוטל.",
+  bookConfirmCodeModalSlot: "{date} · {time}",
+  bookConfirmCodeLabel: "הקוד מתוך ה-SMS",
+  bookConfirmCodeCta: "אישור התור",
   bookConfirmCodeSubmitting: "מאשר...",
   bookConfirmCodeWrong: "הקוד שגוי. נסו שוב.",
   bookConfirmCodeSuccess: "התור אושר בהצלחה!",
@@ -372,8 +376,12 @@ const ar: { [K in keyof typeof he]: string } = {
   bookNeedsConfirmWhatsapp: " تحققوا من واتساب.",
   bookNeedsConfirmCode:
     "أُرسل رمز لتأكيد الموعد لـ {date} الساعة {time}. أدخلوه هنا خلال {minutes} دقيقة — وإلا يُلغى الموعد.",
-  bookConfirmCodeLabel: "رمز التأكيد",
-  bookConfirmCodeCta: "تأكيد الرمز",
+  bookConfirmCodeModalTitle: "الموعد لم يُؤكَّد بعد",
+  bookConfirmCodeModalHint:
+    "أرسلنا رمزاً عبر SMS. أدخلوه هنا خلال {minutes} دقيقة — وإلا يُلغى الموعد.",
+  bookConfirmCodeModalSlot: "{date} · {time}",
+  bookConfirmCodeLabel: "الرمز من رسالة SMS",
+  bookConfirmCodeCta: "تأكيد الموعد",
   bookConfirmCodeSubmitting: "جاري التأكيد...",
   bookConfirmCodeWrong: "الرمز غير صحيح. حاولوا مرة أخرى.",
   bookConfirmCodeSuccess: "تم تأكيد الموعد بنجاح!",
