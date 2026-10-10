@@ -191,17 +191,21 @@ export function resolveConfirmState(
   return "confirm";
 }
 
-async function finalizeConfirmedAppointment(appointment: {
-  id: string;
-  bookingGroupId: string | null;
-}) {
+async function finalizeConfirmedAppointment(
+  appointment: {
+    id: string;
+    bookingGroupId: string | null;
+  },
+  opts?: { markConfirmationSent?: boolean },
+) {
+  const markSent = opts?.markConfirmationSent !== false;
   const updated = await prisma.appointment.update({
     where: { id: appointment.id },
     data: {
       status: "BOOKED",
       confirmExpiresAt: null,
       confirmCode: null,
-      confirmationSentAt: new Date(),
+      ...(markSent ? { confirmationSentAt: new Date() } : {}),
     },
     include: {
       barber: {
@@ -227,7 +231,7 @@ async function finalizeConfirmedAppointment(appointment: {
         status: "BOOKED",
         confirmExpiresAt: null,
         confirmCode: null,
-        confirmationSentAt: new Date(),
+        ...(markSent ? { confirmationSentAt: new Date() } : {}),
       },
     });
   }
@@ -255,7 +259,7 @@ export async function confirmPendingAppointment(rawToken: string) {
   return { state: "success" as const, appointment: updated };
 }
 
-/** Customer entered OTP — finalize booking. */
+/** Customer entered OTP — finalize booking, then send normal booking confirmation. */
 export async function confirmPendingAppointmentByCode(
   rawToken: string,
   rawCode: string,
@@ -278,7 +282,35 @@ export async function confirmPendingAppointmentByCode(
     return { state: "wrong_code" as const, appointment };
   }
 
-  const updated = await finalizeConfirmedAppointment(appointment);
+  // Leave confirmationSentAt null so sendBookingConfirmation can run
+  const updated = await finalizeConfirmedAppointment(appointment, {
+    markConfirmationSent: false,
+  });
+
+  const { sendBookingConfirmation } = await import("@/lib/reminders");
+  const notify = await sendBookingConfirmation(updated.id);
+  if (!notify.ok && !notify.skipped) {
+    console.warn("[confirm] post-OTP booking confirmation failed", {
+      appointmentId: updated.id,
+      error: notify.error,
+      sms: notify.sms,
+      whatsapp: notify.whatsapp,
+    });
+  }
+
+  // Party followers: no separate SMS; mark so they aren't treated as pending notify
+  if (appointment.bookingGroupId) {
+    await prisma.appointment.updateMany({
+      where: {
+        bookingGroupId: appointment.bookingGroupId,
+        id: { not: appointment.id },
+        status: "BOOKED",
+        confirmationSentAt: null,
+      },
+      data: { confirmationSentAt: new Date() },
+    });
+  }
+
   return { state: "success" as const, appointment: updated };
 }
 
