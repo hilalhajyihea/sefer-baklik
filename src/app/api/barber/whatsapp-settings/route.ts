@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireBarberSession } from "@/lib/auth";
 import { getBarberLocale, t } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
+import { isValidIlMobile05, toIlMobile05 } from "@/lib/sms";
 import { resetMonthlyWhatsappQuotasIfNeeded } from "@/lib/whatsappQuota";
 import { whatsappConfigStatus } from "@/lib/whatsapp";
 
@@ -42,14 +43,6 @@ export async function GET() {
   });
 }
 
-const schema = z.object({
-  phone: z.string().max(20).optional(),
-  notifyOnCustomerCancelWhatsapp: z.boolean().optional(),
-  whatsappConfirmationEnabled: z.boolean().optional(),
-  whatsappReminderEnabled: z.boolean().optional(),
-  reminderMinutesBefore: z.number().int().min(5).max(1440).optional(),
-});
-
 export async function PUT(request: Request) {
   const session = await requireBarberSession();
   if (!session) {
@@ -57,6 +50,20 @@ export async function PUT(request: Request) {
   }
 
   const locale = await getBarberLocale(session.barberId);
+  const schema = z.object({
+    phone: z
+      .string()
+      .max(20)
+      .optional()
+      .refine(
+        (v) => v === undefined || v.trim() === "" || isValidIlMobile05(v),
+        t(locale, "errPhoneInvalid"),
+      ),
+    notifyOnCustomerCancelWhatsapp: z.boolean().optional(),
+    whatsappConfirmationEnabled: z.boolean().optional(),
+    whatsappReminderEnabled: z.boolean().optional(),
+    reminderMinutesBefore: z.number().int().min(5).max(1440).optional(),
+  });
   const barber = await prisma.barber.findUnique({
     where: { id: session.barberId },
     select: { whatsappPlanEnabled: true },
@@ -94,7 +101,11 @@ export async function PUT(request: Request) {
 
   const phone =
     parsed.data.phone !== undefined
-      ? parsed.data.phone.trim() || null
+      ? (() => {
+          const trimmed = parsed.data.phone.trim();
+          if (!trimmed) return null;
+          return toIlMobile05(trimmed);
+        })()
       : undefined;
 
   const settings = await prisma.barber.update({

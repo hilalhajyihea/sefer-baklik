@@ -7,27 +7,7 @@ import {
   createRecurringSeries,
   type RecurringInterval,
 } from "@/lib/recurring";
-
-const schema = z.object({
-  mode: z.enum(["once", "recurring"]),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  time: z.string().regex(/^\d{2}:\d{2}$/),
-  customerName: z.string().min(2).max(80),
-  /** Optional in admin; empty = no SMS to customer */
-  customerPhone: z
-    .string()
-    .max(20)
-    .optional()
-    .transform((v) => (v ?? "").trim())
-    .refine(
-      (v) => v === "" || (v.length >= 9 && /^[\d+\-\s()]+$/.test(v)),
-      "טלפון לא תקין",
-    ),
-  staffId: z.string().min(1).optional(),
-  interval: z
-    .enum(["WEEKLY", "BIWEEKLY", "TRIWEEKLY", "MONTHLY"])
-    .optional(),
-});
+import { isValidIlMobile05, toIlMobile05 } from "@/lib/sms";
 
 export async function POST(request: Request) {
   const session = await requireBarberSession();
@@ -36,6 +16,27 @@ export async function POST(request: Request) {
   }
 
   const locale = await getBarberLocale(session.barberId);
+  const schema = z.object({
+    mode: z.enum(["once", "recurring"]),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    time: z.string().regex(/^\d{2}:\d{2}$/),
+    customerName: z.string().min(2).max(80),
+    /** Optional in admin; empty = no SMS to customer */
+    customerPhone: z
+      .string()
+      .max(20)
+      .optional()
+      .transform((v) => (v ?? "").trim())
+      .refine(
+        (v) => v === "" || isValidIlMobile05(v),
+        t(locale, "errPhoneInvalid"),
+      )
+      .transform((v) => (v === "" ? "" : toIlMobile05(v)!)),
+    staffId: z.string().min(1).optional(),
+    interval: z
+      .enum(["WEEKLY", "BIWEEKLY", "TRIWEEKLY", "MONTHLY"])
+      .optional(),
+  });
   const body = await request.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {

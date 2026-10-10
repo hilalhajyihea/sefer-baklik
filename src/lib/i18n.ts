@@ -243,7 +243,8 @@ const he = {
   errInvalidData: "נתונים לא תקינים",
   errNameRequired: "נא להזין שם מלא",
   errPhoneRequired: "נא להזין טלפון תקין",
-  errPhoneInvalid: "טלפון לא תקין",
+  errPhoneInvalid:
+    "המספר שגוי. יש להקיש מספר בן 10 ספרות שמתחיל ב-05 (לדוגמה 0508477316).",
   errBarberInactive: "הספר לא פעיל",
   errSlotUnavailable: "השעה אינה פנויה",
   errSlotTaken: "השעה נתפסה בינתיים",
@@ -543,7 +544,8 @@ const ar: { [K in keyof typeof he]: string } = {
   errInvalidData: "بيانات غير صالحة",
   errNameRequired: "يرجى إدخال الاسم الكامل",
   errPhoneRequired: "يرجى إدخال هاتف صالح",
-  errPhoneInvalid: "الهاتف غير صالح",
+  errPhoneInvalid:
+    "الرقم غير صحيح. يرجى إدخال رقم من 10 أرقام يبدأ بـ 05 (مثال 0508477316).",
   errBarberInactive: "الحلاق غير نشط",
   errSlotUnavailable: "الساعة غير متاحة",
   errSlotTaken: "تم حجز الساعة في الأثناء",

@@ -11,6 +11,7 @@ import {
 } from "@/lib/confirm";
 import { CONFIRM_HOLD_MINUTES } from "@/lib/appointmentStatus";
 import { clampPartySize, MAX_PARTY_SIZE } from "@/lib/partyBooking";
+import { isValidIlMobile05, toIlMobile05 } from "@/lib/sms";
 import { isTeamMode } from "@/lib/staff";
 
 export async function POST(request: Request) {
@@ -33,9 +34,10 @@ export async function POST(request: Request) {
       customerName: z.string().min(2, t(locale, "errNameRequired")).max(80),
       customerPhone: z
         .string()
-        .min(9, t(locale, "errPhoneRequired"))
+        .min(1, t(locale, "errPhoneRequired"))
         .max(20)
-        .regex(/^[\d+\-\s()]+$/, t(locale, "errPhoneInvalid")),
+        .refine((v) => isValidIlMobile05(v), t(locale, "errPhoneInvalid"))
+        .transform((v) => toIlMobile05(v)!),
       staff: z.string().min(1).optional(),
       /** Default 1 — same as classic single booking */
       partySize: z.coerce.number().int().min(1).max(MAX_PARTY_SIZE).optional(),

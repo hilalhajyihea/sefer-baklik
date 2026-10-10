@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatDateLocalized, normalizeLocale, t, type Locale } from "@/lib/i18n";
 import { MAX_PARTY_SIZE } from "@/lib/partyBooking";
+import { isValidIlMobile05 } from "@/lib/sms";
 import { toDateKey, combineDateAndTime } from "@/lib/time";
 import { BrandMark } from "@/components/BrandGraphics";
 
@@ -93,6 +94,10 @@ export function BookingCalendar({
     e.preventDefault();
     setError("");
     setSuccess("");
+    if (!isValidIlMobile05(phone)) {
+      setError(t(locale, "errPhoneInvalid"));
+      return;
+    }
     setSubmitting(true);
     try {
       if (waitlistAvailable && slots.length === 0) {

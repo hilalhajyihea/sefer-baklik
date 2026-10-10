@@ -16,6 +16,7 @@ import {
   normalizeLocale,
   t,
 } from "@/lib/i18n";
+import { isValidIlMobile05 } from "@/lib/sms";
 import { ALLOWED_SLOT_MINUTES } from "@/lib/slotMinutes";
 
 type StaffMember = {
@@ -650,6 +651,10 @@ export function BarberAdminPanel({
     e.preventDefault();
     setMessage("");
     setError("");
+    if (barberPhone.trim() && !isValidIlMobile05(barberPhone)) {
+      setError(t(locale, "errPhoneInvalid"));
+      return;
+    }
     const res = await fetch("/api/barber/sms-settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -677,6 +682,10 @@ export function BarberAdminPanel({
     e.preventDefault();
     setMessage("");
     setError("");
+    if (barberPhone.trim() && !isValidIlMobile05(barberPhone)) {
+      setError(t(locale, "errPhoneInvalid"));
+      return;
+    }
     const res = await fetch("/api/barber/whatsapp-settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -704,6 +713,10 @@ export function BarberAdminPanel({
     e.preventDefault();
     setMessage("");
     setError("");
+    if (bookPhone.trim() && !isValidIlMobile05(bookPhone)) {
+      setError(t(locale, "errPhoneInvalid"));
+      return;
+    }
     setBookSubmitting(true);
     try {
       const res = await fetch("/api/barber/book", {

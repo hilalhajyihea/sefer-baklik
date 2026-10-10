@@ -2,6 +2,21 @@ import { formatDateLocalized, normalizeLocale, t, type Locale } from "@/lib/i18n
 import { formatTime } from "@/lib/time";
 import { formatCancelSmsLine } from "@/lib/cancel";
 
+/**
+ * Customer-facing Israeli mobile: must be exactly 10 digits starting with 05
+ * (e.g. 0508477316). Spaces/dashes ignored for the check.
+ */
+export function isValidIlMobile05(raw: string): boolean {
+  const digits = raw.replace(/\D/g, "");
+  return /^05\d{8}$/.test(digits);
+}
+
+/** Digits-only 05xxxxxxxx, or null if invalid. */
+export function toIlMobile05(raw: string): string | null {
+  const digits = raw.replace(/\D/g, "");
+  return /^05\d{8}$/.test(digits) ? digits : null;
+}
+
 /** Normalize Israeli / international phones to E.164 (+972...). */
 export function normalizePhoneE164(raw: string): string | null {
   let digits = raw.replace(/[^\d+]/g, "");

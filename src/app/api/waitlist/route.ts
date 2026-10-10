@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getTeamOrSoloSlots } from "@/lib/availability";
 import { normalizeLocale, t } from "@/lib/i18n";
+import { isValidIlMobile05, toIlMobile05 } from "@/lib/sms";
 import {
   isActiveWorkingDay,
   joinWaitlist,
@@ -29,9 +30,10 @@ export async function POST(request: Request) {
       customerName: z.string().min(2, t(locale, "errNameRequired")).max(80),
       customerPhone: z
         .string()
-        .min(9, t(locale, "errPhoneRequired"))
+        .min(1, t(locale, "errPhoneRequired"))
         .max(20)
-        .regex(/^[\d+\-\s()]+$/, t(locale, "errPhoneInvalid")),
+        .refine((v) => isValidIlMobile05(v), t(locale, "errPhoneInvalid"))
+        .transform((v) => toIlMobile05(v)!),
     });
 
     const parsed = schema.safeParse(body);
