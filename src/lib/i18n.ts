@@ -108,6 +108,9 @@ const he = {
   cancelFailed: "ביטול נכשל",
   cancelled: "התור בוטל",
   recurringBadge: "תור קבוע",
+  recurringBadgeShort: "קבוע",
+  cancelOnceShort: "הפעם",
+  cancelSeriesShort: "סדרה",
   cancelSeries: "ביטול כל הסדרה",
   confirmCancelSeries:
     "לבטל את כל התורים הקרובים בסדרה הקבועה הזו? תורים שעברו לא יושפעו.",
@@ -431,6 +434,9 @@ const ar: { [K in keyof typeof he]: string } = {
   cancelFailed: "فشل الإلغاء",
   cancelled: "تم إلغاء الموعد",
   recurringBadge: "موعد ثابت",
+  recurringBadgeShort: "ثابت",
+  cancelOnceShort: "مرة",
+  cancelSeriesShort: "سلسلة",
   cancelSeries: "إلغاء كل السلسلة",
   confirmCancelSeries:
     "إلغاء كل المواعيد القادمة في هذه السلسلة الثابتة؟ المواعيد السابقة لن تتأثر.",

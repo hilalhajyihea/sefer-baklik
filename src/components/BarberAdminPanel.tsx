@@ -1141,6 +1141,14 @@ export function BarberAdminPanel({
                                       <span className="truncate text-sm text-[var(--cream)]">
                                         {a.customerName}
                                       </span>
+                                      {a.seriesId ? (
+                                        <span
+                                          className="shrink-0 rounded border border-white/30 bg-black/40 px-1.5 py-0.5 text-[10px] font-semibold text-[rgba(248,243,236,0.9)]"
+                                          title={t(locale, "recurringBadge")}
+                                        >
+                                          {t(locale, "recurringBadgeShort")}
+                                        </span>
+                                      ) : null}
                                       {isCurrent ? (
                                         <span className="shrink-0 rounded bg-[var(--copper)] px-1.5 py-0.5 text-[10px] font-semibold text-white">
                                           {t(locale, "nowInShop")}
@@ -1169,20 +1177,43 @@ export function BarberAdminPanel({
                                   {a.customerPhone?.trim() ? (
                                     <a
                                       href={`tel:${a.customerPhone.replace(/[^\d+]/g, "")}`}
-                                      className="shrink-0 rounded-lg border border-white/20 bg-black/35 px-2.5 py-1.5 text-xs font-semibold text-[var(--copper)]"
+                                      className="shrink-0 rounded-lg border border-white/20 bg-black/35 px-2 py-1.5 text-xs font-semibold text-[var(--copper)]"
                                       onClick={(e) => e.stopPropagation()}
                                       aria-label={t(locale, "phone")}
                                     >
                                       {t(locale, "phone")}
                                     </a>
                                   ) : null}
-                                  <button
-                                    type="button"
-                                    onClick={() => cancelAppointment(a.id)}
-                                    className="shrink-0 rounded-lg border border-red-400/35 bg-red-950/40 px-2.5 py-1.5 text-xs font-medium text-red-200 hover:bg-red-950/70"
-                                  >
-                                    {t(locale, "cancelAppointment")}
-                                  </button>
+                                  {a.seriesId ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => cancelAppointment(a.id)}
+                                        title={t(locale, "cancelAppointment")}
+                                        className="shrink-0 rounded-lg border border-red-400/35 bg-red-950/40 px-2 py-1.5 text-xs font-medium text-red-200 hover:bg-red-950/70"
+                                      >
+                                        {t(locale, "cancelOnceShort")}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          cancelSeries(a.seriesId!)
+                                        }
+                                        title={t(locale, "cancelSeries")}
+                                        className="shrink-0 rounded-lg border border-amber-400/35 bg-amber-950/40 px-2 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-950/70"
+                                      >
+                                        {t(locale, "cancelSeriesShort")}
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => cancelAppointment(a.id)}
+                                      className="shrink-0 rounded-lg border border-red-400/35 bg-red-950/40 px-2.5 py-1.5 text-xs font-medium text-red-200 hover:bg-red-950/70"
+                                    >
+                                      {t(locale, "cancelAppointment")}
+                                    </button>
+                                  )}
                                 </div>
                                 {isOpen ? (
                                   <div className="space-y-2 border-t border-white/10 bg-black/20 px-3 py-2.5">
@@ -1192,13 +1223,11 @@ export function BarberAdminPanel({
                                       {teamMode && a.staff
                                         ? ` · ${a.staff.displayName}`
                                         : ""}
+                                      {a.seriesId
+                                        ? ` · ${t(locale, "recurringBadge")}`
+                                        : ""}
                                     </p>
                                     <div className="flex flex-wrap gap-1.5">
-                                      {a.seriesId ? (
-                                        <span className="rounded-full border border-white/25 bg-black/40 px-2 py-0.5 text-[11px] text-[rgba(248,243,236,0.85)]">
-                                          {t(locale, "recurringBadge")}
-                                        </span>
-                                      ) : null}
                                       {a.bookingGroupId &&
                                       (bookingGroupSize.get(a.bookingGroupId) ||
                                         0) > 1 ? (
@@ -1236,24 +1265,13 @@ export function BarberAdminPanel({
                                     ) : null}
                                     <div className="flex flex-wrap gap-2">
                                       {a.seriesId ? (
-                                        <>
-                                          <button
-                                            type="button"
-                                            onClick={() => openEditSeries(a)}
-                                            className="rounded-lg border border-white/25 bg-black/35 px-3 py-1.5 text-sm font-medium text-[rgba(248,243,236,0.9)] hover:bg-black/55"
-                                          >
-                                            {t(locale, "editSeries")}
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              cancelSeries(a.seriesId!)
-                                            }
-                                            className="rounded-lg border border-amber-400/35 bg-amber-950/40 px-3 py-1.5 text-sm font-medium text-amber-100 hover:bg-amber-950/70"
-                                          >
-                                            {t(locale, "cancelSeries")}
-                                          </button>
-                                        </>
+                                        <button
+                                          type="button"
+                                          onClick={() => openEditSeries(a)}
+                                          className="rounded-lg border border-white/25 bg-black/35 px-3 py-1.5 text-sm font-medium text-[rgba(248,243,236,0.9)] hover:bg-black/55"
+                                        >
+                                          {t(locale, "editSeries")}
+                                        </button>
                                       ) : null}
                                       <button
                                         type="button"
