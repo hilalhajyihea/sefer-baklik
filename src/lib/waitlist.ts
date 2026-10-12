@@ -15,6 +15,8 @@ export const MAX_WAITLIST_PER_DAY = 5;
 /** WhatsApp template name in Meta (typo preserved). Disabled until approved. */
 export const WA_TEMPLATE_WAITLIST = "barber_wating_list_ar";
 export const WA_WAITLIST_ENABLED = false;
+/** Slot-opened SMS/WhatsApp to waitlist — off; list + auto-remove on book stay active. */
+export const WAITLIST_NOTIFY_ENABLED = false;
 
 export function buildBarberBookingUrl(slug: string) {
   return `${getSiteUrl()}/${slug}`;
@@ -164,12 +166,14 @@ export async function removeFromWaitlistOnBooking(input: {
 
 /**
  * Notify everyone still on the waitlist that a slot opened for dateKey.
- * SMS active now; WhatsApp gated by WA_WAITLIST_ENABLED.
+ * Currently disabled (WAITLIST_NOTIFY_ENABLED); join + remove-on-book remain.
  */
 export async function notifyWaitlistSlotOpened(input: {
   barberId: string;
   dateKey: string;
 }) {
+  if (!WAITLIST_NOTIFY_ENABLED) return { notified: 0 };
+
   const barber = await prisma.barber.findUnique({
     where: { id: input.barberId },
   });
