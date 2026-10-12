@@ -85,9 +85,11 @@ export async function POST(request: Request) {
     if (requiresCode) {
       const canSms =
         barber.smsPlanEnabled && barber.smsConfirmationEnabled;
-      if (!canSms) {
+      const canWa =
+        barber.whatsappPlanEnabled && barber.whatsappConfirmationEnabled;
+      if (!canSms && !canWa) {
         return NextResponse.json(
-          { error: t(locale, "errConfirmCodeSmsRequired") },
+          { error: t(locale, "errConfirmCodeChannelRequired") },
           { status: 409 },
         );
       }

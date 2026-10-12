@@ -387,8 +387,8 @@ export function PlatformAdminPanel() {
 
   async function toggleBookingRequiresConfirmCode(barber: Barber) {
     const next = !barber.bookingRequiresConfirmCode;
-    if (next && !barber.smsPlanEnabled) {
-      setError("יש להפעיל SMS לפני הפעלת אישור תור בקוד");
+    if (next && !barber.smsPlanEnabled && !barber.whatsappPlanEnabled) {
+      setError("יש להפעיל SMS או WhatsApp לפני הפעלת אישור תור בקוד");
       return;
     }
     const res = await fetch("/api/platform/barbers", {
@@ -407,7 +407,7 @@ export function PlatformAdminPanel() {
     }
     setMessage(
       next
-        ? "אישור תור בקוד הופעל — לקוחות יקבלו קוד ב-SMS (15 דק׳). אישור קישור כובה אם היה פעיל."
+        ? "אישור תור בקוד הופעל — לקוחות יקבלו קוד ב-SMS/WhatsApp (15 דק׳). אישור קישור כובה אם היה פעיל."
         : "אישור תור בקוד כובה — תורים נקבעים מיד כמו קודם",
     );
     load();
@@ -869,13 +869,17 @@ export function PlatformAdminPanel() {
                         type="button"
                         onClick={() => toggleBookingRequiresConfirmCode(b)}
                         className="shop-chip rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-40"
-                        disabled={!b.smsPlanEnabled && !b.bookingRequiresConfirmCode}
+                        disabled={
+                          !b.smsPlanEnabled &&
+                          !b.whatsappPlanEnabled &&
+                          !b.bookingRequiresConfirmCode
+                        }
                         title={
                           b.bookingRequiresConfirmCode
                             ? "כיבוי מחזיר לקביעת תור מיידית (ברירת מחדל)"
-                            : !b.smsPlanEnabled
-                              ? "יש להפעיל SMS קודם"
-                              : "הלקוח מקבל קוד ב-SMS לאישור תוך 15 דקות (מכבה אישור קישור)"
+                            : !b.smsPlanEnabled && !b.whatsappPlanEnabled
+                              ? "יש להפעיל SMS או WhatsApp קודם"
+                              : "הלקוח מקבל קוד ב-SMS/WhatsApp לאישור תוך 15 דקות (מכבה אישור קישור)"
                         }
                       >
                         {b.bookingRequiresConfirmCode

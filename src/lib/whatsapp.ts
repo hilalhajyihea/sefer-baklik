@@ -49,6 +49,7 @@ export function whatsappConfigStatus() {
       reminder: WA_TEMPLATE_REMINDER,
       reminderNoCancel: WA_TEMPLATE_REMINDER_NO_CANCEL,
       reminderBook: WA_TEMPLATE_REMINDER_BOOK,
+      confirmCode: "barbe_confirm_code" as const,
       customerCancelDone: WA_TEMPLATE_CUSTOMER_CANCEL_DONE,
       barberCancel: WA_TEMPLATE_BARBER_CANCEL,
       language: WA_TEMPLATE_LANG,

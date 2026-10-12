@@ -11,8 +11,8 @@ import {
   WA_TEMPLATE_LANG,
 } from "@/lib/whatsapp";
 
-/** Flip to true only after Utility OTP template is Approved in Meta. */
-export const WA_CONFIRM_CODE_ENABLED = false;
+/** Utility OTP template barbe_confirm_code — Approved in Meta. */
+export const WA_CONFIRM_CODE_ENABLED = true;
 /** Meta Utility template: {{1}} name, {{2}} salon, {{3}} code */
 export const WA_TEMPLATE_CONFIRM_CODE = "barbe_confirm_code";
 
@@ -400,7 +400,7 @@ export async function sendBookingConfirmRequest(appointmentId: string) {
   };
 }
 
-/** Send OTP for bookingRequiresConfirmCode. SMS active; WhatsApp gated. */
+/** Send OTP for bookingRequiresConfirmCode (SMS and/or WhatsApp barbe_confirm_code). */
 export async function sendBookingConfirmCodeRequest(appointmentId: string) {
   const appointment = await prisma.appointment.findUnique({
     where: { id: appointmentId },
@@ -432,7 +432,7 @@ export async function sendBookingConfirmCodeRequest(appointmentId: string) {
   if (!smsOn && !waOn) {
     return {
       ok: false,
-      error: "נדרש SMS פעיל לשליחת קוד האישור",
+      error: "נדרש SMS או WhatsApp פעיל לשליחת קוד האישור",
     };
   }
 

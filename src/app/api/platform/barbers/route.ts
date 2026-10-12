@@ -194,11 +194,11 @@ export async function PATCH(request: Request) {
   if (confirmPatch.bookingRequiresConfirmCode === true) {
     const current = await prisma.barber.findUnique({
       where: { id: parsed.data.id },
-      select: { smsPlanEnabled: true },
+      select: { smsPlanEnabled: true, whatsappPlanEnabled: true },
     });
-    if (!current?.smsPlanEnabled) {
+    if (!current?.smsPlanEnabled && !current?.whatsappPlanEnabled) {
       return NextResponse.json(
-        { error: "יש להפעיל SMS לפני הפעלת אישור בקוד" },
+        { error: "יש להפעיל SMS או WhatsApp לפני הפעלת אישור בקוד" },
         { status: 400 },
       );
     }

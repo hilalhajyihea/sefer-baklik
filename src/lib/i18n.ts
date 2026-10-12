@@ -58,9 +58,9 @@ const he = {
     "נשלח קוד לאישור התור ל-{date} בשעה {time}. הזינו אותו כאן תוך {minutes} דקות — אחרת התור יבוטל.",
   bookConfirmCodeModalTitle: "התור עדיין לא מאושר",
   bookConfirmCodeModalHint:
-    "שלחנו קוד ב-SMS. הזינו אותו כאן תוך {minutes} דקות — אחרת התור יבוטל.",
+    "שלחנו קוד ב-SMS או WhatsApp. הזינו אותו כאן תוך {minutes} דקות — אחרת התור יבוטל.",
   bookConfirmCodeModalSlot: "{date} · {time}",
-  bookConfirmCodeLabel: "הקוד מתוך ה-SMS",
+  bookConfirmCodeLabel: "הקוד מההודעה",
   bookConfirmCodeCta: "אישור התור",
   bookConfirmCodeSubmitting: "מאשר...",
   bookConfirmCodeWrong: "הקוד שגוי. נסו שוב.",
@@ -289,6 +289,8 @@ const he = {
     "לא ניתן לקבוע תור כרגע — נדרש ערוץ SMS או WhatsApp לאישור. פנו למספרה.",
   errConfirmCodeSmsRequired:
     "לא ניתן לקבוע תור כרגע — נדרש SMS פעיל לאישור בקוד. פנו למספרה.",
+  errConfirmCodeChannelRequired:
+    "לא ניתן לקבוע תור כרגע — נדרש SMS או WhatsApp לאישור בקוד. פנו למספרה.",
   errStaffNotFound: "ספר לא נמצא בצוות",
   errCannotDisableStaff:
     "לא ניתן להשבית — נשארו פחות משני ספרים פעילים ויש תורים עתידיים משובצים",
@@ -384,9 +386,9 @@ const ar: { [K in keyof typeof he]: string } = {
     "أُرسل رمز لتأكيد الموعد لـ {date} الساعة {time}. أدخلوه هنا خلال {minutes} دقيقة — وإلا يُلغى الموعد.",
   bookConfirmCodeModalTitle: "الموعد لم يُؤكَّد بعد",
   bookConfirmCodeModalHint:
-    "أرسلنا رمزاً عبر SMS. أدخلوه هنا خلال {minutes} دقيقة — وإلا يُلغى الموعد.",
+    "أرسلنا رمزاً عبر SMS أو واتساب. أدخلوه هنا خلال {minutes} دقيقة — وإلا يُلغى الموعد.",
   bookConfirmCodeModalSlot: "{date} · {time}",
-  bookConfirmCodeLabel: "الرمز من رسالة SMS",
+  bookConfirmCodeLabel: "الرمز من الرسالة",
   bookConfirmCodeCta: "تأكيد الموعد",
   bookConfirmCodeSubmitting: "جاري التأكيد...",
   bookConfirmCodeWrong: "الرمز غير صحيح. حاولوا مرة أخرى.",
@@ -615,6 +617,8 @@ const ar: { [K in keyof typeof he]: string } = {
     "تعذر الحجز حالياً — يلزم قناة SMS أو واتساب للتأكيد. تواصلوا مع الصالون.",
   errConfirmCodeSmsRequired:
     "تعذر الحجز حالياً — يلزم SMS فعّال لتأكيد الرمز. تواصلوا مع الصالون.",
+  errConfirmCodeChannelRequired:
+    "تعذر الحجز حالياً — يلزم SMS أو واتساب لتأكيد الرمز. تواصلوا مع الصالون.",
   errStaffNotFound: "الحلاق غير موجود في الفريق",
   errCannotDisableStaff:
     "لا يمكن التعطيل — يتبقى أقل من حلاقين نشطين وهناك مواعيد مستقبلية معينة",
