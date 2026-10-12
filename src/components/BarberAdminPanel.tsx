@@ -142,10 +142,12 @@ export function BarberAdminPanel({
   manageStaffIdRef.current = manageStaffId;
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([]);
-  /** Other days the barber opened manually; today is always expanded. */
-  const [expandedOtherDays, setExpandedOtherDays] = useState<
-    Record<string, boolean>
-  >({});
+  /** Selected calendar day in appointments tab (chips). */
+  const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
+  /** Which appointment row shows full actions/details. */
+  const [expandedAppointmentId, setExpandedAppointmentId] = useState<
+    string | null
+  >(null);
   const [hours, setHours] = useState<HourRow[]>(defaultHours());
   const [dayOffs, setDayOffs] = useState<DayOff[]>([]);
   const [blockedWindows, setBlockedWindows] = useState<BlockedWindow[]>([]);
@@ -475,12 +477,42 @@ export function BarberAdminPanel({
     return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [filteredAppointments, waitlistByDay]);
 
+  useEffect(() => {
+    if (groupedByDay.length === 0) {
+      setSelectedDayKey(null);
+      return;
+    }
+    const todayKey = toDateKey(new Date(nowMs));
+    const keys = groupedByDay.map(([k]) => k);
+    if (selectedDayKey && keys.includes(selectedDayKey)) return;
+    setSelectedDayKey(keys.includes(todayKey) ? todayKey : keys[0]!);
+  }, [groupedByDay, nowMs, selectedDayKey]);
+
+  const selectedDayAppointments = useMemo(() => {
+    if (!selectedDayKey) return [];
+    return groupedByDay.find(([k]) => k === selectedDayKey)?.[1] || [];
+  }, [groupedByDay, selectedDayKey]);
+
+  const selectedDayWaitlist = useMemo(() => {
+    if (!selectedDayKey) return [];
+    return waitlistByDay.get(selectedDayKey) || [];
+  }, [selectedDayKey, waitlistByDay]);
+
   const nextUpcomingId = useMemo(() => {
-    const upcoming = filteredAppointments.find(
+    const upcoming = selectedDayAppointments.find(
       (a) => new Date(a.startsAt).getTime() > nowMs,
     );
     return upcoming?.id ?? null;
-  }, [filteredAppointments, nowMs]);
+  }, [selectedDayAppointments, nowMs]);
+
+  function shortDayChipLabel(date: Date) {
+    return date.toLocaleDateString(locale === "ar" ? "ar-IL" : "he-IL", {
+      timeZone: "Asia/Jerusalem",
+      weekday: "short",
+      day: "numeric",
+      month: "numeric",
+    });
+  }
 
   function staffColor(staffId: string | null | undefined) {
     if (!staffId) return "bg-[var(--muted)] text-white";
@@ -990,250 +1022,302 @@ export function BarberAdminPanel({
                   {t(locale, "noAppointments")}
                 </p>
               ) : (
-                groupedByDay.map(([dateKey, dayAppointments]) => {
-                  const labelDate =
-                    dayAppointments[0]
-                      ? new Date(dayAppointments[0].startsAt)
-                      : combineDateAndTime(dateKey, "12:00");
-                  const dayWaitlist = waitlistByDay.get(dateKey) || [];
-                  const todayKey = toDateKey(new Date(nowMs));
-                  const isToday = dateKey === todayKey;
-                  const isExpanded =
-                    isToday || Boolean(expandedOtherDays[dateKey]);
-                  return (
-                    <section key={dateKey} className="mb-4">
-                      {isToday ? (
-                        <div className="mb-3 flex flex-wrap items-baseline gap-2 border-b border-white/15 pb-2">
-                          <h2 className="font-display text-2xl text-[var(--cream)]">
-                            {formatDateLocalized(locale, labelDate)}
-                          </h2>
-                          <span className="rounded-full bg-[var(--copper)] px-2.5 py-0.5 text-xs font-semibold text-white">
-                            {t(locale, "today")}
-                          </span>
-                          <span className="text-xs text-[rgba(248,243,236,0.55)]">
-                            {t(locale, "dayAppointmentsCount", {
-                              count: dayAppointments.length,
+                <div className="space-y-4">
+                  <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                    {groupedByDay.map(([dateKey, dayAppointments]) => {
+                      const labelDate =
+                        dayAppointments[0]
+                          ? new Date(dayAppointments[0].startsAt)
+                          : combineDateAndTime(dateKey, "12:00");
+                      const todayKey = toDateKey(new Date(nowMs));
+                      const isToday = dateKey === todayKey;
+                      const selected = dateKey === selectedDayKey;
+                      const wlCount = waitlistByDay.get(dateKey)?.length || 0;
+                      return (
+                        <button
+                          key={dateKey}
+                          type="button"
+                          onClick={() => {
+                            setSelectedDayKey(dateKey);
+                            setExpandedAppointmentId(null);
+                          }}
+                          className={`shrink-0 rounded-xl border px-3 py-2 text-center transition ${
+                            selected
+                              ? "border-[var(--copper)] bg-[var(--copper)] text-white shadow-md"
+                              : "border-white/15 bg-black/30 text-[var(--cream)] hover:bg-black/45"
+                          }`}
+                        >
+                          <div className="text-sm font-semibold leading-tight">
+                            {isToday
+                              ? t(locale, "today")
+                              : shortDayChipLabel(labelDate)}
+                          </div>
+                          <div
+                            className={`mt-0.5 text-[11px] ${
+                              selected
+                                ? "text-white/85"
+                                : "text-[rgba(248,243,236,0.55)]"
+                            }`}
+                          >
+                            {dayAppointments.length}
+                            {wlCount > 0 ? `+${wlCount}` : ""}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {selectedDayKey ? (
+                    <section>
+                      <div className="mb-2 flex flex-wrap items-baseline gap-2 border-b border-white/15 pb-2">
+                        <h2 className="font-display text-xl text-[var(--cream)] sm:text-2xl">
+                          {formatDateLocalized(
+                            locale,
+                            selectedDayAppointments[0]
+                              ? new Date(selectedDayAppointments[0].startsAt)
+                              : combineDateAndTime(selectedDayKey, "12:00"),
+                          )}
+                        </h2>
+                        <span className="text-xs text-[rgba(248,243,236,0.55)]">
+                          {t(locale, "dayAppointmentsCount", {
+                            count: selectedDayAppointments.length,
+                          })}
+                        </span>
+                        {selectedDayWaitlist.length > 0 ? (
+                          <span className="text-xs text-amber-200/90">
+                            {t(locale, "waitlistAdminCount", {
+                              count: selectedDayWaitlist.length,
                             })}
                           </span>
-                          {dayWaitlist.length > 0 ? (
-                            <span className="text-xs text-amber-200/90">
-                              {t(locale, "waitlistAdminCount", {
-                                count: dayWaitlist.length,
-                              })}
-                            </span>
-                          ) : null}
-                        </div>
+                        ) : null}
+                      </div>
+
+                      {selectedDayAppointments.length === 0 ? (
+                        <p className="text-sm text-[rgba(248,243,236,0.62)]">
+                          {t(locale, "noAppointmentsThatDay")}
+                        </p>
                       ) : (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setExpandedOtherDays((prev) => ({
-                              ...prev,
-                              [dateKey]: !prev[dateKey],
-                            }))
-                          }
-                          aria-expanded={isExpanded}
-                          className="mb-3 flex w-full flex-wrap items-center justify-between gap-2 rounded-xl border border-white/12 bg-black/30 px-4 py-3 text-right transition hover:bg-black/45"
-                        >
-                          <div className="flex flex-wrap items-baseline gap-2">
-                            <h2 className="font-display text-xl text-[var(--cream)]">
-                              {formatDateLocalized(locale, labelDate)}
-                            </h2>
-                            <span className="text-xs text-[rgba(248,243,236,0.55)]">
-                              {t(locale, "dayAppointmentsCount", {
-                                count: dayAppointments.length,
-                              })}
-                            </span>
-                            {dayWaitlist.length > 0 ? (
-                              <span className="text-xs text-amber-200/90">
-                                {t(locale, "waitlistAdminCount", {
-                                  count: dayWaitlist.length,
-                                })}
-                              </span>
-                            ) : null}
-                          </div>
-                          <span className="text-xs font-medium text-[var(--copper)]">
-                            {isExpanded
-                              ? t(locale, "collapseDay")
-                              : t(locale, "expandDay")}
-                          </span>
-                        </button>
-                      )}
-                      {isExpanded ? (
-                      <div className="space-y-2">
-                        {dayAppointments.map((a) => {
-                          const status = appointmentStatus(
-                            a.startsAt,
-                            a.endsAt,
-                            nowMs,
-                          );
-                          const isCurrent = status === "current";
-                          const isNext =
-                            status === "upcoming" && a.id === nextUpcomingId;
-                          return (
-                            <div
-                              key={a.id}
-                              className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 transition ${
-                                isCurrent
-                                  ? "border-[var(--copper)] bg-[rgba(196,90,40,0.22)] shadow-[0_0_0_1px_rgba(196,90,40,0.3)]"
-                                  : isNext
-                                    ? "border-[var(--olive)] bg-[rgba(47,74,52,0.35)]"
-                                    : status === "past"
-                                      ? "border-white/10 bg-black/25 opacity-55"
-                                      : "border-white/12 bg-black/30"
-                              }`}
-                            >
-                              <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <p className="font-semibold text-[var(--cream)]">
-                                    {formatTime(new Date(a.startsAt))}–
-                                    {formatTime(new Date(a.endsAt))}
-                                  </p>
-                                  {teamMode && a.staff ? (
-                                    <span
-                                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${staffColor(a.staffId)}`}
-                                    >
-                                      {a.staff.displayName}
-                                    </span>
-                                  ) : null}
-                                  {isCurrent ? (
-                                    <span className="rounded-full bg-[var(--copper)] px-2 py-0.5 text-xs font-semibold text-white">
-                                      {t(locale, "nowInShop")}
-                                    </span>
-                                  ) : null}
-                                  {isNext ? (
-                                    <span className="rounded-full bg-[var(--olive)] px-2 py-0.5 text-xs font-semibold text-white">
-                                      {t(locale, "nextUp")}
-                                    </span>
-                                  ) : null}
-                                  {a.seriesId ? (
-                                    <span className="rounded-full border border-white/25 bg-black/40 px-2 py-0.5 text-xs font-semibold text-[rgba(248,243,236,0.85)]">
-                                      {t(locale, "recurringBadge")}
-                                    </span>
-                                  ) : null}
-                                  {a.bookingGroupId &&
-                                  (bookingGroupSize.get(a.bookingGroupId) || 0) >
-                                    1 ? (
-                                    <span className="rounded-full border border-sky-400/40 bg-sky-950/50 px-2 py-0.5 text-xs font-semibold text-sky-100">
-                                      {a.bookingGroupIndex === 0
-                                        ? t(locale, "partyGroupLeadBadge", {
-                                            count:
-                                              bookingGroupSize.get(
-                                                a.bookingGroupId,
-                                              ) || 0,
-                                          })
-                                        : t(locale, "partyGroupBadge", {
-                                            count:
-                                              bookingGroupSize.get(
-                                                a.bookingGroupId,
-                                              ) || 0,
-                                          })}
-                                    </span>
-                                  ) : null}
-                                  {a.status === "PENDING_CONFIRM" ? (
-                                    <span className="rounded-full border border-[var(--copper)]/50 bg-[rgba(196,90,40,0.25)] px-2 py-0.5 text-xs font-semibold text-[var(--cream)]">
-                                      {t(locale, "pendingConfirmBadge")}
-                                    </span>
-                                  ) : a.status === "BOOKED" && a.confirmToken ? (
-                                    <span className="rounded-full border border-[var(--olive)]/50 bg-[rgba(47,74,52,0.35)] px-2 py-0.5 text-xs font-semibold text-[var(--cream)]">
-                                      {t(locale, "confirmedBadge")}
-                                    </span>
-                                  ) : null}
-                                </div>
-                                <p className="text-sm text-[rgba(248,243,236,0.62)]">
-                                  {a.customerName}
+                        <div className="divide-y divide-white/10 rounded-xl border border-white/12 bg-black/25">
+                          {selectedDayAppointments.map((a) => {
+                            const status = appointmentStatus(
+                              a.startsAt,
+                              a.endsAt,
+                              nowMs,
+                            );
+                            const isCurrent = status === "current";
+                            const isNext =
+                              status === "upcoming" && a.id === nextUpcomingId;
+                            const isOpen = expandedAppointmentId === a.id;
+                            return (
+                              <div
+                                key={a.id}
+                                className={`${
+                                  isCurrent
+                                    ? "bg-[rgba(196,90,40,0.22)]"
+                                    : isNext
+                                      ? "bg-[rgba(47,74,52,0.28)]"
+                                      : status === "past"
+                                        ? "opacity-55"
+                                        : ""
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 px-2.5 py-1.5 sm:px-3 sm:py-2">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setExpandedAppointmentId(
+                                        isOpen ? null : a.id,
+                                      )
+                                    }
+                                    className="min-w-0 flex-1 text-right"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span
+                                        className="shrink-0 tabular-nums text-sm font-semibold text-[var(--cream)]"
+                                        dir="ltr"
+                                      >
+                                        {formatTime(new Date(a.startsAt))}
+                                      </span>
+                                      <span className="truncate text-sm text-[var(--cream)]">
+                                        {a.customerName}
+                                      </span>
+                                      {isCurrent ? (
+                                        <span className="shrink-0 rounded bg-[var(--copper)] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                                          {t(locale, "nowInShop")}
+                                        </span>
+                                      ) : null}
+                                      {isNext ? (
+                                        <span className="shrink-0 rounded bg-[var(--olive)] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                                          {t(locale, "nextUp")}
+                                        </span>
+                                      ) : null}
+                                      {a.status === "PENDING_CONFIRM" ? (
+                                        <span className="shrink-0 rounded border border-[var(--copper)]/50 px-1.5 py-0.5 text-[10px] text-[var(--cream)]">
+                                          {t(locale, "pendingConfirmBadge")}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                    {a.customerPhone?.trim() ? (
+                                      <p
+                                        className="mt-0.5 truncate text-xs text-[rgba(248,243,236,0.55)]"
+                                        dir="ltr"
+                                      >
+                                        {a.customerPhone}
+                                      </p>
+                                    ) : null}
+                                  </button>
                                   {a.customerPhone?.trim() ? (
-                                    <>
-                                      {" · "}
+                                    <a
+                                      href={`tel:${a.customerPhone.replace(/[^\d+]/g, "")}`}
+                                      className="shrink-0 rounded-lg border border-white/20 bg-black/35 px-2.5 py-1.5 text-xs font-semibold text-[var(--copper)]"
+                                      onClick={(e) => e.stopPropagation()}
+                                      aria-label={t(locale, "phone")}
+                                    >
+                                      {t(locale, "phone")}
+                                    </a>
+                                  ) : null}
+                                  <button
+                                    type="button"
+                                    onClick={() => cancelAppointment(a.id)}
+                                    className="shrink-0 rounded-lg border border-red-400/35 bg-red-950/40 px-2.5 py-1.5 text-xs font-medium text-red-200 hover:bg-red-950/70"
+                                  >
+                                    {t(locale, "cancelAppointment")}
+                                  </button>
+                                </div>
+                                {isOpen ? (
+                                  <div className="space-y-2 border-t border-white/10 bg-black/20 px-3 py-2.5">
+                                    <p className="text-xs text-[rgba(248,243,236,0.65)]">
+                                      {formatTime(new Date(a.startsAt))}–
+                                      {formatTime(new Date(a.endsAt))}
+                                      {teamMode && a.staff
+                                        ? ` · ${a.staff.displayName}`
+                                        : ""}
+                                    </p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {a.seriesId ? (
+                                        <span className="rounded-full border border-white/25 bg-black/40 px-2 py-0.5 text-[11px] text-[rgba(248,243,236,0.85)]">
+                                          {t(locale, "recurringBadge")}
+                                        </span>
+                                      ) : null}
+                                      {a.bookingGroupId &&
+                                      (bookingGroupSize.get(a.bookingGroupId) ||
+                                        0) > 1 ? (
+                                        <span className="rounded-full border border-sky-400/40 bg-sky-950/50 px-2 py-0.5 text-[11px] text-sky-100">
+                                          {a.bookingGroupIndex === 0
+                                            ? t(locale, "partyGroupLeadBadge", {
+                                                count:
+                                                  bookingGroupSize.get(
+                                                    a.bookingGroupId,
+                                                  ) || 0,
+                                              })
+                                            : t(locale, "partyGroupBadge", {
+                                                count:
+                                                  bookingGroupSize.get(
+                                                    a.bookingGroupId,
+                                                  ) || 0,
+                                              })}
+                                        </span>
+                                      ) : null}
+                                      {a.status === "BOOKED" &&
+                                      a.confirmToken ? (
+                                        <span className="rounded-full border border-[var(--olive)]/50 bg-[rgba(47,74,52,0.35)] px-2 py-0.5 text-[11px] text-[var(--cream)]">
+                                          {t(locale, "confirmedBadge")}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                    {a.customerPhone?.trim() ? (
                                       <a
                                         href={`tel:${a.customerPhone.replace(/[^\d+]/g, "")}`}
                                         dir="ltr"
-                                        className="font-medium text-[var(--copper)] underline-offset-2 hover:underline"
-                                        onClick={(e) => e.stopPropagation()}
+                                        className="inline-block text-sm font-medium text-[var(--copper)] underline-offset-2 hover:underline"
                                       >
                                         {a.customerPhone}
                                       </a>
-                                    </>
-                                  ) : null}
-                                </p>
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                {a.seriesId ? (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => openEditSeries(a)}
-                                      className="rounded-lg border border-white/25 bg-black/35 px-3 py-1.5 text-sm font-medium text-[rgba(248,243,236,0.9)] hover:bg-black/55"
-                                    >
-                                      {t(locale, "editSeries")}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => cancelSeries(a.seriesId!)}
-                                      className="rounded-lg border border-amber-400/35 bg-amber-950/40 px-3 py-1.5 text-sm font-medium text-amber-100 hover:bg-amber-950/70"
-                                    >
-                                      {t(locale, "cancelSeries")}
-                                    </button>
-                                  </>
+                                    ) : null}
+                                    <div className="flex flex-wrap gap-2">
+                                      {a.seriesId ? (
+                                        <>
+                                          <button
+                                            type="button"
+                                            onClick={() => openEditSeries(a)}
+                                            className="rounded-lg border border-white/25 bg-black/35 px-3 py-1.5 text-sm font-medium text-[rgba(248,243,236,0.9)] hover:bg-black/55"
+                                          >
+                                            {t(locale, "editSeries")}
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              cancelSeries(a.seriesId!)
+                                            }
+                                            className="rounded-lg border border-amber-400/35 bg-amber-950/40 px-3 py-1.5 text-sm font-medium text-amber-100 hover:bg-amber-950/70"
+                                          >
+                                            {t(locale, "cancelSeries")}
+                                          </button>
+                                        </>
+                                      ) : null}
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setExpandedAppointmentId(null)
+                                        }
+                                        className="rounded-lg border border-white/20 bg-black/30 px-3 py-1.5 text-sm font-medium text-[rgba(248,243,236,0.85)]"
+                                      >
+                                        {t(locale, "appointmentHideDetails")}
+                                      </button>
+                                    </div>
+                                  </div>
                                 ) : null}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {selectedDayWaitlist.length > 0 ? (
+                        <div className="mt-3 rounded-xl border border-amber-400/25 bg-amber-950/25 p-3">
+                          <p className="mb-2 text-sm font-semibold text-amber-100">
+                            {t(locale, "waitlistTitle")}{" "}
+                            <span className="font-normal text-amber-100/70">
+                              (
+                              {t(locale, "waitlistAdminCount", {
+                                count: selectedDayWaitlist.length,
+                              })}
+                              )
+                            </span>
+                          </p>
+                          <ul className="space-y-2">
+                            {selectedDayWaitlist.map((e) => (
+                              <li
+                                key={e.id}
+                                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/25 px-3 py-2"
+                              >
+                                <div>
+                                  <p className="text-sm font-medium text-[var(--cream)]">
+                                    {e.customerName}
+                                  </p>
+                                  <a
+                                    href={`tel:${e.customerPhone.replace(/[^\d+]/g, "")}`}
+                                    dir="ltr"
+                                    className="text-sm text-[var(--copper)] underline-offset-2 hover:underline"
+                                  >
+                                    {e.customerPhone}
+                                  </a>
+                                </div>
                                 <button
                                   type="button"
-                                  onClick={() => cancelAppointment(a.id)}
+                                  onClick={() => removeWaitlistEntry(e.id)}
                                   className="rounded-lg border border-red-400/35 bg-red-950/40 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-950/70"
                                 >
-                                  {t(locale, "cancelAppointment")}
+                                  {t(locale, "waitlistRemove")}
                                 </button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {dayWaitlist.length > 0 ? (
-                          <div className="mt-3 rounded-xl border border-amber-400/25 bg-amber-950/25 p-3">
-                            <p className="mb-2 text-sm font-semibold text-amber-100">
-                              {t(locale, "waitlistTitle")}{" "}
-                              <span className="font-normal text-amber-100/70">
-                                (
-                                {t(locale, "waitlistAdminCount", {
-                                  count: dayWaitlist.length,
-                                })}
-                                )
-                              </span>
-                            </p>
-                            <ul className="space-y-2">
-                              {dayWaitlist.map((e) => (
-                                <li
-                                  key={e.id}
-                                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/25 px-3 py-2"
-                                >
-                                  <div>
-                                    <p className="text-sm font-medium text-[var(--cream)]">
-                                      {e.customerName}
-                                    </p>
-                                    <a
-                                      href={`tel:${e.customerPhone.replace(/[^\d+]/g, "")}`}
-                                      dir="ltr"
-                                      className="text-sm text-[var(--copper)] underline-offset-2 hover:underline"
-                                    >
-                                      {e.customerPhone}
-                                    </a>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeWaitlistEntry(e.id)}
-                                    className="rounded-lg border border-red-400/35 bg-red-950/40 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-950/70"
-                                  >
-                                    {t(locale, "waitlistRemove")}
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null}
-                      </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       ) : null}
                     </section>
-                  );
-                })
+                  ) : null}
+                </div>
               )}
             </div>
           )}
