@@ -21,6 +21,10 @@ import {
   buildReminderWhatsAppParamsBook,
 } from "@/lib/whatsapp";
 import { formatDateLocalized } from "@/lib/i18n";
+import {
+  countBookingGroupSize,
+  timeLabelWithPartySize,
+} from "@/lib/partyBooking";
 import { getSiteUrl } from "@/lib/seo";
 import { formatTime } from "@/lib/time";
 
@@ -100,6 +104,13 @@ export async function sendBookingConfirmation(appointmentId: string) {
     ? cancelUrl
     : undefined;
 
+  const partySize = await countBookingGroupSize(appointment.bookingGroupId);
+  const timeLabel = timeLabelWithPartySize(
+    formatTime(appointment.startsAt),
+    partySize,
+    "ar",
+  );
+
   let sms: ChannelResult | undefined;
   let whatsapp: ChannelResult | undefined;
 
@@ -113,6 +124,7 @@ export async function sendBookingConfirmation(appointmentId: string) {
         staffName: appointment.staff?.displayName,
         startsAt: appointment.startsAt,
         cancelUrl: cancelUrlForSms,
+        partySize,
         locale: appointment.barber.locale,
       }),
     });
@@ -132,7 +144,7 @@ export async function sendBookingConfirmation(appointmentId: string) {
             barberName: appointment.barber.displayName,
             staffName: appointment.staff?.displayName,
             dateLabel: formatDateLocalized("ar", appointment.startsAt),
-            timeLabel: formatTime(appointment.startsAt),
+            timeLabel,
             cancelUrl,
           })
         : buildConfirmWhatsAppParamsNoCancel({
@@ -140,7 +152,7 @@ export async function sendBookingConfirmation(appointmentId: string) {
             barberName: appointment.barber.displayName,
             staffName: appointment.staff?.displayName,
             dateLabel: formatDateLocalized("ar", appointment.startsAt),
-            timeLabel: formatTime(appointment.startsAt),
+            timeLabel,
           }),
     });
   }

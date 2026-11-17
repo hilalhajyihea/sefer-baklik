@@ -1,4 +1,6 @@
 import { randomBytes } from "crypto";
+import { prisma } from "@/lib/prisma";
+import { normalizeLocale, t, type Locale } from "@/lib/i18n";
 import { minutesToTime, parseTimeToMinutes } from "@/lib/time";
 
 /** Max people in one consecutive public booking. */
@@ -39,5 +41,35 @@ export function consecutiveTimesFrom(
   const start = parseTimeToMinutes(startTime);
   return Array.from({ length: count }, (_, i) =>
     minutesToTime(start + i * slotMinutes),
+  );
+}
+
+/** Size of a multi-person booking group; 1 when not in a group. */
+export async function countBookingGroupSize(
+  bookingGroupId: string | null | undefined,
+): Promise<number> {
+  if (!bookingGroupId) return 1;
+  const n = await prisma.appointment.count({
+    where: {
+      bookingGroupId,
+      status: { in: ["BOOKED", "PENDING_CONFIRM"] },
+    },
+  });
+  return Math.max(1, n);
+}
+
+/**
+ * Enrich time label for existing WhatsApp templates (no new {{n}}).
+ * e.g. "10:00 (3 مواعيد)" when partySize > 1.
+ */
+export function timeLabelWithPartySize(
+  timeLabel: string,
+  partySize: number,
+  locale?: Locale | string | null,
+): string {
+  if (partySize <= 1) return timeLabel;
+  return (
+    timeLabel +
+    t(normalizeLocale(locale), "waPartyTimeSuffix", { count: partySize })
   );
 }

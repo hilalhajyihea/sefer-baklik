@@ -246,6 +246,16 @@ const he = {
     "התור אצל {barber} נקבע ל-{date} בשעה {time}.",
   smsConfirmLine2Staff:
     "התור אצל {barber} עם {staff} נקבע ל-{date} בשעה {time}.",
+  smsConfirmLine2Party:
+    "נקבעו {count} תורים רצופים אצל {barber} ל-{date} משעה {time}.",
+  smsConfirmLine2PartyStaff:
+    "נקבעו {count} תורים רצופים אצל {barber} עם {staff} ל-{date} משעה {time}.",
+  smsConfirmRequestLine2Party:
+    "לאישור {count} תורים רצופים אצל {barber} ב-{date} משעה {time}:",
+  smsConfirmRequestLine2PartyStaff:
+    "לאישור {count} תורים רצופים אצל {barber} עם {staff} ב-{date} משעה {time}:",
+  /** Appended inside WhatsApp time param for existing templates */
+  waPartyTimeSuffix: " ({count} תורים)",
   smsReminderLine1: "תזכורת: שלום {name},",
   smsReminderLine2:
     "התור אצל {barber} בעוד כ-{minutes} דקות ({time}).",
@@ -574,6 +584,15 @@ const ar: { [K in keyof typeof he]: string } = {
     "تم حجز موعدك لدى {barber} لـ {date} الساعة {time}.",
   smsConfirmLine2Staff:
     "تم حجز موعدك لدى {barber} مع {staff} لـ {date} الساعة {time}.",
+  smsConfirmLine2Party:
+    "تم حجز {count} مواعيد متتالية لدى {barber} لـ {date} من الساعة {time}.",
+  smsConfirmLine2PartyStaff:
+    "تم حجز {count} مواعيد متتالية لدى {barber} مع {staff} لـ {date} من الساعة {time}.",
+  smsConfirmRequestLine2Party:
+    "لتأكيد {count} مواعيد متتالية لدى {barber} في {date} من الساعة {time}:",
+  smsConfirmRequestLine2PartyStaff:
+    "لتأكيد {count} مواعيد متتالية لدى {barber} مع {staff} في {date} من الساعة {time}:",
+  waPartyTimeSuffix: " ({count} مواعيد)",
   smsReminderLine1: "تذكير: مرحباً {name}،",
   smsReminderLine2:
     "موعدك لدى {barber} خلال حوالي {minutes} دقيقة ({time}).",

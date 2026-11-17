@@ -57,21 +57,43 @@ export function buildConfirmRequestSms(input: {
   startsAt: Date;
   confirmUrl: string;
   minutes: number;
+  partySize?: number;
   locale?: Locale | string | null;
 }): string {
   const locale = normalizeLocale(input.locale);
-  const where = input.staffName
-    ? t(locale, "confirmRequestLine2Staff", {
-        barber: input.barberName,
-        staff: input.staffName,
-        date: formatDateLocalized(locale, input.startsAt),
-        time: formatTime(input.startsAt),
-      })
-    : t(locale, "confirmRequestLine2", {
-        barber: input.barberName,
-        date: formatDateLocalized(locale, input.startsAt),
-        time: formatTime(input.startsAt),
-      });
+  const partySize = input.partySize && input.partySize > 1 ? input.partySize : 1;
+  const date = formatDateLocalized(locale, input.startsAt);
+  const time = formatTime(input.startsAt);
+  let where: string;
+  if (partySize > 1) {
+    where = input.staffName
+      ? t(locale, "smsConfirmRequestLine2PartyStaff", {
+          count: partySize,
+          barber: input.barberName,
+          staff: input.staffName,
+          date,
+          time,
+        })
+      : t(locale, "smsConfirmRequestLine2Party", {
+          count: partySize,
+          barber: input.barberName,
+          date,
+          time,
+        });
+  } else {
+    where = input.staffName
+      ? t(locale, "confirmRequestLine2Staff", {
+          barber: input.barberName,
+          staff: input.staffName,
+          date,
+          time,
+        })
+      : t(locale, "confirmRequestLine2", {
+          barber: input.barberName,
+          date,
+          time,
+        });
+  }
   return [
     t(locale, "confirmRequestLine1", { name: input.customerName }),
     where,
@@ -349,6 +371,16 @@ export async function sendBookingConfirmRequest(appointmentId: string) {
     };
   }
 
+  const { countBookingGroupSize, timeLabelWithPartySize } = await import(
+    "@/lib/partyBooking"
+  );
+  const partySize = await countBookingGroupSize(appointment.bookingGroupId);
+  const timeLabel = timeLabelWithPartySize(
+    formatTime(appointment.startsAt),
+    partySize,
+    "ar",
+  );
+
   let sms;
   let whatsapp;
 
@@ -363,6 +395,7 @@ export async function sendBookingConfirmRequest(appointmentId: string) {
         startsAt: appointment.startsAt,
         confirmUrl,
         minutes: CONFIRM_HOLD_MINUTES,
+        partySize,
         locale: appointment.barber.locale,
       }),
     });
@@ -379,7 +412,7 @@ export async function sendBookingConfirmRequest(appointmentId: string) {
         barberName: appointment.barber.displayName,
         staffName: appointment.staff?.displayName,
         dateLabel: formatDateLocalized("ar", appointment.startsAt),
-        timeLabel: formatTime(appointment.startsAt),
+        timeLabel,
         confirmUrl,
       }),
     });

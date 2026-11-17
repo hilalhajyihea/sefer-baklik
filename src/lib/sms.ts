@@ -207,21 +207,43 @@ export function buildConfirmationSms(input: {
   staffName?: string | null;
   startsAt: Date;
   cancelUrl?: string | null;
+  partySize?: number;
   locale?: Locale | string | null;
 }): string {
   const locale = normalizeLocale(input.locale);
-  const line2 = input.staffName
-    ? t(locale, "smsConfirmLine2Staff", {
-        barber: input.barberName,
-        staff: input.staffName,
-        date: formatDateLocalized(locale, input.startsAt),
-        time: formatTime(input.startsAt),
-      })
-    : t(locale, "smsConfirmLine2", {
-        barber: input.barberName,
-        date: formatDateLocalized(locale, input.startsAt),
-        time: formatTime(input.startsAt),
-      });
+  const partySize = input.partySize && input.partySize > 1 ? input.partySize : 1;
+  const date = formatDateLocalized(locale, input.startsAt);
+  const time = formatTime(input.startsAt);
+  let line2: string;
+  if (partySize > 1) {
+    line2 = input.staffName
+      ? t(locale, "smsConfirmLine2PartyStaff", {
+          count: partySize,
+          barber: input.barberName,
+          staff: input.staffName,
+          date,
+          time,
+        })
+      : t(locale, "smsConfirmLine2Party", {
+          count: partySize,
+          barber: input.barberName,
+          date,
+          time,
+        });
+  } else {
+    line2 = input.staffName
+      ? t(locale, "smsConfirmLine2Staff", {
+          barber: input.barberName,
+          staff: input.staffName,
+          date,
+          time,
+        })
+      : t(locale, "smsConfirmLine2", {
+          barber: input.barberName,
+          date,
+          time,
+        });
+  }
   const lines = [
     t(locale, "smsConfirmLine1", { name: input.customerName }),
     line2,
