@@ -652,6 +652,29 @@ export function BarberAdminPanel({
     e.preventDefault();
     setMessage("");
     setError("");
+    if (!offDate) return;
+
+    try {
+      const previewParams = new URLSearchParams({ previewDate: offDate });
+      if (teamMode && manageStaffId) {
+        previewParams.set("staffId", manageStaffId);
+      }
+      const previewUrl = teamMode
+        ? `/api/barber/staff/days-off?${previewParams}`
+        : `/api/barber/days-off?${previewParams}`;
+      const previewRes = await fetch(previewUrl);
+      const preview = await previewRes.json().catch(() => ({}));
+      const count = Number(preview.appointmentCount || 0);
+      if (count > 0) {
+        const ok = confirm(
+          t(locale, "dayOffConfirmCancel", { count }),
+        );
+        if (!ok) return;
+      }
+    } catch {
+      // proceed without preview if network fails
+    }
+
     const res = await fetch(
       teamMode ? "/api/barber/staff/days-off" : "/api/barber/days-off",
       {
@@ -675,8 +698,14 @@ export function BarberAdminPanel({
     }
     setOffDate("");
     setOffNote("");
-    setMessage(t(locale, "dayOffAdded"));
+    const cancelled = Number(data.cancelledCount || 0);
+    setMessage(
+      cancelled > 0
+        ? t(locale, "dayOffAddedWithCancel", { count: cancelled })
+        : t(locale, "dayOffAdded"),
+    );
     await loadHoursAndDaysOff(teamMode, manageStaffId);
+    await load({ silent: true });
   }
 
   async function saveSmsSettings(e: FormEvent) {
@@ -790,7 +819,10 @@ export function BarberAdminPanel({
   }
 
   async function removeDayOff(id: string) {
-    await fetch(
+    if (!confirm(t(locale, "dayOffConfirmRestore"))) return;
+    setMessage("");
+    setError("");
+    const res = await fetch(
       teamMode ? "/api/barber/staff/days-off" : "/api/barber/days-off",
       {
         method: "DELETE",
@@ -798,8 +830,28 @@ export function BarberAdminPanel({
         body: JSON.stringify({ id }),
       },
     );
-    setMessage(t(locale, "dayOffRemoved"));
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(data.error || t(locale, "addFailed"));
+      return;
+    }
+    const restored = Number(data.restoredCount || 0);
+    const skipped = Number(data.skippedCount || 0);
+    if (restored > 0 || skipped > 0) {
+      setMessage(
+        t(locale, "dayOffRemovedWithRestore", {
+          restored,
+          skipped:
+            skipped > 0
+              ? t(locale, "dayOffRestoreSkipped", { skipped })
+              : "",
+        }),
+      );
+    } else {
+      setMessage(t(locale, "dayOffRemoved"));
+    }
     await loadHoursAndDaysOff(teamMode, manageStaffId);
+    await load({ silent: true });
   }
 
   async function addBlockedWindow(e: FormEvent) {

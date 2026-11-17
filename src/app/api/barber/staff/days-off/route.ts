@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireBarberSession } from "@/lib/auth";
+import {
+  cancelAppointmentsForDayOff,
+  countAppointmentsOnDay,
+  restoreAppointmentsAfterDayOffRemoved,
+} from "@/lib/dayOffAppointments";
 import { getBarberLocale, t } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
 import { isTeamMode } from "@/lib/staff";
-import { dateKeyToDbDate, toDateKey } from "@/lib/time";
+import { dateKeyToDbDate, dbDateToDateKey, toDateKey } from "@/lib/time";
 
 async function assertStaffOwned(barberId: string, staffId: string) {
   return prisma.staff.findFirst({
@@ -19,7 +24,8 @@ export async function GET(request: Request) {
   }
 
   const locale = await getBarberLocale(session.barberId);
-  const staffId = new URL(request.url).searchParams.get("staffId");
+  const { searchParams } = new URL(request.url);
+  const staffId = searchParams.get("staffId");
   if (!staffId) {
     return NextResponse.json({ error: t(locale, "errIdMissing") }, { status: 400 });
   }
@@ -27,6 +33,22 @@ export async function GET(request: Request) {
   const staff = await assertStaffOwned(session.barberId, staffId);
   if (!staff) {
     return NextResponse.json({ error: t(locale, "errStaffNotFound") }, { status: 404 });
+  }
+
+  const previewDate = searchParams.get("previewDate");
+  if (previewDate) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(previewDate)) {
+      return NextResponse.json(
+        { error: t(locale, "errDateInvalid") },
+        { status: 400 },
+      );
+    }
+    const count = await countAppointmentsOnDay({
+      barberId: session.barberId,
+      dateKey: previewDate,
+      staffId,
+    });
+    return NextResponse.json({ date: previewDate, appointmentCount: count });
   }
 
   const from = dateKeyToDbDate(toDateKey());
@@ -67,6 +89,12 @@ export async function POST(request: Request) {
   }
 
   const date = dateKeyToDbDate(parsed.data.date);
+  const existing = await prisma.staffDayOff.findUnique({
+    where: {
+      staffId_date: { staffId: parsed.data.staffId, date },
+    },
+  });
+
   const dayOff = await prisma.staffDayOff.upsert({
     where: {
       staffId_date: { staffId: parsed.data.staffId, date },
@@ -79,7 +107,23 @@ export async function POST(request: Request) {
     },
   });
 
-  return NextResponse.json({ dayOff });
+  let cancelledCount = 0;
+  let notifiedCount = 0;
+  if (!existing) {
+    const result = await cancelAppointmentsForDayOff({
+      barberId: session.barberId,
+      dateKey: parsed.data.date,
+      staffId: parsed.data.staffId,
+    });
+    cancelledCount = result.cancelledCount;
+    notifiedCount = result.notifiedCount;
+  }
+
+  return NextResponse.json({
+    dayOff,
+    cancelledCount,
+    notifiedCount,
+  });
 }
 
 const deleteSchema = z.object({
@@ -99,6 +143,18 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: t(locale, "errIdMissing") }, { status: 400 });
   }
 
+  const existing = await prisma.staffDayOff.findFirst({
+    where: {
+      id: parsed.data.id,
+      staff: { barberId: session.barberId },
+    },
+  });
+  if (!existing) {
+    return NextResponse.json({ ok: true, restoredCount: 0, skippedCount: 0 });
+  }
+
+  const dateKey = dbDateToDateKey(existing.date);
+
   await prisma.staffDayOff.deleteMany({
     where: {
       id: parsed.data.id,
@@ -106,5 +162,15 @@ export async function DELETE(request: Request) {
     },
   });
 
-  return NextResponse.json({ ok: true });
+  const restored = await restoreAppointmentsAfterDayOffRemoved({
+    barberId: session.barberId,
+    dateKey,
+    staffId: existing.staffId,
+  });
+
+  return NextResponse.json({
+    ok: true,
+    restoredCount: restored.restoredCount,
+    skippedCount: restored.skippedCount,
+  });
 }

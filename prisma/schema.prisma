@@ -164,6 +164,8 @@ model Appointment {
   customerPhone      String
   /// BOOKED | PENDING_CONFIRM | CANCELLED
   status             String    @default("BOOKED")
+  /// Why cancelled when status=CANCELLED; e.g. DAY_OFF (nullable — legacy rows stay null)
+  cancelReason       String?
   /// PUBLIC | ADMIN | RECURRING
   source             String    @default("PUBLIC")
   /// Opaque token for customer self-cancel link in SMS (nullable so existing rows can migrate)

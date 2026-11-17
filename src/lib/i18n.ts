@@ -135,7 +135,16 @@ const he = {
   remove: "הסרה",
   addFailed: "הוספה נכשלה",
   dayOffAdded: "יום חופש נוסף",
+  dayOffAddedWithCancel:
+    "יום חופש נוסף. בוטלו {count} תורים ביום זה (סדרות קבועות נשארו פעילות).",
+  dayOffConfirmCancel:
+    "ביום זה יש {count} תורים. להוסיף חופש ולבטל רק אותם? סדרות קבועות יישארו פעילות לימים אחרים.",
   dayOffRemoved: "יום החופש הוסר",
+  dayOffRemovedWithRestore:
+    "יום החופש הוסר. שוחזרו {restored} תורים{skipped}.",
+  dayOffRestoreSkipped: " ({skipped} לא שוחזרו כי המשבצת תפוסה)",
+  dayOffConfirmRestore:
+    "להסיר את יום החופש? תורים שבוטלו בגלל החופש ישוחזרו אם המשבצת עדיין פנויה.",
   noDaysOff: "אין ימי חופש קרובים",
   blockedWindowHelp:
     "חסימת תאריך וטווח שעות — הלקוחות לא יראו תורים בחלון הזה (למשל הפסקת צהריים).",
@@ -473,7 +482,16 @@ const ar: { [K in keyof typeof he]: string } = {
   remove: "إزالة",
   addFailed: "فشلت الإضافة",
   dayOffAdded: "تمت إضافة يوم عطلة",
+  dayOffAddedWithCancel:
+    "تمت إضافة يوم عطلة. أُلغي {count} مواعيد في هذا اليوم (السلاسل الثابتة بقيت نشطة).",
+  dayOffConfirmCancel:
+    "يوجد {count} مواعيد في هذا اليوم. إضافة عطلة وإلغاؤها فقط؟ السلاسل الثابتة تبقى لأيام أخرى.",
   dayOffRemoved: "تمت إزالة يوم العطلة",
+  dayOffRemovedWithRestore:
+    "تمت إزالة يوم العطلة. تمت استعادة {restored} مواعيد{skipped}.",
+  dayOffRestoreSkipped: " ({skipped} لم تُستعد لأن الفترة محجوزة)",
+  dayOffConfirmRestore:
+    "إزالة يوم العطلة؟ المواعيد التي أُلغيت بسبب العطلة ستُستعاد إذا كانت الفترة ما زالت متاحة.",
   noDaysOff: "لا أيام عطل قريبة",
   blockedWindowHelp:
     "حظر تاريخ ونطاق ساعات — لن يرى الزبائن مواعيد في هذه النافذة (مثل استراحة الظهر).",
