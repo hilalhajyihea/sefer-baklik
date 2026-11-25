@@ -20,6 +20,8 @@ type Props = {
   logoUrl?: string | null;
   locale?: Locale | string;
   staff?: StaffOption[];
+  /** Active vacation/shop notice from the server (already date-filtered). */
+  vacationNotice?: string | null;
 };
 
 export function BookingCalendar({
@@ -28,6 +30,7 @@ export function BookingCalendar({
   logoUrl,
   locale: localeProp,
   staff = [],
+  vacationNotice = null,
 }: Props) {
   const locale = normalizeLocale(localeProp);
   const teamMode = staff.length >= 2;
@@ -368,6 +371,16 @@ export function BookingCalendar({
       {/* Booking panel */}
       <div className="relative -mt-8 pb-14 sm:-mt-10 sm:pb-20">
         <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
+          {vacationNotice ? (
+            <div
+              role="status"
+              className="animate-fade-up mb-4 rounded-2xl border border-[var(--copper)]/45 bg-[rgba(166,104,58,0.22)] px-4 py-3 text-[var(--cream)] sm:px-5 sm:py-4"
+            >
+              <p className="whitespace-pre-wrap text-sm leading-relaxed sm:text-base">
+                {vacationNotice}
+              </p>
+            </div>
+          ) : null}
           <form
             onSubmit={onSubmit}
             className="surface-dark animate-fade-up rounded-2xl p-5 sm:p-7"

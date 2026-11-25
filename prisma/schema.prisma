@@ -56,6 +56,12 @@ model Barber {
   /// Binary logo payload stored in DB (survives Render deploys)
   logoData                Bytes?
   logoMimeType            String?
+  /// Public booking banner only — does NOT close slots (use DayOff for that)
+  vacationNoticeText      String?
+  /// Inclusive: first calendar day (Asia/Jerusalem) to show the banner
+  vacationNoticeShowFrom  DateTime? @db.Date
+  /// Inclusive: last calendar day to show the banner
+  vacationNoticeUntil     DateTime? @db.Date
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 

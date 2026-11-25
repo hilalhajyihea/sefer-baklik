@@ -169,6 +169,10 @@ export function BarberAdminPanel({
     useState(true);
   const [offDate, setOffDate] = useState("");
   const [offNote, setOffNote] = useState("");
+  const [vacationNoticeText, setVacationNoticeText] = useState("");
+  const [vacationNoticeShowFrom, setVacationNoticeShowFrom] = useState("");
+  const [vacationNoticeUntil, setVacationNoticeUntil] = useState("");
+  const [vacationNoticeSaving, setVacationNoticeSaving] = useState(false);
   const [blockDate, setBlockDate] = useState("");
   const [blockStart, setBlockStart] = useState("12:00");
   const [blockEnd, setBlockEnd] = useState("13:00");
@@ -206,6 +210,16 @@ export function BarberAdminPanel({
     const res = await fetch("/api/barber/blocked-windows");
     const data = await res.json();
     setBlockedWindows(data.blockedWindows || []);
+  }, []);
+
+  const loadVacationNotice = useCallback(async () => {
+    const res = await fetch("/api/barber/vacation-notice");
+    if (!res.ok) return;
+    const data = await res.json().catch(() => ({}));
+    const notice = data.notice || {};
+    setVacationNoticeText(notice.text || "");
+    setVacationNoticeShowFrom(notice.showFrom || "");
+    setVacationNoticeUntil(notice.until || "");
   }, []);
 
   const loadHoursAndDaysOff = useCallback(
@@ -325,6 +339,7 @@ export function BarberAdminPanel({
 
         await loadHoursAndDaysOff(nextTeam, staffIdForHours);
         await loadBlockedWindows();
+        await loadVacationNotice();
 
         if (sData.settings) {
           setSmsPlanEnabled(!!sData.settings.smsPlanEnabled);
@@ -372,7 +387,14 @@ export function BarberAdminPanel({
         }
       }
     },
-    [router, slug, locale, loadHoursAndDaysOff, loadBlockedWindows],
+    [
+      router,
+      slug,
+      locale,
+      loadHoursAndDaysOff,
+      loadBlockedWindows,
+      loadVacationNotice,
+    ],
   );
 
   useEffect(() => {
@@ -815,6 +837,65 @@ export function BarberAdminPanel({
       setError(t(locale, "networkError"));
     } finally {
       setBookSubmitting(false);
+    }
+  }
+
+  async function saveVacationNotice(e: FormEvent) {
+    e.preventDefault();
+    setMessage("");
+    setError("");
+    setVacationNoticeSaving(true);
+    try {
+      const res = await fetch("/api/barber/vacation-notice", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: vacationNoticeText,
+          showFrom: vacationNoticeShowFrom,
+          until: vacationNoticeUntil,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || t(locale, "addFailed"));
+        return;
+      }
+      const notice = data.notice || {};
+      setVacationNoticeText(notice.text || "");
+      setVacationNoticeShowFrom(notice.showFrom || "");
+      setVacationNoticeUntil(notice.until || "");
+      setMessage(t(locale, "vacationNoticeSaved"));
+    } catch {
+      setError(t(locale, "networkError"));
+    } finally {
+      setVacationNoticeSaving(false);
+    }
+  }
+
+  async function clearVacationNotice() {
+    if (!confirm(t(locale, "vacationNoticeConfirmClear"))) return;
+    setMessage("");
+    setError("");
+    setVacationNoticeSaving(true);
+    try {
+      const res = await fetch("/api/barber/vacation-notice", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: "", clear: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || t(locale, "addFailed"));
+        return;
+      }
+      setVacationNoticeText("");
+      setVacationNoticeShowFrom("");
+      setVacationNoticeUntil("");
+      setMessage(t(locale, "vacationNoticeCleared"));
+    } catch {
+      setError(t(locale, "networkError"));
+    } finally {
+      setVacationNoticeSaving(false);
     }
   }
 
@@ -1650,6 +1731,69 @@ export function BarberAdminPanel({
 
           {tab === "daysOff" && (
             <div className="space-y-5">
+              <form
+                onSubmit={saveVacationNotice}
+                className="space-y-3 rounded-xl border border-white/12 bg-black/25 p-4"
+              >
+                <div>
+                  <h2 className="text-base font-semibold text-[var(--cream)]">
+                    {t(locale, "vacationNoticeTitle")}
+                  </h2>
+                  <p className="mt-1 text-sm text-[rgba(248,243,236,0.62)]">
+                    {t(locale, "vacationNoticeHelp")}
+                  </p>
+                </div>
+                <label className="block text-sm font-medium text-[var(--cream)]">
+                  {t(locale, "vacationNoticeTextLabel")}
+                  <textarea
+                    value={vacationNoticeText}
+                    onChange={(e) => setVacationNoticeText(e.target.value)}
+                    rows={3}
+                    maxLength={500}
+                    className="shop-field mt-1 block w-full rounded-xl px-3 py-2"
+                  />
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  <label className="text-sm font-medium text-[var(--cream)]">
+                    {t(locale, "vacationNoticeShowFrom")}
+                    <input
+                      type="date"
+                      value={vacationNoticeShowFrom}
+                      onChange={(e) =>
+                        setVacationNoticeShowFrom(e.target.value)
+                      }
+                      className="shop-field mt-1 block rounded-xl px-3 py-2"
+                    />
+                  </label>
+                  <label className="text-sm font-medium text-[var(--cream)]">
+                    {t(locale, "vacationNoticeUntil")}
+                    <input
+                      type="date"
+                      value={vacationNoticeUntil}
+                      onChange={(e) => setVacationNoticeUntil(e.target.value)}
+                      className="shop-field mt-1 block rounded-xl px-3 py-2"
+                    />
+                  </label>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="submit"
+                    disabled={vacationNoticeSaving}
+                    className="btn-primary rounded-xl px-5 py-2.5 font-semibold disabled:opacity-60"
+                  >
+                    {t(locale, "vacationNoticeSave")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={vacationNoticeSaving}
+                    onClick={() => clearVacationNotice()}
+                    className="rounded-xl border border-white/20 bg-black/30 px-5 py-2.5 text-sm font-semibold text-[var(--cream)] hover:bg-black/45 disabled:opacity-60"
+                  >
+                    {t(locale, "vacationNoticeClear")}
+                  </button>
+                </div>
+              </form>
+
               <form
                 onSubmit={addDayOff}
                 className="flex flex-wrap items-end gap-3"

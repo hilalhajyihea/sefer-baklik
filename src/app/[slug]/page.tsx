@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { normalizeLocale } from "@/lib/i18n";
 import { barberShareMetadata } from "@/lib/seo";
 import { getActiveStaff, isTeamMode } from "@/lib/staff";
+import { resolveVacationNotice } from "@/lib/vacationNotice";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,9 @@ export default async function BarberPublicPage({ params }: Props) {
       locale: true,
       logoUrl: true,
       logoMimeType: true,
+      vacationNoticeText: true,
+      vacationNoticeShowFrom: true,
+      vacationNoticeUntil: true,
     },
   });
   if (!barber || !barber.isActive) notFound();
@@ -45,6 +49,11 @@ export default async function BarberPublicPage({ params }: Props) {
   const logoUrl = barber.logoMimeType
     ? barber.logoUrl || `/api/barbers/${barber.slug}/logo`
     : null;
+  const notice = resolveVacationNotice({
+    text: barber.vacationNoticeText,
+    showFrom: barber.vacationNoticeShowFrom,
+    until: barber.vacationNoticeUntil,
+  });
 
   return (
     <main className="flex-1" lang={locale}>
@@ -54,6 +63,7 @@ export default async function BarberPublicPage({ params }: Props) {
         logoUrl={logoUrl}
         locale={locale}
         staff={staff}
+        vacationNotice={notice.active ? notice.text : null}
       />
     </main>
   );
